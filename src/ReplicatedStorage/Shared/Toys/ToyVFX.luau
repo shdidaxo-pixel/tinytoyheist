@@ -382,8 +382,16 @@ local function vfx(): any
 	return if ok then mod else nil
 end
 
--- the size roll on a toy (1 = normal), whatever the size session calls it
+-- the size roll on a toy (1 = normal): its SizeTier (ToySize), or a number attribute
 local function sizeMult(model: Model): number
+	local tier = model:GetAttribute("SizeTier")
+	local sizeModule = script.Parent:FindFirstChild("ToySize")
+	if type(tier) == "string" and sizeModule then
+		local ok, ToySize = pcall(require, sizeModule)
+		if ok then
+			return (ToySize :: any).scale(tier)
+		end
+	end
 	for _, name in { "SizeMult", "SizeRoll", "SizeScale" } do
 		local v = model:GetAttribute(name)
 		if type(v) == "number" then
@@ -407,6 +415,7 @@ function ToyVFX.revealBurst(model: Model)
 		rarity = model:GetAttribute("Rarity"),
 		mutation = model:GetAttribute("Mutation"),
 		sizeMult = sizeMult(model),
+		sizeTier = model:GetAttribute("SizeTier"),
 	})
 end
 

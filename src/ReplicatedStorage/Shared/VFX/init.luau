@@ -827,6 +827,7 @@ export type BurstOpts = {
 	color: Color3?,
 	scale: number?,
 	sizeMult: number?,
+	sizeTier: string?,
 	amount: number?,
 	mine: boolean?,
 }
@@ -1136,12 +1137,25 @@ BURSTS.Hatch = function(pos, h, o)
 			mutationBurst(mid, h, o.mutation :: string, o.mine == true)
 		end)
 	end
-	if big > 1.15 then
+	local tierName = if o.sizeTier and o.sizeTier ~= "Normal" then o.sizeTier else nil
+	if big > 1.15 or tierName then
+		big = math.max(big, 1.2)
+		-- the size session's tier name and colour when it's there (ToySize), else by how big
+		local word = tierName or (if big >= 2 then "Giant" elseif big >= 1.5 then "Huge" else "Big")
+		local wordColor = GOLD
+		local sizeModule = Toys:FindFirstChild("ToySize")
+		if tierName and sizeModule then
+			local ok, ToySize = pcall(require, sizeModule)
+			if ok then
+				wordColor = (ToySize :: any).color(tierName)
+			end
+		end
 		task.delay(0.25, function()
-			floorDecal(pos, "Shock", WHITE, h * 2, h * (8 + big * 3), 0.9)
+			floorDecal(pos, "Shock", wordColor, h * 2, h * (8 + big * 3), 0.9)
+			orb(mid, h * 0.6, h * (2 + big), wordColor, 0.35)
 			puff(pos, h * big, 12)
-			VFX.popText(if big >= 2 then "GIANT!" elseif big >= 1.5 then "HUGE!" else "BIG!", mid, {
-				color = GOLD,
+			VFX.popText(string.upper(word) .. "!", mid, {
+				color = wordColor,
 				size = 40 + 10 * big,
 				duration = 1.6,
 			})

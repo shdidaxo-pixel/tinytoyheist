@@ -126,13 +126,17 @@ local function onReveal(info: any)
 	snapshot = nil
 	local sizeMult = tonumber(info.sizeMult) or 1
 	local function burst(at: Vector3, height: number?)
-		Moments.fire("HatchBurst", { rarity = info.rarity, mutation = info.mutation, sizeMult = sizeMult })
+		Moments.fire(
+			"HatchBurst",
+			{ rarity = info.rarity, mutation = info.mutation, sizeMult = sizeMult, sizeTier = info.sizeTier }
+		)
 		local toys = VFX.hatchEnd()
 		local toy = toys[1]
 		VFX.burst("Hatch", at, {
 			rarity = info.rarity,
 			mutation = info.mutation,
 			sizeMult = sizeMult,
+			sizeTier = info.sizeTier,
 			mine = true,
 			scale = math.max(1, (height or 5) / 4), -- as big as the blanket it came out of
 		})

@@ -4,6 +4,7 @@
 -- hidden on your own toys, and the run while you train Speed on your wheel (jump or move to stop).
 
 local Players = game:GetService("Players")
+local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -179,6 +180,16 @@ function GameView.start(bedroom: Model)
 	for _, hole in holes:GetChildren() do
 		task.spawn(watchHome, hole)
 	end
+
+	-- Steal: the toy roams only on our screen, so tell the server which one we held (it checks where it really is)
+	local steal = ReplicatedStorage:WaitForChild("GameRemotes"):WaitForChild("Steal") :: RemoteEvent
+	ProximityPromptService.PromptTriggered:Connect(function(prompt)
+		local toy = prompt.Name == "StealPrompt" and prompt:FindFirstAncestorWhichIsA("Model")
+		local uid = toy and toy:GetAttribute("Uid")
+		if typeof(uid) == "string" then
+			steal:FireServer(uid)
+		end
+	end)
 
 	local stop = ReplicatedStorage:WaitForChild("GameRemotes"):WaitForChild("StopTraining") :: RemoteEvent
 	me:GetAttributeChangedSignal("Training"):Connect(training)

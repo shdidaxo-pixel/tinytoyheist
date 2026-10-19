@@ -76,7 +76,16 @@ end
 
 function Raids.start(_bedroom: Model)
 	notice = ReplicatedStorage:WaitForChild("BedroomRemotes"):WaitForChild("Notice") :: RemoteEvent
-	Pens.onSteal = function(thief: Player, owner: Player, uid: string, model: Model)
+	-- the thief's client finished holding Steal on a toy (GameRemotes.Steal, uid)
+	local stealRemote = PlayerData.remote("RemoteEvent", "Steal") :: RemoteEvent
+	stealRemote.OnServerEvent:Connect(function(thief: Player, uid: any)
+		if typeof(uid) ~= "string" then
+			return
+		end
+		local owner, model = Pens.findToy(uid)
+		if not owner or not model or owner == thief then
+			return
+		end
 		local why = Raids.blocked(thief, owner)
 		if why then
 			notice:FireClient(thief, why, "warn")
@@ -92,7 +101,7 @@ function Raids.start(_bedroom: Model)
 			notice:FireClient(owner, `{thief.DisplayName} is stealing your {id}! Stop them!`, "warn")
 			notice:FireClient(thief, "Got it! Drag it to your home!", "good")
 		end
-	end
+	end)
 	Carry.onStealBanked = function(thief: Player, owner: Player)
 		lastSteal[thief] = lastSteal[thief] or {}
 		lastSteal[thief][owner.UserId] = os.clock()

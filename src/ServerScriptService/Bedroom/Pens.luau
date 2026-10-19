@@ -4,7 +4,7 @@
 --   Banking a sleeping toy: the blanket lies in your pen with a wake-up timer over it (Small 5 s, Medium 20 s,
 --   Large 60 s). Then it pops open: the toy, its rarity and its mutation (rolled at banking, so leaving early or
 --   rejoining can't re-roll it). Waking toys don't earn yet.
---   Every toy in a pen carries a Steal prompt; Raids decides who may use it (the owner's client hides their own).
+--   Every toy in a pen carries a Steal prompt (the owner's client hides their own); Raids decides who may use it.
 --   The Index (toy x mutation found) is kept here too, with the room-set rewards.
 
 local Players = game:GetService("Players")
@@ -22,7 +22,6 @@ local PlayerData = require(script.Parent.PlayerData)
 local Homes = require(script.Parent.Homes)
 
 local Pens = {}
-Pens.onSteal = nil :: ((thief: Player, owner: Player, uid: string, model: Model) -> ())?
 
 type Toy = PlayerData.Toy
 type State = {
@@ -46,6 +45,16 @@ end
 
 function Pens.state(player: Player): State?
 	return states[player]
+end
+
+-- Which player's pen a toy is roaming, and its model
+function Pens.findToy(uid: string): (Player?, Model?)
+	for player, s in states do
+		if s.models[uid] then
+			return player, s.models[uid]
+		end
+	end
+	return nil, nil
 end
 
 function Pens.find(player: Player, uid: string): (Toy?, number?)
@@ -170,13 +179,9 @@ local function show(player: Player, entry: Toy, at: CFrame?): Model?
 		prompt.HoldDuration = GameConfig.RAID.hold
 		prompt.MaxActivationDistance = 10 + (toy:GetAttribute("Height") :: number? or 8) * 0.3
 		prompt.RequiresLineOfSight = false
+		-- the toy roams only on the clients, so the server would refuse this prompt on distance: the client sends
+		-- GameRemotes.Steal instead and Raids checks the distance against PenRoam
 		prompt.Parent = root
-		prompt.Triggered:Connect(function(thief)
-			local model = s.models[entry.u]
-			if Pens.onSteal and thief ~= player and model then
-				Pens.onSteal(thief, player, entry.u, model)
-			end
-		end)
 	end
 	s.models[entry.u] = toy
 	toy.Parent = s.hole:FindFirstChild("PenToys")

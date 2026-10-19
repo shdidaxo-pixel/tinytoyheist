@@ -29,6 +29,7 @@ local HIPS = {
 }
 local HIP_Y = 15.5 * S
 local NECK = CFrame.new(30 * S, 39.5 * S, 0)
+local HEAD_TURN = CFrame.new(42 * S, 46 * S, 0) -- about the middle of the head
 local TAIL_BASE = CFrame.new(-34 * S, 29.5 * S, 0)
 local BACK_HIP = CFrame.new(-26 * S, HIP_Y, 0)
 local FRONT_HIP = CFrame.new(24 * S, HIP_Y, 0)
@@ -146,7 +147,7 @@ function CatView.start(bedroom: Model)
 		local fling = math.sin(math.clamp((t - throwAt) / 0.45, 0, 1) * math.pi)
 		local shake = math.sin(t * 30) * bite
 
-		local bob = (math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4 - groom * 2.5 - bite * 1.5) * S
+		local bob = (math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4 - groom * 2.5 - bite * 1) * S
 		local breathe = math.sin(t * 2) * 0.4 * S
 		local body = current * CFrame.new(0, bob + breathe * (1 - walking), 0)
 		-- prowl: the shoulders roll as it walks
@@ -159,7 +160,7 @@ function CatView.start(bedroom: Model)
 		-- grooming: the front dips toward the paw
 		body *= BACK_HIP * CFrame.Angles(0, 0, -0.15 * groom) * BACK_HIP:Inverse()
 		-- biting: the front dips, braced; throwing: it rears up
-		body *= BACK_HIP * CFrame.Angles(0, 0, -0.1 * bite + 0.18 * fling) * BACK_HIP:Inverse()
+		body *= BACK_HIP * CFrame.Angles(0, 0, -0.05 * bite + 0.18 * fling) * BACK_HIP:Inverse()
 
 		-- the head: looks around on patrol, locks forward when hunting, licks the paw while grooming
 		local wantYaw = if hunting then 0 else math.sin(t * 0.7) * 0.35
@@ -169,9 +170,15 @@ function CatView.start(bedroom: Model)
 		local neck = NECK
 			* CFrame.Angles(0, lookYaw * (1 - groom) + 0.35 * groom, math.sin(stride * 2) * 0.04 * walking)
 			* CFrame.Angles(0.35 * rub * groom, 0, (-0.6 + lick) * groom - 0.12 * crouch)
-			-- the bite: head clamped down, shaking side to side; the throw: a big flick up and to the side
-			* CFrame.Angles(0.15 * shake, 0.35 * shake + 0.7 * fling, -0.4 * bite + 0.75 * fling)
 			* NECK:Inverse()
+		-- the bite: head a little down, shaking side to side; the throw: a flick up and to the side. Turned about
+		-- the middle of the head, not the neck (the neck is well behind it, so a turn there swung the head into the
+		-- chest), and the collar stays out of it. The mouse is held at the mouth, so it shakes along.
+		local action = neck
+			* HEAD_TURN
+			* CFrame.Angles(0, 0.4 * shake + 0.5 * fling, -0.15 * bite + 0.5 * fling)
+			* CFrame.Angles(0.06 * shake, 0, 0)
+			* HEAD_TURN:Inverse()
 
 		-- an ear flick now and then
 		if t >= nextFlick then
@@ -199,12 +206,12 @@ function CatView.start(bedroom: Model)
 				-- legs stay on the floor while the body bobs: hang them from the un-bobbed frame
 				cf = current * joint * CFrame.Angles(0, 0, swing) * joint:Inverse() * piece.offset
 			elseif piece.kind == "Head" then
-				cf = body * neck * piece.offset
+				cf = body * action * piece.offset
 			elseif piece.kind == "Ear" then
 				local b = piece.base :: CFrame
 				-- flat back when the lights are on; a flick otherwise
 				local back = 0.9 * angry + 0.5 * flick * (if piece.index > 0 then 1 else 0) * (1 - angry)
-				cf = body * neck * b * CFrame.Angles(piece.index * 0.2 * angry, 0, back) * b:Inverse() * piece.offset
+				cf = body * action * b * CFrame.Angles(piece.index * 0.2 * angry, 0, back) * b:Inverse() * piece.offset
 			elseif piece.kind == "Tail" then
 				-- each link adds a little more bend, so the tail curls from its base
 				local k = piece.index

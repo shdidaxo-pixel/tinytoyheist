@@ -38,6 +38,74 @@ and the reason behind it, every piece of Dylan's feedback in order, and a step-b
 
 ---
 
+## 0. Progress: v6 is built in Studio (19 Oct 2026, the map session)
+
+**The Kid's Bedroom v6 is built and playable in Studio.** Everything below this section was written before the build;
+where it disagrees with this section, this section wins.
+
+### What exists now
+
+| Piece | Where | Notes |
+| --- | --- | --- |
+| Map numbers | `src/ReplicatedStorage/Shared/MapConfig.luau` | v6, from Appendix A, plus home/zone/noise helpers, `trackPath`/`trackPose`, `trainCarDistance`, `flashlightTarget`, `SIGN`, `SHOWCASE_LEVELS`, `TOWER_STEPS`. |
+| Spec | `tests/MapConfig.spec.luau` | Appendix D.1 and more: 2,401 checks pass. Track length 1841.0 (matches the render). Spawns 9 S / 12 M / 5 L. |
+| Builder | `tools/build-bedroom.luau` + `tools/bedroom/` (Kit, Room, Homes, Furniture, Landmarks, Hazards) | Rojo: `ServerStorage.TinyToyHeistTools.BuildBedroom` and `.Bedroom`. ~3,300 parts, 22 lights, builds in a few seconds. Command bar: `local m = game.ServerStorage.TinyToyHeistTools.BuildBedroom:Clone(); print(require(m)); m:Destroy()` |
+| Lighting | `src/ReplicatedStorage/Shared/BedroomLighting.luau` | `Night` and `LightsOn`, `apply(preset, seconds)`. Room lights are found by the `LightRole` attribute. |
+| Pen roaming | `src/ReplicatedStorage/Shared/PenRoam.luau` | Toy position from a seed and the server clock (no history), so server and clients agree. |
+| Server systems | `src/ServerScriptService/Bedroom/` | Homes (claim, spawn on your bed, signs, push-pin lock, level rebuilds, Studio demo toys), Giant (wake meter, sleep cycle, flashlight), Train, Cat, Hazards, Knock, Events. |
+| Client views | `src/StarterPlayer/StarterPlayerScripts/Bedroom/` | Lights, KidView, TrainView, CatView (walk cycle, tail, head, crouch), HomeView (roaming toys, wheels, fairy lights, bobbing signs, YOUR HOME), Effects (knock-downs, noise ripples, trap/board/duck/brick animations). |
+| Captures | `design/studio-v6/` | Studio shots at the Appendix B cameras and `compare-*.jpg` beside the renders. |
+
+### Play-tested (all working)
+Spawn on your matchbox bed in your own home; walk home → safe ring → carpet → over the track → wood → creaky → the
+door, and back, with no snags; climb the tower to the lookout (all 25 steps with normal jumps); the train knocks you
+down and fires the drop; the cat stalks, pounces, knocks you down and rests, and goes aggressive with the lights on;
+wake meter 80+ → the Kid sits up and sweeps his flashlight; 100 → Stirring → Awake with the lights on (photo 1) and
+back to night after; traps SNAP you home and re-arm after 20 s; boards/ducks/bricks make noise (x2 in the monitor
+zone); toys roam their pens; Speed wheels spin by level; no script errors.
+
+### Hooks for other code (also in the shared notes folder)
+- `ServerStorage.BedroomEvents.DropCarried` (fired with player, reason) when a hazard knocks someone: the carry system
+  should drop their toy. Hazards treat a player as carrying when the Player attribute `Carrying` is truthy.
+- `ServerStorage.BedroomEvents.MakeNoise` (position, points, kind): "Drag"/"Step" count the floor
+  (`MapConfig.noiseAt`); other kinds only the monitor zone. Feeds `GiantKid.WakeMeter`.
+- `GiantKid` attributes: `State` (Asleep/Stirring/Awake), `WakeMeter`, `Flashlight`, `WakesAt`, `StateEndsAt`.
+  Test: `workspace.Bedroom.GiantKid:SetAttribute("WakeMeter", 100)` on the Server.
+- Toys in a pen: put a ToyBuilder model in `Hole#.PenToys`; the client roams it (set `RoamSeed`/`Size` if you like).
+- A home's look changes live when its `Level` attribute changes.
+
+### Changed from the plan (and why)
+- **Signs** float over the middle of each home as transparent text on a BillboardGui that faces the camera (Dylan:
+  "should js be transparent and should follow camera movement"), not a board on a lolly stick. "EMPTY HOME" /
+  owner name / "YOUR HOME" in gold with an arrow; second line "Lv N · $X/s" or a red "LOCKED 0:32".
+- **Tower steps** rise 4.8 (25 steps, 24° apart) instead of 6 (20 steps), so every step is an easy hop.
+- **Lighting**: both presets use a high sun through the shadowless ceiling (tinted blue and dim at night, warm and
+  bright with the lights on), so the switch is a smooth tween. Roblox's moon was too weak and blue.
+- **Locked homes** don't use a solid barrier (it would trap the owner): strangers who walk in are put back outside.
+- **Homes are silent** (noise 0) like the safe ring.
+- **Floor** uses Roblox materials (Carpet, WoodPlanks) and a plain teal safe ring. The voxel tile path is still there
+  (`ServerStorage.TinyToyHeistAssets.FloorTiles`) if the OBJ tiles are ever imported. AI-generated stud/OSB/carpet
+  materials were tried and removed: they came out as grates, bricks and garish noise.
+- **The train and cat collide with nothing**: hits are checked in code (no physics shoves); you can't ride the train.
+- **Hallway**: open door, sign, and an invisible wall 150 studs in (past the door's swing).
+- The shop arrow in the HUD now fades out after 12 s (Dylan asked).
+
+### Still to do / open
+1. **Reconnect Rojo** in Studio once: the running Rojo can't add the new ServerScriptService node live, so
+   `ServerScriptService.Bedroom` in the place is a manual copy of `src/ServerScriptService/Bedroom`. After a reconnect
+   Rojo manages it.
+2. **The HUD's wake meter and timer are still the demo loop** (`Hud.client.luau`): wire them to the `GiantKid`
+   attributes.
+3. **No carry system yet**, so no real drag noise; the cat's calm mode reacts to fast movers and carriers only.
+4. **The awake Giant** doesn't walk or grab yet; he sits up, sweeps the flashlight and the lights come on.
+5. **Sleeping toys (blankets) on the spawns**: `ToySpawns` markers exist; the toy system should put blankets there.
+6. **Sounds**: none yet (train rattle, cat bell, creaks, squeaks, trap snap).
+7. Home interiors read a bit dark at night next to the render; the pine sides come out brown.
+8. Walk speed 16 makes home → door about 100 s; fine with Speed upgrades, but worth a feel test.
+9. Open questions in section 11 still stand (scale, keyhole, spawn count, what the safe zone protects from).
+
+---
+
 ## 1. Where things stand
 
 ### In one paragraph

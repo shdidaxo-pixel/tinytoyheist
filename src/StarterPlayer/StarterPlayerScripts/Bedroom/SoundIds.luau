@@ -29,6 +29,7 @@ local D: { [string]: Def } = {
 	-- toys
 	Grab = { ids = { 9113455017, 9114883390 }, volume = 0.6, range = 60 },
 	HatchRise = { ids = { 9119816546 }, volume = 0.45 },
+	HatchShake = { ids = { 9113455185 }, volume = 0.3 }, -- the blanket shaking before the burst
 	HatchPop = { ids = { 9117841338 }, volume = 0.6 },
 	RevealCommon = { ids = { 9116394545 }, volume = 0.5 },
 	RevealUncommon = { ids = { 9126073001 }, volume = 0.45 },

@@ -298,18 +298,23 @@ local function toySqueaks()
 	end)
 end
 
--- the reveal: the riser while you hold E on a blanket, then a pop and a stinger by rarity; mutation and size after
+-- the reveal: the riser while you hold E on a blanket, the blanket rustling while it shakes (VFX HatchCharge, longer
+-- for rarer toys), then at the burst a pop and a stinger by rarity, with mutation and size stingers after
 local BIG_RARITY = { Mythic = true, Secret = true }
 local riser: Sound? = nil
-local function stopRiser()
-	local r = riser
-	riser = nil
-	if r then
-		TweenService:Create(r, TweenInfo.new(0.15), { Volume = 0 }):Play()
+local shake: Sound? = nil
+local function fadeOut(s: Sound?)
+	if s then
+		TweenService:Create(s, TweenInfo.new(0.15), { Volume = 0 }):Play()
 		task.delay(0.2, function()
-			r:Destroy()
+			s:Destroy()
 		end)
 	end
+end
+local function stopRiser()
+	fadeOut(riser)
+	fadeOut(shake)
+	riser, shake = nil, nil
 end
 local function hatchHold()
 	if not Sounds.once("HatchHold", 0.3) then
@@ -319,11 +324,30 @@ local function hatchHold()
 	local r = make("HatchRise", flat)
 	r:Play()
 	riser = r
-	task.delay(4, function()
+	task.delay(8, function()
 		if riser == r then
 			stopRiser()
 		end
 	end)
+end
+-- the build-up: restart the riser timed to end on the burst, and rustle the blanket faster and faster
+local function hatchCharge(data: any)
+	local seconds = math.max(0.3, type(data) == "table" and tonumber(data.seconds) or 1)
+	local r = riser or make("HatchRise", flat)
+	riser = r
+	r.TimePosition = 0
+	r.PlaybackSpeed = math.clamp(r.TimeLength / seconds, 0.8, 3)
+	if not r.IsPlaying then
+		r:Play()
+	end
+	fadeOut(shake)
+	local s = Sounds.loop("HatchShake")
+	s:Play()
+	shake = s
+	TweenService:Create(s, TweenInfo.new(seconds, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		PlaybackSpeed = 1.6,
+		Volume = s.Volume * 1.6,
+	}):Play()
 end
 local function reveal(info: any)
 	stopRiser()
@@ -447,6 +471,8 @@ local function notice(text: any, kind: any)
 		Sounds.play(if kind == "warn" then "NoticeWarn" else "NoticeGood")
 	end
 end
+local momentsReady = false
+local pendingReveal: any = nil
 local function moments()
 	local shared = ReplicatedStorage:WaitForChild("Shared")
 	local vfx = shared:WaitForChild("VFX", 120)
@@ -461,6 +487,13 @@ local function moments()
 	local me = player.UserId
 	Moments.on("HatchHold", hatchHold)
 	Moments.on("HatchCancel", stopRiser)
+	Moments.on("HatchCharge", hatchCharge)
+	Moments.on("HatchBurst", function(data: any)
+		local info = pendingReveal or data
+		pendingReveal = nil
+		reveal(info)
+	end)
+	momentsReady = true
 	Moments.on("StealStart", function(data: any)
 		if type(data) == "table" and data.owner == me then
 			robbed()
@@ -549,7 +582,20 @@ function Sounds.start(bedroom: Model)
 		end
 	end)
 	local revealRemote = gameRemotes:WaitForChild("Reveal") :: RemoteEvent
-	revealRemote.OnClientEvent:Connect(reveal)
+	revealRemote.OnClientEvent:Connect(function(info: any)
+		if not momentsReady then
+			reveal(info)
+			return
+		end
+		-- the VFX build-up runs first; the stinger waits for its HatchBurst (or plays anyway if that never comes)
+		pendingReveal = info
+		task.delay(4.5, function()
+			if pendingReveal == info then
+				pendingReveal = nil
+				reveal(info)
+			end
+		end)
+	end)
 	player:GetAttributeChangedSignal("Carrying"):Connect(function()
 		if player:GetAttribute("Carrying") then
 			Sounds.play("Grab")

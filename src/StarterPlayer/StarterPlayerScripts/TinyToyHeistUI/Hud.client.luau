@@ -722,6 +722,95 @@ do
 	selectTab(tabList[1].key)
 end
 
+-- Reward cards (Daily and Playtime), built like the shop's pack cards: a ray background in the card's colour, a
+-- light inner rim, a dark border, a detailed picture that wiggles on hover, and Gotham labels.
+local function rewardCard(parent: Instance, name: string, size: Vector2, position: UDim2, colour: string): Frame
+	local cardFrame = UIKit.new("Frame", {
+		Name = name,
+		BackgroundColor3 = UIKit.Ink,
+		Size = UDim2.fromOffset(size.X, size.Y),
+		Position = position,
+		ZIndex = 3,
+	}, parent)
+	UIKit.corner(cardFrame, 6)
+	UIKit.stroke(cardFrame, UIKit.Ink, 4, true)
+	local bg = UIKit.new("ImageLabel", {
+		Name = "Background",
+		BackgroundTransparency = 1,
+		Image = img("PassCard_Reward" .. colour),
+		ScaleType = Enum.ScaleType.Crop,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 1,
+	}, cardFrame)
+	UIKit.corner(bg, 6)
+	local rim = UIKit.new("Frame", {
+		Name = "Rim",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -6, 1, -6),
+		Position = UDim2.fromOffset(3, 3),
+		ZIndex = 2,
+	}, cardFrame)
+	UIKit.corner(rim, 4)
+	UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.5, Thickness = 2 }, rim)
+	return cardFrame
+end
+
+-- A small dark pill at the top of a card ("DAY 3", "5 MIN").
+local function chip(parent: Instance, text: string, y: number, color: Color3?): TextLabel
+	local t = UIKit.text(parent, text, 14, {
+		color = color,
+		stroke = 0,
+		position = UDim2.new(0.5, 0, 0, y),
+		anchor = Vector2.new(0.5, 0),
+		z = 6,
+	})
+	t.BackgroundColor3 = UIKit.Ink
+	t.BackgroundTransparency = 0.4
+	UIKit.corner(t, 10)
+	UIKit.new("UIPadding", {
+		PaddingLeft = UDim.new(0, 10),
+		PaddingRight = UDim.new(0, 10),
+		PaddingTop = UDim.new(0, 3),
+		PaddingBottom = UDim.new(0, 3),
+	}, t)
+	return t
+end
+
+-- The bar under a reward: CLAIMED (green + tick), CLAIM! (green, pulsing), a countdown (dark + clock) or LOCKED
+-- (grey + padlock).
+local function rewardStatus(parent: Instance, state: string, text: string, size: Vector2, position: UDim2): Frame
+	local holder = UIKit.button(parent, text, {
+		palette = if state == "claimed" or state == "ready"
+			then P.green
+			elseif state == "timer" then P.grey
+			else P.light,
+		icon = if state == "claimed"
+			then img("Check")
+			elseif state == "timer" then img("Clock")
+			elseif state == "locked" then img("Lock")
+			else nil,
+		size = UDim2.fromOffset(size.X, size.Y),
+		position = position,
+		textSize = 18,
+		iconSize = 22,
+		iconGap = 5,
+	})
+	holder.ZIndex = 4
+	if state == "ready" then
+		UIKit.pulse(holder:FindFirstChild("Face") :: Frame, 0.06, 0.6)
+	end
+	return holder
+end
+
+-- Today's card gets a gold ring.
+local function goldRing(cardFrame: Frame)
+	local s = cardFrame:FindFirstChildOfClass("UIStroke")
+	if s then
+		s.Color = UIKit.Yellow
+		s.Thickness = 4
+	end
+end
+
 -- Daily Rewards: a 7-day streak with a big Day 7 jackpot (from @hallodi.roblox).
 do
 	local p = UIKit.panel(gui, "DAILY REWARDS", P.magenta, Vector2.new(720, 500))
@@ -739,91 +828,84 @@ do
 	local fill =
 		UIKit.new("Frame", { BackgroundColor3 = hex("5BE36A"), Size = UDim2.fromScale(1 / 7, 1), ZIndex = 9 }, bar)
 	UIKit.corner(fill, 8)
-	local days = {
-		{ "DAY 1!", "$2,500", img("Cash"), "4FD8F0", "1E8FD0", "CLAIMED" },
-		{ "Tomorrow", "3 FLASHLIGHTS", img("Flashlight"), "FF5A5A", "C01828", "12:05:07" },
-		{ "Day 3", "$6,000", img("Cash"), "7BEA5A", "2EA82A", "LOCKED" },
-		{ "Day 4", "x2 SPEED 10m", img("Bolt"), "C77BFF", "7A2BD0", "LOCKED" },
-		{ "Day 5", "3 DECOYS", img("Decoy"), "FF7AD0", "C42A9A", "LOCKED" },
-		{ "Day 6", "LUCKY BLANKET", img("Gift"), "FFE45A", "E8A818", "LOCKED" },
+	UIKit.shade(fill, hex("5BE36A"))
+	-- { chip, reward, picture, card colour, status, status text, reward colour }
+	local days: { { any } } = {
+		{ "DAY 1!", "$2,500", img("CashPack1v2"), "Blue", "claimed", "CLAIMED", UIKit.CashGreen },
+		{ "TOMORROW", "3 FLASHLIGHTS", img("Flashlight2"), "Red", "timer", "12:05:07" },
+		{ "DAY 3", "$6,000", img("CashPack2v2"), "Green", "locked", "LOCKED", UIKit.CashGreen },
+		{ "DAY 4", "x2 SPEED 10m", img("BoltBig"), "Purple", "locked", "LOCKED" },
+		{ "DAY 5", "3 DECOYS", img("Decoy2"), "Pink", "locked", "LOCKED" },
+		{ "DAY 6", "LUCKY BLANKET", img("Featured_hero"), "Gold", "locked", "LOCKED" },
 	}
-	for i = 1, 7 do
-		local col = if i <= 4 then i - 1 elseif i == 5 then 0 elseif i == 6 then 1 else 2
+	for i, d in days do
+		local col = if i <= 4 then i - 1 else i - 5
 		local row = if i <= 4 then 0 else 1
-		local jackpot = i == 7
-		local w = if jackpot then 334 else 160
-		local d = if jackpot then { "Day 7", "JACKPOT!", "", "FFB04A", "F06A12", "LOCKED" } else days[i]
-		local _, t = UIKit.tile(b, {
-			name = "Day " .. i,
-			size = UDim2.fromOffset(w, 180),
-			position = UDim2.fromOffset(16 + col * 172, 78 + row * 192),
-			top = hex(d[4]),
-			bottom = hex(d[5]),
+		local t =
+			rewardCard(b, "Day " .. i, Vector2.new(160, 180), UDim2.fromOffset(16 + col * 172, 78 + row * 192), d[4])
+		chip(t, d[1], 8, if i == 1 then UIKit.Yellow else nil)
+		UIKit.text(t, d[2], 16, {
+			color = d[7] or UIKit.White,
+			stroke = 3,
+			position = UDim2.new(0.5, 0, 0, 32),
+			anchor = Vector2.new(0.5, 0),
+			z = 6,
 		})
-		if i == 1 or jackpot then
-			UIKit.burst(clip(t, 6), UDim2.new(0.5, 0, 0, 90), if jackpot then 320 else 200, 0.28)
-		end
+		local pic = UIKit.icon(t, d[3], 92, UDim2.fromOffset(80, 94), mid, 5)
+		UIKit.hoverWiggle(t, pic)
 		if i == 1 then
-			UIKit.text(
-				t,
-				"DAY 1!",
-				28,
-				{ color = UIKit.Yellow, position = UDim2.new(0.5, 0, 0, 6), anchor = Vector2.new(0.5, 0) }
-			)
-			UIKit.sparkle(t, UDim2.fromOffset(22, 50), 18)
-			UIKit.sparkle(t, UDim2.fromOffset(140, 64), 14)
-		else
-			UIKit.text(t, d[1], 14, { stroke = 2, position = UDim2.new(0.5, 0, 0, 6), anchor = Vector2.new(0.5, 0) })
-			UIKit.text(
-				t,
-				d[2],
-				if jackpot then 26 else 18,
-				{ position = UDim2.new(0.5, 0, 0, 24), anchor = Vector2.new(0.5, 0) }
-			)
+			goldRing(t)
+			UIKit.sparkle(t, UDim2.fromOffset(24, 70), 16)
+			UIKit.sparkle(t, UDim2.fromOffset(138, 84), 13)
 		end
-		if jackpot then
-			local prizes: { { any } } = {
-				{ img("Cash"), "$15K", UIKit.CashGreen },
-				{ toy("kingduck"), "Mythic toy", UIKit.White },
-				{ img("Bolt"), "x3", UIKit.White },
-			}
-			for k, prize in prizes do
-				local x = 62 + (k - 1) * 105
-				UIKit.icon(t, prize[1], 58, UDim2.fromOffset(x, 86), mid)
-				UIKit.text(
-					t,
-					prize[2],
-					16,
-					{ color = prize[3], position = UDim2.fromOffset(x, 114), anchor = Vector2.new(0.5, 0) }
-				)
-			end
-			UIKit.sparkle(t, UDim2.fromOffset(30, 40), 18)
-			UIKit.sparkle(t, UDim2.fromOffset(300, 46), 20)
-		else
-			if i ~= 1 then
-				UIKit.backing(t, UDim2.fromOffset(80, 92), 110, 0.35)
-			end
-			UIKit.hoverWiggle(t, UIKit.icon(t, d[3], 64, UDim2.fromOffset(80, 92), mid))
-		end
-		local claimed = d[6] == "CLAIMED"
-		local _, status = UIKit.block(t, {
-			name = "Status",
-			size = UDim2.new(1, -16, 0, 34),
-			position = UDim2.new(0, 8, 1, -42),
-			color = if claimed then hex("9AA0AE") else hex("D9DCE4"),
-			edge = UIKit.Ink,
-			radius = 4,
-			lip = 0,
-			strokeWidth = 3,
-		})
-		UIKit.text(status, d[6], 18, { position = center, anchor = mid })
+		rewardStatus(t, d[5], d[6], Vector2.new(144, 34), UDim2.fromOffset(8, 136))
 	end
+	-- Day 7: the jackpot, a wide orange card with a rainbow edge and three prizes
+	local jp = rewardCard(b, "Day 7", Vector2.new(334, 180), UDim2.fromOffset(16 + 2 * 172, 78 + 192), "Jackpot")
+	local edge = jp:FindFirstChildOfClass("UIStroke")
+	if edge then
+		edge.Color = UIKit.White
+		UIKit.new("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, hex("FF4D5E")),
+				ColorSequenceKeypoint.new(0.25, hex("FFD43B")),
+				ColorSequenceKeypoint.new(0.5, hex("5BE36A")),
+				ColorSequenceKeypoint.new(0.75, hex("3DA5FF")),
+				ColorSequenceKeypoint.new(1, hex("B45CFF")),
+			}),
+			Rotation = 20,
+		}, edge)
+	end
+	chip(jp, "DAY 7", 8)
+	local jackpotHolder = UIKit.new("Frame", {
+		Name = "Jackpot",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(200, 30),
+		Position = UDim2.fromOffset(167, 47),
+		AnchorPoint = mid,
+		ZIndex = 6,
+	}, jp)
+	UIKit.text(jackpotHolder, "JACKPOT!", 28, { stroke = 4, position = center, anchor = mid, z = 6 })
+	UIKit.pulse(jackpotHolder, 0.06, 0.7)
+	local prizes: { { any } } = {
+		{ img("CashPack3v2"), "$15K", UIKit.CashGreen },
+		{ toy("kingduck"), "Mythic toy", UIKit.White },
+		{ img("BoltBig"), "x3", UIKit.White },
+	}
+	for k, prize in prizes do
+		local x = 62 + (k - 1) * 105
+		UIKit.hoverWiggle(jp, UIKit.icon(jp, prize[1], 70, UDim2.fromOffset(x, 88), mid, 5))
+		chip(jp, prize[2], 112, prize[3]).Position = UDim2.fromOffset(x, 112)
+	end
+	UIKit.sparkle(jp, UDim2.fromOffset(28, 40), 18)
+	UIKit.sparkle(jp, UDim2.fromOffset(306, 44), 20)
+	rewardStatus(jp, "locked", "LOCKED", Vector2.new(318, 34), UDim2.fromOffset(8, 136))
 	UIKit.text(b, "NEXT REWARD IN 12:05:07", 20, { position = UDim2.new(0.5, 0, 1, -40), anchor = Vector2.new(0.5, 0) })
 end
 
 -- Playtime Rewards: ten gifts that unlock the longer you play (from @hallodi.roblox).
 do
-	local p = UIKit.panel(gui, "PLAYTIME REWARDS", P.orange, Vector2.new(760, 470))
+	local p = UIKit.panel(gui, "PLAYTIME REWARDS", P.orange, Vector2.new(760, 496))
 	panels.Playtime = p
 	local b = p.body
 	UIKit.text(p.header, "CLAIMED 0/10", 18, { position = UDim2.new(1, -240, 0, 6) })
@@ -835,67 +917,53 @@ do
 	}, p.header)
 	UIKit.corner(bar, 8)
 	UIKit.stroke(bar, UIKit.Ink, 2.5, true)
-	local gifts = {
-		{ "1 MIN", "$1,000", img("Cash"), "READY" },
-		{ "5 MIN", "x2", img("Flashlight"), "2:30" },
-		{ "8 MIN", "$2,000", img("Cash"), "5:30" },
-		{ "12 MIN", "x1", img("Decoy"), "9:30" },
-		{ "15 MIN", "x3", img("Pencil"), "12:30" },
-		{ "20 MIN", "$4,000", img("Cash"), "17:30" },
-		{ "25 MIN", "5m", img("Bolt"), "22:30" },
+	-- { played, reward, picture, countdown }; cash piles grow with the time played
+	local gifts: { { any } } = {
+		{ "1 MIN", "$1,000", img("CashPack1v2"), "READY" },
+		{ "5 MIN", "x2", img("Flashlight2"), "2:30" },
+		{ "8 MIN", "$2,000", img("CashPack2v2"), "5:30" },
+		{ "12 MIN", "x1", img("Decoy2"), "9:30" },
+		{ "15 MIN", "x3", img("Pencil2"), "12:30" },
+		{ "20 MIN", "$4,000", img("CashPack3v2"), "17:30" },
+		{ "25 MIN", "5m", img("BoltBig"), "22:30" },
 		{ "30 MIN", "x1", img("Gift"), "27:30" },
-		{ "40 MIN", "$8,000", img("Cash"), "37:30" },
+		{ "40 MIN", "$8,000", img("CashPack4v2"), "37:30" },
 		{ "50 MIN", "TOY", toy("teddyknight"), "47:30" },
 	}
-	local colors = {
-		{ "5FE0F5", "1E9FD8" },
-		{ "FFE45A", "F0A818" },
-		{ "FF6A5A", "D02828" },
-		{ "D07BFF", "8A2BD8" },
-		{ "8BF06A", "2EB82A" },
-	}
+	local colours = { "Blue", "Gold", "Red", "Purple", "Green" }
 	for i, g in gifts do
 		local c, r = (i - 1) % 5, (i - 1) // 5
 		local x, y = 16 + c * 146, 78 + r * 186
 		local ready = i == 1
-		local _, t = UIKit.tile(b, {
-			name = g[1],
-			size = UDim2.fromOffset(136, 130),
-			position = UDim2.fromOffset(x, y),
-			top = hex(colors[c + 1][1]),
-			bottom = hex(colors[c + 1][2]),
-			edge = if ready then UIKit.Yellow else UIKit.Ink,
+		local t = rewardCard(b, g[1], Vector2.new(136, 130), UDim2.fromOffset(x, y), colours[c + 1])
+		chip(t, g[1], 6)
+		local pic = UIKit.icon(t, g[3], 88, UDim2.fromOffset(68, 66), mid, 5)
+		UIKit.hoverWiggle(t, pic)
+		UIKit.text(t, g[2], 19, {
+			color = if string.sub(g[2], 1, 1) == "$" then UIKit.CashGreen else UIKit.White,
+			stroke = 3,
+			position = UDim2.new(1, -8, 1, -5),
+			anchor = Vector2.new(1, 1),
+			z = 6,
 		})
 		if ready then
-			UIKit.burst(clip(t, 6), UDim2.fromOffset(68, 46), 190, 0.32)
-			UIKit.sparkle(t, UDim2.fromOffset(18, 22), 16)
-		else
-			UIKit.backing(t, UDim2.fromOffset(68, 46), 100, 0.35)
+			goldRing(t)
+			UIKit.sparkle(t, UDim2.fromOffset(18, 36), 16)
+			UIKit.sparkle(t, UDim2.fromOffset(118, 50), 12)
 		end
-		UIKit.hoverWiggle(t, UIKit.icon(t, g[3], 62, UDim2.fromOffset(68, 46), mid))
-		UIKit.text(t, g[1], 16, {
-			color = if ready then UIKit.White else hex("FF4D5E"),
-			stroke = 2.5,
-			position = UDim2.fromOffset(68, 78),
-			anchor = Vector2.new(0.5, 0),
-		})
-		UIKit.text(t, g[2], 18, { position = UDim2.new(1, -8, 1, -6), anchor = Vector2.new(1, 1) })
-		local _, status = UIKit.block(b, {
-			name = "Status",
-			size = UDim2.fromOffset(136, 36),
-			position = UDim2.fromOffset(x, y + 136),
-			palette = if ready then P.green else P.light,
-			radius = 4,
-			lip = 0,
-			strokeWidth = 3,
-		})
-		UIKit.text(status, if ready then "CLAIM!" else g[4], 18, { position = center, anchor = mid })
+		rewardStatus(
+			b,
+			if ready then "ready" else "timer",
+			if ready then "CLAIM!" else g[4],
+			Vector2.new(136, 34),
+			UDim2.fromOffset(x, y + 138)
+		)
 	end
 	UIKit.text(
 		b,
 		"PLAYED TODAY 2:29   |   NEXT GIFT IN 2:30",
 		20,
-		{ position = UDim2.new(0.5, 0, 1, -38), anchor = Vector2.new(0.5, 0) }
+		{ position = UDim2.new(0.5, 0, 1, -36), anchor = Vector2.new(0.5, 0) }
 	)
 end
 

@@ -1,0 +1,116 @@
+<title>Bedroom v6 Renders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+/* Layout: a short header with what changed and what to decide, then the photos in run order, two across (one on a phone).
+   One deliberate night look, taken from the renders themselves: navy room, warm lamp accent, teal safe-zone accent. */
+:root{
+  --bg:#0E1226; --panel:#161B37; --line:#2A3160; --ink:#ECEFFA; --soft:#A5ACCD; --lamp:#FFB36B; --safe:#4FC6A8;
+  --display:'Lilita One','Trebuchet MS',sans-serif; --body:'Nunito',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:10px;max-width:72ch}
+.eyebrow{font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--safe)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,5vw,54px);line-height:1.02;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;color:var(--lamp)}
+p{margin:0}
+.lede{color:var(--soft);font-size:17px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:8px;min-width:0}
+.note ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.note li::marker{color:var(--lamp)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr));gap:22px}
+figure{margin:0;display:grid;gap:10px;min-width:0}
+.shot{position:relative;display:block;border:0;padding:0;background:none;cursor:zoom-in;border-radius:12px;overflow:hidden}
+.shot img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#05071A}
+.shot:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.num{position:absolute;left:10px;top:10px;min-width:36px;height:36px;padding:0 10px;border-radius:999px;display:grid;place-items:center;
+  background:var(--lamp);color:#22140A;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+figcaption{display:grid;gap:3px}
+figcaption b{font-weight:900;font-size:17px}
+figcaption span{color:var(--soft);font-size:15px}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1600px)}
+dialog::backdrop{background:rgba(5,7,20,.88)}
+dialog img{display:block;max-width:100%;max-height:86vh;border-radius:10px}
+dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
+.close{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));border:0;border-radius:999px;
+  background:var(--panel);color:var(--ink);font:800 15px var(--body);padding:8px 14px;cursor:pointer}
+.close:focus-visible{outline:3px solid var(--lamp)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tiny Toy Heist · Kid's Bedroom · concept v6</div>
+    <h1>The bedroom as one long run</h1>
+    <p class="lede">Concept renders, not the game. All 8 homes sit side by side in a curved wall at the start, and the room runs long and straight from there to the hallway door. Comment on any photo by its number.</p>
+  </header>
+
+  <section class="notes" aria-label="What changed and what to decide">
+    <div class="note">
+      <h2>What changed</h2>
+      <ul>
+        <li>All 8 homes in one curved row inside the wall, with solid wall between each home.</li>
+        <li>Home fronts are open (drywall torn away), so you see everyone's toys and can look up the studs, blocking and cables to the top.</li>
+        <li>A teal safe zone in front of the homes, 140 deep: bigger than the first strip, still much smaller than a whole band.</li>
+        <li>A smaller room so the toys and homes read bigger: the run is 420 wide and 1700 long, with walls 320 tall. The bed and furniture are a bit smaller, and the sleeping toys under blankets are about 35% bigger.</li>
+        <li>Three bands down the run: carpet (Small toys), wood (Medium), creaky boards (Large), each clearly coloured and labelled.</li>
+        <li>The train track is a long oval down both sides of the run that swings across it at each end, so the train covers about 1,700 studs a lap and you have to time your crossing.</li>
+        <li>The hallway door is straight ahead at the end. The bed is along the right-hand wall.</li>
+        <li>Much less clutter: no sock heap, bookshelf, beanbag, rug or scattered props. Hazards stay: cat, mouse traps, loose boards, baby monitor, flashlight, the train.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>Still to decide</h2>
+      <ul>
+        <li>Scale: does the room now feel the right size next to the toys and homes, or shrink it more?</li>
+        <li>The start area round the homes is wider than the run (it needs that width to fit 8 homes in the curve). OK, or would you rather have fewer homes per curve?</li>
+        <li>Night look (photo 2 lighting) as the default, lights-on (photo 1) when the Kid wakes: still right?</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="photos" aria-label="Renders" id="photos"></section>
+</div>
+
+<dialog id="zoom" aria-label="Enlarged render">
+  <button class="close" id="zoomClose" type="button">Close</button>
+  <img id="zoomImg" alt="">
+  <p id="zoomCap"></p>
+</dialog>
+
+<script>
+const PHOTOS=[
+  ['hero','The run','From above the homes, looking down the whole room: carpet, wood, creaky boards, the bed and the open door.'],
+  ['homes','The homes','Looking back at the curved wall: 8 homes side by side, wall between each, open fronts, the teal safe zone.'],
+  ['yours','Your home','Level 2, sock-lined: studs, OSB backing, cables up to the top plate, an outlet box, a fairy light, your toys on their slots.'],
+  ['lookup','Looking up','Inside your home: the studs, blocking and cables run all the way to the top plate, 360 studs up.'],
+  ['across','From inside your home','Looking out across the safe zone at the homes further round the curve.'],
+  ['bases','Along the row','The homes from the safe zone: open fronts, torn drywall edges, solid wall between neighbours.'],
+  ['l1','Level 1 home','Bloxer99, locked: brown wool insulation (your photo 3), bottle-cap slots, red bars across the front.'],
+  ['rich','Level 7 home','mia.ttv\'s golden vault: gold over the framing, coin pillars, 20 slots, and a raider inside.'],
+  ['safe','Leaving home','What you see stepping out of the safe zone: toys getting bigger down the run, the door at the end.'],
+  ['tower','Block tower and train','Left side of the carpet band: toy-brick steps up to a lookout. The train\'s long oval track runs past it and across the run.'],
+  ['run','Down the run','Mouse height on the carpet: wood and creaky bands ahead, desk on the left, bed on the right, door straight on.'],
+  ['cat','The cat','It prowls the wood band. You hear its bell first.'],
+  ['bed','The bed','The Giant Kid asleep along the right-hand wall, the nightstand lamp, and the monitor\'s green noise-x2 patch.'],
+  ['flash','Flashlight at 80+','He sits up and sweeps a flashlight back down the run.'],
+  ['door','The hallway door','The end of the run: creaky boards, Large toys, and the door wide open to the next room.'],
+  ['lightson','Lights on','The same room when the Kid wakes (your photo 1 lighting).'],
+  ['map','Top-down','The whole layout from above, ceiling removed.']
+];
+const grid=document.getElementById('photos'),dlg=document.getElementById('zoom');
+PHOTOS.forEach(([k,title,cap],i)=>{
+  const f=document.createElement('figure');
+  f.innerHTML=`<button class="shot" type="button" aria-label="Enlarge photo ${i+1}: ${title}"><img src="renders-v6/${k}.jpg" alt="Render ${i+1}: ${title}" loading="lazy"><span class="num">${i+1}</span></button><figcaption><b>${i+1}. ${title}</b><span>${cap}</span></figcaption>`;
+  f.querySelector('button').addEventListener('click',()=>{const im=document.getElementById('zoomImg');im.src=`renders-v6/${k}.jpg`;im.alt=`Render ${i+1}: ${title}`;
+    document.getElementById('zoomCap').textContent=`${i+1}. ${title}: ${cap}`;dlg.showModal()});
+  grid.appendChild(f)});
+document.getElementById('zoomClose').addEventListener('click',()=>dlg.close());
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+</script>

@@ -59,6 +59,104 @@ local function allowed(p: Vector3): Vector3
 	return Vector3.new(x, 0, z)
 end
 
+-- Does the segment a -> b cross the box (x0, z0)-(x1, z1)? (slab test, flat)
+local function crosses(a: Vector3, b: Vector3, x0: number, z0: number, x1: number, z1: number): boolean
+	local t0, t1 = 0, 1
+	for _, axis in { { a.X, b.X - a.X, x0, x1 }, { a.Z, b.Z - a.Z, z0, z1 } } do
+		local p, d, lo, hi = axis[1], axis[2], axis[3], axis[4]
+		if math.abs(d) < 1e-6 then
+			if p < lo or p > hi then
+				return false
+			end
+		else
+			local u0, u1 = (lo - p) / d, (hi - p) / d
+			if u0 > u1 then
+				u0, u1 = u1, u0
+			end
+			t0, t1 = math.max(t0, u0), math.min(t1, u1)
+			if t0 > t1 then
+				return false
+			end
+		end
+	end
+	return true
+end
+
+-- Is the straight line a -> b blocked by a piece of furniture? (a little inside allowed()'s margin, so its edge
+-- is open)
+local PAD = 14 * S
+local function blocked(a: Vector3, b: Vector3): boolean
+	for _, f in MapConfig.FOOTPRINTS do
+		if crosses(a, b, f[1] - PAD, f[2] - PAD, f[3] + PAD, f[4] + PAD) then
+			return true
+		end
+	end
+	return false
+end
+
+-- The corners to drive round: a little out from each piece of furniture's corners, leaving out any that are jammed
+-- against a wall or another piece (dead ends)
+local CORNERS: { Vector3 } = {}
+for _, f in MapConfig.FOOTPRINTS do
+	local around = 30 * S
+	for _, c in
+		{
+			Vector3.new(f[1] - around, 0, f[2] - around),
+			Vector3.new(f[3] + around, 0, f[2] - around),
+			Vector3.new(f[1] - around, 0, f[4] + around),
+			Vector3.new(f[3] + around, 0, f[4] + around),
+		}
+	do
+		if (allowed(c) - c).Magnitude < 2 then
+			table.insert(CORNERS, c)
+		end
+	end
+end
+
+-- Where to head for to reach `goal` from `from`: the goal itself if nothing's in the way, else the first corner of
+-- the shortest way round the furniture (Dijkstra over the corners; a handful of nodes)
+local function detour(from: Vector3, goal: Vector3): Vector3
+	goal = allowed(goal) -- a mouse under the chair: go as near as it can
+	if not blocked(from, goal) then
+		return goal
+	end
+	local n = #CORNERS + 1 -- the last node is the goal
+	local function point(i: number): Vector3
+		return if i == n then goal else CORNERS[i]
+	end
+	local dist, done, first = {}, {}, {}
+	for i = 1, n do
+		local p = point(i)
+		dist[i] = if (p - from).Magnitude > 4 * S and not blocked(from, p) then (p - from).Magnitude else math.huge
+		first[i] = i
+	end
+	while true do
+		local u, best = 0, math.huge
+		for i = 1, n do
+			if not done[i] and dist[i] < best then
+				u, best = i, dist[i]
+			end
+		end
+		if u == 0 then
+			return goal -- no way round found: head straight for it (the stuck check takes over)
+		elseif u == n then
+			return point(first[n])
+		end
+		done[u] = true
+		local pu = point(u)
+		for v = 1, n do
+			if not done[v] then
+				local pv = point(v)
+				local d = dist[u] + (pv - pu).Magnitude
+				if d < dist[v] and not blocked(pu, pv) then
+					dist[v] = d
+					first[v] = first[u]
+				end
+			end
+		end
+	end
+end
+
 local function inPlay(position: Vector3): boolean
 	return MapConfig.inRoom(position)
 		and position.Z >= MapConfig.CAT.minZ
@@ -114,8 +212,24 @@ function RCCar.start(bedroom: Model)
 	car:SetAttribute("State", "Docked")
 	setPose()
 
+	-- stuck against furniture with the goal behind it: drive along the obstacle for a moment (toward the goal's side)
+	local stuckFor, escapeUntil, escapeDir = 0, 0, Vector3.zero
+	local waypoint, plannedAt = Vector3.zero, 0
+
 	-- drive toward a point: turn (limited), speed up or slow for the bend, move, slide off walls and furniture
 	local function drive(goal: Vector3, top: number, dt: number)
+		local before = position
+		local toGoal = Vector3.new(goal.X - position.X, 0, goal.Z - position.Z)
+		if os.clock() < escapeUntil then
+			goal = position + escapeDir * 60 * S
+		else
+			-- the way round the furniture, worked out again five times a second
+			if os.clock() - plannedAt > 0.2 or (waypoint - position).Magnitude < 6 * S then
+				plannedAt = os.clock()
+				waypoint = detour(position, goal)
+			end
+			goal = waypoint
+		end
 		local d = Vector3.new(goal.X - position.X, 0, goal.Z - position.Z)
 		if d.Magnitude > 0.5 then
 			local turn = angleTo(facing, d.Unit)
@@ -129,12 +243,24 @@ function RCCar.start(bedroom: Model)
 		speed += math.clamp(top - speed, -RCCar.ACCEL * 2 * dt, RCCar.ACCEL * dt)
 		local want = position + facing * speed * dt
 		local got = allowed(want)
-		if speed > 10 and (got - want).Magnitude > speed * dt * 0.5 then
+		if speed > 10 and (got - want).Magnitude > speed * dt * 0.5 and os.clock() >= escapeUntil then
 			-- hit a wall or furniture: bonk, lose speed and swing round
 			speed *= 0.35
 			facing = (CFrame.Angles(0, (if steer >= 0 then 1 else -1) * 1.2, 0) * facing).Unit
 		end
 		position = got
+		-- barely moving though it wants to go somewhere: it's pinned against something
+		if top > 10 and toGoal.Magnitude > 20 * S and (position - before).Magnitude < top * dt * 0.2 then
+			stuckFor += dt
+			if stuckFor > 0.4 and os.clock() >= escapeUntil then
+				stuckFor = 0
+				local side = Vector3.new(-facing.Z, 0, facing.X)
+				escapeDir = if side:Dot(toGoal) >= 0 then side else -side
+				escapeUntil = os.clock() + 1
+			end
+		else
+			stuckFor = 0
+		end
 	end
 
 	task.spawn(function()
@@ -200,7 +326,7 @@ function RCCar.start(bedroom: Model)
 			elseif state == "Return" then
 				-- back to the charger: line up in front of it, then roll on
 				local front = dock + dockFacing * 40 * S
-				if (front - position).Magnitude > 8 * S and (dock - position).Magnitude > 12 * S then
+				if (front - position).Magnitude > 16 * S and (dock - position).Magnitude > 24 * S then
 					drive(front, RCCar.SPEED * 0.7, dt)
 				else
 					local d = dock - position

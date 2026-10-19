@@ -8,6 +8,7 @@
 --   Embers  little sparks rising from the feet, particles per second
 --   Light   PointLight brightness
 --   Tell    true if the sleeping toy leaks its glow from under the blanket (the plan's "glow tell", Epic and up)
+-- Kept soft so the toy itself reads first (Dylan, 19 Oct: toys glowed too much in the pens).
 return {
 	Order = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Secret" },
 	Colors = {
@@ -21,11 +22,11 @@ return {
 	},
 	Fx = {
 		Common = { Ring = 0, Sparkle = 0, Aura = 0, Embers = 0, Light = 0, Tell = false },
-		Uncommon = { Ring = 0.3, Sparkle = 0, Aura = 0, Embers = 0, Light = 0, Tell = false },
-		Rare = { Ring = 0.5, Sparkle = 0.7, Aura = 0, Embers = 0, Light = 0, Tell = false },
-		Epic = { Ring = 0.7, Sparkle = 2, Aura = 0, Embers = 0, Light = 0, Tell = true },
-		Legendary = { Ring = 0.85, Sparkle = 3.5, Aura = 0.3, Embers = 0, Light = 0.9, Tell = true },
-		Mythic = { Ring = 0.95, Sparkle = 3, Aura = 0.38, Embers = 4, Light = 1.1, Tell = true },
-		Secret = { Ring = 1, Sparkle = 6, Aura = 0.42, Embers = 3, Light = 1.3, Tell = true },
+		Uncommon = { Ring = 0.25, Sparkle = 0, Aura = 0, Embers = 0, Light = 0, Tell = false },
+		Rare = { Ring = 0.35, Sparkle = 0.7, Aura = 0, Embers = 0, Light = 0, Tell = false },
+		Epic = { Ring = 0.45, Sparkle = 1.5, Aura = 0, Embers = 0, Light = 0, Tell = true },
+		Legendary = { Ring = 0.55, Sparkle = 2.5, Aura = 0.14, Embers = 0, Light = 0.35, Tell = true },
+		Mythic = { Ring = 0.6, Sparkle = 2.5, Aura = 0.17, Embers = 3, Light = 0.45, Tell = true },
+		Secret = { Ring = 0.65, Sparkle = 4, Aura = 0.2, Embers = 2.5, Light = 0.55, Tell = true },
 	},
 }

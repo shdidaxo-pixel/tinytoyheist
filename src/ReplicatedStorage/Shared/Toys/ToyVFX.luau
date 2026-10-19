@@ -82,7 +82,7 @@ local function floorImage(part: BasePart, image: string, color: Color3, transpar
 		g.Name = "Glow"
 		g.Face = Enum.NormalId.Top
 		g.LightInfluence = 0
-		g.Brightness = 1.6
+		g.Brightness = 1
 		g.CanvasSize = Vector2.new(256, 256)
 		g.SizingMode = Enum.SurfaceGuiSizingMode.FixedSize
 		g.Parent = part
@@ -135,7 +135,7 @@ function ToyVFX.applyRarity(model: Model)
 		local size = footprint(model) * 1.5 + H * 0.35
 		local ring = floorPart(model, "Ring", size * 1.25, folder)
 		if fx.Ring > 0 then
-			floorImage(ring, TEX.Glow, color, 1 - fx.Ring * 0.75, 1).Name = "Disc"
+			floorImage(ring, TEX.Glow, color, 1 - fx.Ring * 0.5, 0.85).Name = "Disc"
 			floorImage(ring, TEX.Ring, color, 1 - fx.Ring, 0.8).Name = "Ring"
 		end
 		if fx.Embers > 0 then
@@ -193,7 +193,7 @@ function ToyVFX.applyRarity(model: Model)
 		e.Lifetime = NumberRange.new(1.2)
 		e.Speed = NumberRange.new(0)
 		e.LockedToPart = true
-		e.Size = seq({ { 0, H * 0.85 }, { 0.5, H * 1 }, { 1, H * 1.05 } })
+		e.Size = seq({ { 0, H * 0.7 }, { 0.5, H * 0.8 }, { 1, H * 0.85 } })
 		e.Transparency = seq({ { 0, 1 }, { 0.45, 1 - fx.Aura }, { 1, 1 } })
 		e.LightEmission = 1
 		e.LightInfluence = 0
@@ -210,7 +210,7 @@ function ToyVFX.applyRarity(model: Model)
 		l.Name = "RarityLight"
 		l.Color = color
 		l.Brightness = fx.Light
-		l.Range = math.min(60, H * 2.2)
+		l.Range = math.min(40, H * 1.5)
 		l.Shadows = false
 		l.Parent = root
 		local ref = Instance.new("ObjectValue")

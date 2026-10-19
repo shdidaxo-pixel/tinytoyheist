@@ -296,6 +296,7 @@ export type ButtonOptions = {
 	palette: Palette,
 	icon: string?,
 	iconSize: number?,
+	iconGap: number?,
 	size: UDim2?,
 	position: UDim2?,
 	anchor: Vector2?,
@@ -357,7 +358,7 @@ function UIKit.button(parent: Instance, label: string, o: ButtonOptions): Frame
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
-		Padding = UDim.new(0, 8),
+		Padding = UDim.new(0, o.iconGap or 8),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, row)
 	if o.icon then

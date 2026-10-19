@@ -233,7 +233,8 @@ local function watchLevels(hole: Instance)
 			if typeof(new) ~= "number" or typeof(old) ~= "number" or new <= old then
 				return
 			end
-			task.wait(0.35) -- let the new look build
+			-- land with the new look: the home fence build-up (HomeUpgradeView) drops its corner posts at 1.25 s
+			task.wait(if name == "Level" then 1.25 else 0.35)
 			local wheel = name == "WheelLevel" and hole:FindFirstChild("TrainingWheel", true)
 			local at: any = if wheel then wheel else homeCentre(hole)
 			local color = if name == "Level" then GOLD else Color3.fromRGB(80, 200, 255)

@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 
 local bedroom = Workspace:WaitForChild("Bedroom") :: Model
 
-for _, name in { "Lights", "KidView", "TrainView", "CatView", "HomeView", "Effects" } do
+for _, name in { "Lights", "KidView", "TrainView", "CatView", "HomeView", "Effects", "Sounds" } do
 	task.spawn(function()
 		local ok, err = pcall(function()
 			local view = require(script.Parent:WaitForChild(name)) :: any

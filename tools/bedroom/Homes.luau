@@ -25,7 +25,7 @@ Homes.LEVEL_LOOK = {
 	{ fairy = 0xFFE07A, pen = 0xFFC93C, wheel = { 0xFFC93C, 0xFFF1B0, 0xD9A21E } }, -- 7 Golden vault
 }
 
-local PINE, PINE_DARK, OSB, GOLD = 0xE2B77C, 0xC9A066, 0xC9A46A, 0xFFC93C
+local PINE, PINE_DARK, OSB, GOLD = 0xF2D3A4, 0xD8B07A, 0xDDBB88, 0xFFC93C
 local DRYWALL = 0xF2EFE8
 local RED = 0xFF4D5E
 
@@ -555,7 +555,13 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 		collide = false,
 		transparency = 1,
 	})
-	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 1.9 else 1.4, 60, { Shadows = true })
+	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 2.4 else 2, 60, { Shadows = true })
+	-- a soft cool fill near the front, so the home reads at night (the room's moonlight can't reach in)
+	local fill = Kit.part(fairy, "Fill", Vector3.one, frame * CFrame.new(0, 45, 40), 0xFFFFFF, {
+		collide = false,
+		transparency = 1,
+	})
+	Kit.light(fill, "PointLight", 0xD8E0FF, 1.4, 60)
 
 	-- The pen floor, dressed for the level (a layer on the pen part)
 	local pen = home:FindFirstChild("Pen") :: BasePart

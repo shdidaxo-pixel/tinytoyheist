@@ -58,7 +58,7 @@ Server code fires to clients with the server module `ServerScriptService.Bedroom
 | `Hatch` | client: `GameRemotes.Reveal` | the reveal info `{ id, name, rarity, mutation, perSecond, size, equipped, sizeMult? }` |
 | `HatchCharge` | client: the build-up starts (right after Reveal); the blanket shakes for `seconds` (0.6 Common … 3 Secret) | `{ rarity, seconds }` |
 | `HatchBurst` | client: the build-up ends, the toy bursts out, the card shows: **the reveal sting goes here** | `{ rarity, mutation?, sizeMult }` |
-| `ToyRevealed` | client: a toy pops into any pen with a fresh `RevealedAt` | `{ toy: Model, mine: boolean }` |
+| `ToyRevealed` | client: your new toy pops into your pen at the burst | `{ toy: Model, mine: true }` |
 | `Cash` | client: Cash attribute went up | `{ amount }` |
 | `ToyIncome` | client: the "+$" pop over one of your pen toys | `{ toy, amount }` |
 | `HomeLevelUp` | client: your home's `Level` went up | `{ home, level }` |
@@ -82,3 +82,35 @@ If you add a moment, add a row here.
 - Idle pen effects (rarity Fx, mutation auras) stay soft; the burst at the moment is where it goes crazy.
 - Performance Mode = `LocalPlayer:GetAttribute("SettingPerformanceMode")`.
 - Asset ids in one module: `src/ReplicatedStorage/Shared/VFX/Assets.luau`. Sources in `design/vfx/`.
+
+## Files
+
+| File | What |
+| --- | --- |
+| `src/ReplicatedStorage/Shared/VFX/init.luau` | the library (bursts, hatch charge-up, pop text, shake, flash, vignette, beams, confetti, UI juice, `VFX.freeze` for captures) |
+| `src/ReplicatedStorage/Shared/VFX/Assets.luau` | every VFX texture: uploaded id, or the local Studio copy until then |
+| `src/ReplicatedStorage/Shared/VFX/Moments.luau` | the client event bus |
+| `src/ServerScriptService/Bedroom/Moments.luau` | `Moments.fire(player or "all", kind, data)` from server code (Raids, Carry call it) |
+| `src/StarterPlayer/StarterPlayerScripts/Bedroom/VfxClient.client.luau` | wires the moments to effects: your hatch, "+$" pops, level-ups, steals, the Kid, rare spawns, button clicks |
+| `.../Bedroom/Effects.luau` | knocked down: jolt, flash, dust puff, dizzy stars |
+| `src/ReplicatedStorage/Shared/Toys/ToyVFX.luau` | `revealBurst` → `VFX.burst("Hatch")` (everyone sees it at the pen); your own toy is held back for your charge-up |
+| `src/ReplicatedStorage/Shared/Toys/Mutations.luau` | the 10 mutation looks, each with a signature effect (low rates) |
+| `.../TinyToyHeistUI/GameUI.luau` | reveal card waits for the burst (`VFX.afterHatch`), `VFX.revealCard`, cash counter bounce |
+| `design/vfx/make_sprites.py`, `render_coin.py`, `preview.py`, `out/` | sprite sources (numpy in Blender's Python; the coin is a Blender render) and the PNGs |
+
+## Your hatch, step by step
+1. Hold E on a ready blanket (`HatchHold`): a sparkle.
+2. The prompt fires: a local copy of the blanket replaces the real one (no gap when the server removes it).
+3. `GameRemotes.Reveal` arrives: `VFX.hatchCharge` (`HatchCharge`): it shakes harder and harder, hops, swells,
+   sparkles get sucked in, light and beams grow white → rarity colour, screen edges close in. 0.6 s Common … 3 s Secret.
+4. Burst (`HatchBurst`): neon orb, starburst, speed lines, sparkles, shockwave rings, beams, confetti (Uncommon+),
+   sunburst rays (Epic+), lightning + a second wave + a light pillar (Mythic, Secret), rainbow everything (Secret).
+   Mutation: a second burst in its colour with its own particle and "GOLD!" text. Big size roll: ground slam,
+   "HUGE!/GIANT!". Screen: flash, shake, FOV punch, vignette, screen confetti (Epic+), double for Mythic+.
+5. The pen toy pops in (held tiny until now) and plays the animations session's hatch jump; the card shows with
+   spinning rays, a shine, the rarity line bouncing in and the $/s counting up.
+
+## Before launch
+- Upload the 18 PNGs in `design/vfx/out/` (not `_preview.png`) and paste the ids into `Assets.luau`. Until then they
+  only show in Studio (local copies in Studio's `content/textures/TTHVFX1/`; copy `design/vfx/out/*.png` there on a
+  new PC or Studio version).

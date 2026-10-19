@@ -138,7 +138,11 @@ function CatView.start(bedroom: Model)
 		local wantCrouch = if state == "Stalk" then 1 elseif state == "Pounce" then -0.5 else 0
 		crouchV += ((wantCrouch - crouch) * 90 - crouchV * 11) * dt
 		crouch += crouchV * dt
-		local wantGroom = if (state == "Rest" or state == "Groom") and walking < 0.3 then 1 else 0
+		local wantGroom = if (state == "Rest" or state == "Groom")
+				and walking < 0.3
+				and cat:GetAttribute("Aggressive") ~= true
+			then 1
+			else 0 -- an angry cat doesn't stop to groom
 		groom += (wantGroom - groom) * math.min(1, dt * 5)
 		angry += ((if cat:GetAttribute("Aggressive") == true then 1 else 0) - angry) * math.min(1, dt * 4)
 		air += ((if state == "Pounce" then 1 else 0) - air) * math.min(1, dt * 14)

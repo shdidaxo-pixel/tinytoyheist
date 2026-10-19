@@ -123,6 +123,20 @@ If you add a moment, add a row here.
   Kid awake). A real hatch by another session showed the card waiting for the burst, with rays and confetti.
 - Kid stir/wake: red "!" over him, red edges; lights-on session's banner shows at the same time (fine).
 - The "robbed" moment once showed the camera badly tilted; the shake now takes last frame's wobble off before the
-  camera updates (can't add up). Not re-tested in Play yet.
-- Not captured yet: steal start / success, dropped stolen toy beacon, rare blanket pillar, knocked-down stars,
-  Performance Mode, phone size.
+  camera updates (can't add up). **Re-tested 19 Oct**: three `StolenFrom` fired from the Server 0.25 s apart, camera
+  roll sampled every frame for 6 s: peak 0.5°, back to exactly 0° once it settled. Fixed.
+- More captures (19 Oct, fired as Moments from the Server): `steal-start-thief` ("GO GO GO!", orange burst),
+  `steal-start-owner` ("THIEF!", red edges), `steal-banked` ("STOLEN!" + toy name, confetti), `stolen-dropped-beacon`
+  (red beams, "YOUR TOY! GRAB IT!"), `recovered` (green burst, "GOT IT BACK!"), `rare-blanket-pillar` (gold pillar at
+  the Legendary blanket by the bed; a table frames it), `knocked-bonk` and `knocked-stars-before/after-fix`,
+  `performance-mode-hatch` (Legendary Gold Huge with `SettingPerformanceMode`: beams, ring, sparkles, lighter).
+- Fixed while testing: `VFX.freeze` from the command bar / MCP only froze particles (their `require` is a separate
+  copy of the module); it now goes through `Workspace.VFXFrozen`, and confetti holds still too. The dizzy stars went
+  into the floor when you land upside down (`StudsOffsetWorldSpace` turns with the head); they now stay above it.
+- Capture tips: arm a client hook on the remote that calls `VFX.freeze(true)` ~0.5 s after the moment arrives (tool
+  calls take seconds, so freezing from a separate call is too late). Tweened things (flash, the BONK shout, the
+  reveal card) don't freeze. Anchor the character to hold a knock-down pose. Pin the Kid asleep for a slot with
+  `GiantKid:SetAttribute("WakesAt", workspace:GetServerTimeNow() + 3600)` (Server, Play only).
+- Not captured yet: phone size (pop text + reveal card). There's no Luau way to size the viewport; it needs Studio's
+  Device emulator (Test tab) turned on by hand. Don't launch "Roblox Studio" from the Start menu with computer use:
+  that runs the installer and closes the open Studio (happened 19 Oct, 17:25).

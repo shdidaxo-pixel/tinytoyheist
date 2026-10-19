@@ -70,6 +70,25 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
   `game.ServerStorage.GameDebug:Invoke("wipe", game.Players:GetPlayers()[1])`.
 - Gotcha: BillboardGuis with `AlwaysOnTop` don't show up in Studio screen captures.
 
+### Changed after Dylan's 27-note review (19 Oct, evening; these win over the bullets above)
+- **Inventory**: banked toys go to your inventory (profile.Toys, `e` = equipped, `l` = locked) and equip
+  themselves while the pen has free slots. Only equipped toys earn and can be stolen. Your Toys panel: Equip /
+  Unequip, Equip Best, Lock, Sell, Sell Mode (pick many). Levelling the home fills new slots from the inventory.
+- **Hatching**: a carried blanket lies in your home (profile.Blankets, max 6, timer saved as os.time) and you must
+  hold E on it there to hatch it (HatchPrompt, owner only). The reveal card says the size and pen/inventory.
+- **Speed only**: Strength, Sneak and Grip are gone (Large toys need nothing). The Speed wheel has its own level
+  (profile.WheelLevel, GameConfig.WHEEL_COST, x1 to x4 training), bought apart from the home; Speed goes to 80.
+  Rebirth is hidden (GameConfig.SHOW_REBIRTH). Idea for later: a Grip game pass.
+- **HUD**: Toys / Daily / Playtime / Settings are small buttons top right, each with its own badge; the right edge
+  lists your blankets and their timers; the wake meter's fill stays inside the bar; Slow Mode halves speed and
+  drag noise; Settings are LocalPlayer attributes (SettingMusic, SettingSoundEffects for the SFX chat;
+  Performance Mode and Hide Players work). The quest banner is only a one-time tutorial (profile.Tutorial).
+- **World**: the cash pile is no longer used (cash/s is on the home sign and the player list's Cash / Per Sec);
+  empty homes start at Level 1 with no demo toys, in Studio too; the lights-on cat hunts everyone; pen toys roam
+  further. Studio test: the Featured shop buttons give Large blankets for free in Studio.
+- **Art pass** (blankets, padlock, Index stand, wheel tiers, lights, the showcase area) is its own session;
+  Carry.makeBlanket uses its tools/bedroom/Blanket.luau.
+
 ### Still to do
 1. Shop: passes and products need IDs made on the Roblox site (the shop UI isn't wired).
 2. Gadgets (Flashlight, Decoy, ...), the Pencil Bonk, door lock upgrades, alarm bell.

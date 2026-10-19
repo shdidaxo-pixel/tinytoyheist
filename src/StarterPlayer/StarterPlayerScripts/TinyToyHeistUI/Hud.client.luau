@@ -565,9 +565,11 @@ do
 		Position = UDim2.new(1, 14, 0, 74),
 	}, p.pop)
 	list(tabs, 18, Enum.HorizontalAlignment.Center)
-	type Tab = { key: string, scale: UIScale, dim: Frame, ring: UIStroke, arrow: ImageLabel }
+	type Tab = { key: string, tile: Frame, dim: Frame, ring: UIStroke, arrow: ImageLabel }
 	local tabList: { Tab } = {}
-	local quick = TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+	-- no resizing: scaling a tile re-draws its ray clip every frame (a flash) and slides the face over its outline,
+	-- so the chosen tile slides out toward the shop instead
+	local quick = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	local current: string? = nil
 	local function selectTab(key: string)
 		if key == current then
@@ -576,7 +578,7 @@ do
 		current = key
 		for _, t in tabList do
 			local on = t.key == key
-			TweenService:Create(t.scale, quick, { Scale = if on then 1.07 else 1 }):Play()
+			TweenService:Create(t.tile, quick, { Position = UDim2.fromOffset(if on then -8 else 0, 0) }):Play()
 			TweenService:Create(t.dim, quick, { BackgroundTransparency = if on then 1 else 0.8 }):Play()
 			TweenService:Create(t.ring, quick, { Transparency = if on then 0 else 1 }):Play()
 			t.arrow.Visible = on
@@ -590,15 +592,20 @@ do
 			{ "Cash", "Cash Packs", img("CashPack1v2"), P.green, 84 },
 		} :: { { any } }
 	do
-		local holder, face = UIKit.block(tabs, {
-			name = tab[1],
-			size = UDim2.fromOffset(88, 92),
+		-- a fixed slot in the column, so the tile inside can slide without the list pulling it back
+		local slot = UIKit.new("Frame", {
+			Name = tab[1],
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(88, 92),
+			LayoutOrder = i,
+		}, tabs)
+		local holder, face = UIKit.block(slot, {
+			name = "Tile",
+			size = UDim2.fromScale(1, 1),
 			palette = tab[4],
 			lip = 5,
 			gloss = true,
-			layoutOrder = i,
 		})
-		local scale = UIKit.new("UIScale", { Name = "Selected" }, face)
 		UIKit.burst(clip(face, 4), UDim2.fromScale(0.5, 0.4), 130, 0.28)
 		local pic = UIKit.icon(face, tab[3], tab[5], UDim2.fromScale(0.5, 0.4), mid, 5)
 		UIKit.hoverWiggle(face, pic)
@@ -632,8 +639,26 @@ do
 			TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
 			{ Position = UDim2.new(0, -26, 0.5, 0) }
 		):Play()
-		table.insert(tabList, { key = tab[2], scale = scale, dim = dim, ring = ring, arrow = arrow })
-		UIKit.clickable(holder, function()
+		table.insert(tabList, { key = tab[2], tile = holder, dim = dim, ring = ring, arrow = arrow })
+		-- a plain hit area (no hover grow, for the same reason as above); hovering nudges the tile out a little
+		local hit = UIKit.new("TextButton", {
+			Name = "Hit",
+			BackgroundTransparency = 1,
+			Text = "",
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 20,
+		}, slot)
+		hit.MouseEnter:Connect(function()
+			if current ~= tab[2] then
+				TweenService:Create(holder, quick, { Position = UDim2.fromOffset(-4, 0) }):Play()
+			end
+		end)
+		hit.MouseLeave:Connect(function()
+			if current ~= tab[2] then
+				TweenService:Create(holder, quick, { Position = UDim2.new() }):Play()
+			end
+		end)
+		hit.Activated:Connect(function()
 			local target = jump[tab[2]]
 			if target then
 				selectTab(tab[2])

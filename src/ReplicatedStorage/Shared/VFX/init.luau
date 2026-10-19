@@ -760,10 +760,14 @@ function VFX.popText(text: string, at: any, opts: TextOpts?): Instance?
 			local c = g.AbsolutePosition + g.AbsoluteSize / 2
 			pos = UDim2.fromOffset(c.X, c.Y)
 		end
+		-- sized for a 1280 x 720 screen, smaller on phones, and never wider than 90% of the screen
+		local view = screen("Over").AbsoluteSize
+		local k = math.clamp(math.min(view.X / 1280, view.Y / 720), 0.5, 1.4)
+		local w = math.min(px * k * math.max(3, #text * 0.62), view.X * 0.9)
 		local holder = Instance.new("Frame")
 		holder.BackgroundTransparency = 1
 		holder.AnchorPoint = Vector2.new(0.5, 0.5)
-		holder.Size = UDim2.fromOffset(px * math.max(3, #text * 0.62), px * 1.2)
+		holder.Size = UDim2.fromOffset(w, w / math.max(3, #text * 0.62) * 1.2)
 		holder.Position = pos
 		holder.Parent = screen("Over")
 		local l = Instance.new("TextLabel")

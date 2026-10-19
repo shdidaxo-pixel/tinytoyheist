@@ -4,14 +4,14 @@
 <style>html,body{margin:0;overflow:hidden;background:#000}canvas{display:block}</style></head><body>
 <canvas id="c" width="700" height="380"></canvas><script>
 const k=new URLSearchParams(location.search).get('i')||'Speed';
-const C={Speed:['#7FE6FF','#2C9BF0','#1450C8'],Cash:['#FFF08A','#FFC23A','#F08A10'],Luck:['#D6FF8A','#62D63A','#1F9A2A'],VIP:null}[k];
+const C={SpeedPack:['#C8F6FF','#55C8FF','#1C7AE0'],CashPack:['#EEFF9A','#8EE83A','#2A9A2A'],Speed:['#7FE6FF','#2C9BF0','#1450C8'],Cash:['#FFF08A','#FFC23A','#F08A10'],Luck:['#D6FF8A','#62D63A','#1F9A2A'],VIP:null}[k];
 const g=document.getElementById('c').getContext('2d'),W=700,H=380;
 let gr=g.createLinearGradient(0,0,W,H);
 if(C){gr.addColorStop(0,C[0]);gr.addColorStop(.5,C[1]);gr.addColorStop(1,C[2])}
 else{['#FF5AA8','#FFB23A','#FFF06A','#5BE36A','#3DD0FF','#9B6BFF'].forEach((c,i,a)=>gr.addColorStop(i/(a.length-1),c))}
 g.fillStyle=gr;g.fillRect(0,0,W,H);
 // bright spot + rays behind the badge
-const bx=150,by=180;
+const bx=k.endsWith('Pack')?350:150,by=k.endsWith('Pack')?150:180;
 const sp=g.createRadialGradient(bx,by,0,bx,by,260);sp.addColorStop(0,'rgba(255,255,255,.75)');sp.addColorStop(.35,'rgba(255,255,255,.25)');sp.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=sp;g.fillRect(0,0,W,H);
 g.save();g.translate(bx,by);for(let i=0;i<18;i++){g.rotate(Math.PI*2/18);const rg=g.createLinearGradient(0,0,520,0);rg.addColorStop(0,'rgba(255,255,255,.35)');rg.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=rg;g.beginPath();g.moveTo(0,0);g.lineTo(520,-34);g.lineTo(520,34);g.closePath();g.fill()}g.restore();
 // soft diagonal sheen across the top-right

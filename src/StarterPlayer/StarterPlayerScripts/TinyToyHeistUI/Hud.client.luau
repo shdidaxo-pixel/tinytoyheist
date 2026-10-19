@@ -343,17 +343,67 @@ do
 		end
 	end
 
-	-- Speed and cash packs: a pile picture over rays, the amount, and a price.
-	local function packs(
-		titleText: string,
-		color: Color3,
-		order: number,
-		items: { { string } },
-		top: string,
-		bottom: string
-	)
+	-- Speed and cash packs, like Break and Steal an Egg: a bright card with rays, a big detailed picture (winged
+	-- sneakers or banded cash, piling up, then a sack and a treasure chest for the big ones), the amount with the
+	-- number in green, and a lime price button. The two biggest packs get wide cards on their own row.
+	local function packCard(parent: Instance, pk: { any }, width: number, cardKind: string, layoutOrder: number)
+		local cardFrame = UIKit.new("Frame", {
+			Name = pk[1],
+			BackgroundColor3 = UIKit.Ink,
+			Size = UDim2.fromOffset(width, 210),
+			LayoutOrder = layoutOrder,
+		}, parent)
+		UIKit.corner(cardFrame, 6)
+		UIKit.stroke(cardFrame, UIKit.Ink, 4, true)
+		local bg = UIKit.new("ImageLabel", {
+			Name = "Background",
+			BackgroundTransparency = 1,
+			Image = img("PassCard_" .. cardKind),
+			ScaleType = Enum.ScaleType.Crop,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 1,
+		}, cardFrame)
+		UIKit.corner(bg, 6)
+		local rim = UIKit.new("Frame", {
+			Name = "Rim",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, -6, 1, -6),
+			Position = UDim2.fromOffset(3, 3),
+			ZIndex = 2,
+		}, cardFrame)
+		UIKit.corner(rim, 4)
+		UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.55, Thickness = 2 }, rim)
+		local pic = UIKit.icon(cardFrame, img(pk[2] .. "v2"), 0, UDim2.fromOffset(width / 2, 74), mid, 5)
+		pic.Size = if width > 300 then UDim2.fromOffset(240, 180) else UDim2.fromOffset(212, 159)
+		if width > 300 then
+			pic.Position = UDim2.fromOffset(width / 2, 80)
+		end
+		UIKit.hoverWiggle(cardFrame, pic)
+		local amount = UIKit.text(cardFrame, pk[1], 27, {
+			position = UDim2.fromOffset(width / 2, 124),
+			anchor = Vector2.new(0.5, 0),
+			stroke = 3.5,
+			z = 6,
+		})
+		amount.RichText = true
+		local priceWidth = math.min(width - 24, 230)
+		for _, h in buyRow(cardFrame, pk[3], UDim2.fromOffset((width - priceWidth) / 2, 158), priceWidth, P.lime) do
+			h.ZIndex = 6
+		end
+		if pk[4] then
+			local ribbon = UIKit.text(cardFrame, pk[4], 20, {
+				color = if pk[4] == "BEST DEAL!" then UIKit.Yellow else hex("8CFF3A"),
+				position = UDim2.new(0.5, 0, 0, -14),
+				anchor = Vector2.new(0.5, 0),
+				stroke = 3.5,
+				z = 30,
+			})
+			UIKit.pulse(ribbon, 0.08, 0.7)
+		end
+	end
+	local function packs(titleText: string, color: Color3, order: number, cardKind: string, items: { { any } })
 		jump[titleText] = UIKit.section(scroll, titleText, color, order)
-		local grid = UIKit.new("Frame", {
+		local small = UIKit.new("Frame", {
 			Name = titleText,
 			BackgroundTransparency = 1,
 			Size = UDim2.fromOffset(712, 0),
@@ -361,49 +411,51 @@ do
 			LayoutOrder = order + 1,
 		}, scroll)
 		UIKit.new("UIGridLayout", {
-			CellSize = UDim2.fromOffset(229, 180),
-			CellPadding = UDim2.fromOffset(12, 12),
+			CellSize = UDim2.fromOffset(229, 210),
+			CellPadding = UDim2.fromOffset(12, 18),
 			SortOrder = Enum.SortOrder.LayoutOrder,
-		}, grid)
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		}, small)
+		UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 14) }, small)
+		local wide = UIKit.new("Frame", {
+			Name = titleText .. " (big)",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(712, 0),
+			AutomaticSize = Enum.AutomaticSize.Y,
+			LayoutOrder = order + 2,
+		}, scroll)
+		UIKit.new("UIGridLayout", {
+			CellSize = UDim2.fromOffset(350, 210),
+			CellPadding = UDim2.fromOffset(12, 18),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		}, wide)
+		UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 16) }, wide)
 		for i, pk in items do
-			local holder, c = UIKit.tile(grid, {
-				name = pk[1],
-				size = UDim2.fromOffset(229, 180),
-				top = hex(top),
-				bottom = hex(bottom),
-				edgeWidth = 3,
-				layoutOrder = i,
-			})
-			UIKit.burst(clip(c, 4), UDim2.fromOffset(114, 64), 280, 0.3)
-			UIKit.hoverWiggle(c, UIKit.icon(c, img(pk[2]), 140, UDim2.fromOffset(114, 58), mid))
-			UIKit.text(
-				c,
-				pk[1],
-				22,
-				{ color = UIKit.Yellow, position = UDim2.new(0.5, 0, 0, 104), anchor = Vector2.new(0.5, 0) }
-			)
-			buyRow(c, pk[3], UDim2.fromOffset(12, 130), 205)
-			if pk[4] then
-				local ribbon = UIKit.text(holder, pk[4], 18, {
-					color = UIKit.Yellow,
-					position = UDim2.new(0.5, 0, 0, -10),
-					anchor = Vector2.new(0.5, 0),
-					z = 30,
-				})
-				UIKit.pulse(ribbon, 0.08, 0.7)
+			if i <= 3 then
+				packCard(small, pk, 229, cardKind, i)
+			else
+				packCard(wide, pk, 350, cardKind, i)
 			end
 		end
 	end
-	packs("Speed Packs", hex("6AD8FF"), 5, {
-		{ "+150K SPEED", "SpeedPack1", "59" },
-		{ "+1M SPEED", "SpeedPack2", "199", "BEST SELLING!" },
-		{ "+10M SPEED", "SpeedPack3", "459", "BEST DEAL!" },
-	}, "9BE8FF", "2C9AE8")
-	packs("Cash Packs", hex("6AF26A"), 7, {
-		{ "+$100K", "CashPack1", "59" },
-		{ "+$500K", "CashPack2", "199", "BEST SELLING!" },
-		{ "+$2M", "CashPack3", "459", "BEST DEAL!" },
-	}, "B8FF9A", "2EA82A")
+	local g = function(s: string): string
+		return '<font color="#7CFF5A">' .. s .. "</font>"
+	end
+	packs("Speed Packs", hex("6AD8FF"), 5, "SpeedPack", {
+		{ g("+150K") .. " SPEED", "SpeedPack1", "59" },
+		{ g("+1M") .. " SPEED", "SpeedPack2", "199", "BEST SELLING!" },
+		{ g("+10M") .. " SPEED", "SpeedPack3", "459" },
+		{ g("+50M") .. " SPEED", "SpeedPack4", "999" },
+		{ g("+250M") .. " SPEED", "SpeedPack5", "1,999", "BEST DEAL!" },
+	})
+	packs("Cash Packs", hex("6AF26A"), 8, "CashPack", {
+		{ g("+$100K"), "CashPack1", "59" },
+		{ g("+$500K"), "CashPack2", "199", "BEST SELLING!" },
+		{ g("+$2M"), "CashPack3", "459" },
+		{ g("+$20M"), "CashPack4", "999" },
+		{ g("+$100M"), "CashPack5", "1,999", "BEST DEAL!" },
+	})
 	UIKit.text(scroll, "Odds are shown on every random item.", 15, {
 		font = UIKit.Fonts.body,
 		color = hex("CFCFE0"),
@@ -903,31 +955,58 @@ do
 	end)
 	slowHit.Name = "Toggle"
 
-	-- x2 Speed offer: only shows while you're training on your hamster wheel (hud.setTraining).
-	local promoHolder, promo = UIKit.block(left, {
-		name = "x2 Speed",
-		size = UDim2.fromOffset(176, 76),
-		palette = P.cyan,
-		layoutOrder = 4,
-	})
-	promoHolder.Visible = false
-	UIKit.burst(clip(promo, 4), UDim2.fromScale(0.5, 0.42), 190, 0.45)
-	local bolt = UIKit.icon(promo, img("Bolt"), 42, UDim2.new(0.5, 0, 0, -8), Vector2.new(0.5, 0))
-	bolt.Rotation = -8
+	-- x2 Speed offer (like Break and Steal an Egg's): a rainbow button with a bolt poking out of the top and
+	-- "ONLY 3" in green underneath. Only shows while you're training on your hamster wheel (hud.setTraining).
+	local promoHolder = UIKit.new("Frame", {
+		Name = "x2 Speed",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(176, 110),
+		LayoutOrder = 4,
+		Visible = false,
+	}, left)
+	local rainbow = UIKit.new("Frame", {
+		Name = "Button",
+		BackgroundColor3 = UIKit.White,
+		Size = UDim2.new(1, 0, 0, 58),
+		Position = UDim2.fromOffset(0, 24),
+		ZIndex = 2,
+	}, promoHolder)
+	UIKit.corner(rainbow, 4)
+	UIKit.stroke(rainbow, UIKit.Ink, 4, true)
+	UIKit.new("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, hex("FF4D8A")),
+			ColorSequenceKeypoint.new(0.2, hex("FFB21E")),
+			ColorSequenceKeypoint.new(0.4, hex("FFF06A")),
+			ColorSequenceKeypoint.new(0.6, hex("5BE36A")),
+			ColorSequenceKeypoint.new(0.8, hex("3DC8FF")),
+			ColorSequenceKeypoint.new(1, hex("A35CFF")),
+		}),
+	}, rainbow)
+	UIKit.burst(clip(rainbow, 4), UDim2.fromScale(0.5, 0.5), 200, 0.5)
+	local promoLabel = UIKit.shadowText(rainbow, "x2 Speed", 30)
+	promoLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+	promoLabel.Position = UDim2.new(0.5, 0, 0.5, -1)
+	local bolt = UIKit.icon(promoHolder, img("Bolt"), 50, UDim2.new(0.5, 0, 0, -6), Vector2.new(0.5, 0), 6)
+	bolt.Rotation = -10
 	UIKit.bob(bolt, 4, 0.6)
-	UIKit.text(
-		promo,
-		"x2 Speed",
-		28,
-		{ position = UDim2.new(0.5, 0, 0, 20), anchor = Vector2.new(0.5, 0), stroke = 3.5 }
-	)
-	UIKit.text(
-		promo,
-		"ONLY 3",
-		15,
-		{ stroke = 2.5, position = UDim2.new(0.5, -10, 0, 50), anchor = Vector2.new(0.5, 0) }
-	)
-	UIKit.icon(promo, img("Robux"), 18, UDim2.new(0.5, 26, 0, 51))
+	local only = UIKit.new("Frame", {
+		Name = "Only",
+		BackgroundTransparency = 1,
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 28),
+		Position = UDim2.new(0.5, 0, 0, 86),
+		AnchorPoint = Vector2.new(0.5, 0),
+	}, promoHolder)
+	UIKit.new("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 5),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, only)
+	UIKit.text(only, "ONLY", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 1
+	UIKit.icon(only, img("Robux"), 24).LayoutOrder = 2
+	UIKit.text(only, "3", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 3
 	UIKit.clickable(promoHolder, function()
 		open("Shop")
 	end)

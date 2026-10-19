@@ -1,0 +1,186 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Speed and cash pack art</title>
+<!-- Source for the Shop's Speed Pack and Cash Pack pictures (assets/ui/<Name>.png, 400x300). Render one with
+     ?i=<Name>. Style from Break and Steal an Egg: winged sneakers and banded cash bundles with thick outlines,
+     shading and highlights; bigger packs pile up, then come in a drawstring sack or a treasure chest. -->
+<style>
+html,body{margin:0;background:transparent}
+body.sheet{display:flex;flex-wrap:wrap;gap:16px;padding:16px;background:#2F2F36;width:1300px}
+svg{display:block}
+body.one svg:not(.defs){display:none}
+body.one svg.show{display:block}
+</style></head>
+<body class="sheet">
+<svg class="defs" width="0" height="0" style="position:absolute" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="shoeBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BE2FF"/><stop offset=".45" stop-color="#3E9EFF"/><stop offset="1" stop-color="#1B55D0"/></linearGradient>
+<linearGradient id="soleG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C6D6EA"/></linearGradient>
+<linearGradient id="wingG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#CFE2F5"/></linearGradient>
+<linearGradient id="billG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9BF07A"/><stop offset="1" stop-color="#3CB840"/></linearGradient>
+<linearGradient id="bandG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset=".5" stop-color="#FFC52E"/><stop offset="1" stop-color="#E08A0C"/></linearGradient>
+<linearGradient id="woodG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D98E4A"/><stop offset="1" stop-color="#8A4A1C"/></linearGradient>
+<linearGradient id="woodDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A3E16"/><stop offset="1" stop-color="#4A2208"/></linearGradient>
+<linearGradient id="sackG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4F2EC"/><stop offset=".6" stop-color="#C9C4B8"/><stop offset="1" stop-color="#9A9486"/></linearGradient>
+<linearGradient id="sackBlue" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2E7BE8"/><stop offset=".5" stop-color="#6CC4FF"/><stop offset="1" stop-color="#1E5AC8"/></linearGradient>
+
+<!-- winged sneaker, chunky and glossy like Break and Steal an Egg: blue high-top, white toe cap, big white
+     wing on the side, thick white sole, gloss highlights. About 180 x 140, facing right. -->
+<symbol id="shoe" viewBox="-95 -78 190 156" overflow="visible">
+<g stroke="#141018" stroke-linejoin="round" stroke-linecap="round">
+<path d="M-70 30C-74 0 -70 -40 -54 -62L-14 -54C-6 -30 8 -18 38 -12L64 -6C84 -2 92 12 90 30Z" fill="url(#shoeBlue)" stroke-width="8"/>
+<path d="M40 -12C62 -8 84 -2 90 16C92 24 90 30 90 30H34C30 14 32 -4 40 -12Z" fill="#FFFFFF" stroke-width="7"/>
+<path d="M46 -4C62 -2 76 2 82 12" fill="none" stroke="#C6D6EA" stroke-width="5"/>
+<path d="M-40 -44l26 6M-36 -28l26 6M-30 -12l26 6" stroke-width="12"/>
+<path d="M-40 -44l26 6M-36 -28l26 6M-30 -12l26 6" stroke="#FFFFFF" stroke-width="6"/>
+<path d="M-58 -4C-48 -10 -32 -6 -24 4C-14 16 4 18 20 12" fill="none" stroke="#FFFFFF" stroke-width="7"/>
+<path d="M-60 -10C-56 -40 -50 -54 -46 -58" fill="none" stroke="#D6F3FF" stroke-width="7"/>
+<ellipse cx="10" cy="-20" rx="18" ry="6" fill="#E6F8FF" stroke="none" opacity=".75" transform="rotate(16 10 -20)"/>
+<path d="M-80 30H96V42A14 14 0 0 1 82 56H-66A14 14 0 0 1 -80 42Z" fill="url(#soleG)" stroke-width="8"/>
+<path d="M-66 46H84" stroke="#9FB4CE" stroke-width="5"/>
+<path d="M-30 -30C-58 -60 -92 -58 -96 -40C-80 -44 -66 -40 -60 -34C-80 -34 -92 -26 -92 -14C-76 -20 -62 -18 -54 -12C-70 -8 -78 0 -76 10C-60 2 -42 0 -30 4Z" fill="url(#wingG)" stroke-width="7"/>
+<path d="M-82 -40C-72 -38 -62 -34 -56 -28M-84 -16C-74 -16 -64 -14 -56 -10M-70 4C-62 0 -52 -2 -44 0" fill="none" stroke="#9FB8D4" stroke-width="4"/>
+</g>
+</symbol>
+
+<!-- banded cash bundle, about 160 x 90 -->
+<symbol id="cash" viewBox="-90 -55 180 110" overflow="visible">
+<g stroke="#141018" stroke-linejoin="round">
+<rect x="-80" y="-14" width="160" height="56" rx="7" fill="#1F8A30" stroke-width="7"/>
+<rect x="-80" y="-24" width="160" height="56" rx="7" fill="#2EAA3A" stroke-width="7"/>
+<rect x="-80" y="-40" width="160" height="58" rx="7" fill="url(#billG)" stroke-width="7"/>
+<rect x="-70" y="-32" width="140" height="42" rx="5" fill="none" stroke="#2E9B3A" stroke-width="4"/>
+<ellipse cx="34" cy="-11" rx="17" ry="15" fill="#2E9B3A" stroke="#1C6E26" stroke-width="3"/>
+<text x="34" y="-1" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="28" fill="#C8FFB0" stroke="none">$</text>
+<circle cx="-56" cy="-11" r="6" fill="#2E9B3A" stroke="none"/>
+<rect x="-22" y="-46" width="30" height="94" rx="5" fill="url(#bandG)" stroke-width="6"/>
+<path d="M-14 -38v26" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".85"/>
+<path d="M14 -32h48" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+</g>
+</symbol>
+
+<!-- open treasure chest body (contents are drawn between lid and front) -->
+<symbol id="chestBack" viewBox="-130 -110 260 220" overflow="visible">
+<g stroke="#141018" stroke-linejoin="round">
+<path d="M-110 -10 L-100 -96 Q0 -132 100 -96 L110 -10 Z" fill="url(#woodDark)" stroke-width="8"/>
+<path d="M-100 -96 Q0 -132 100 -96" fill="none" stroke="url(#bandG)" stroke-width="14"/>
+<path d="M-100 -96 Q0 -132 100 -96" fill="none" stroke="#141018" stroke-width="3" transform="translate(0 7)"/>
+</g>
+</symbol>
+<symbol id="chestFront" viewBox="-130 -110 260 220" overflow="visible">
+<g stroke="#141018" stroke-linejoin="round">
+<rect x="-116" y="-14" width="232" height="104" rx="8" fill="url(#woodG)" stroke-width="8"/>
+<path d="M-110 30h220M-110 60h220" stroke="#6A3412" stroke-width="4"/>
+<rect x="-116" y="-14" width="232" height="18" rx="6" fill="url(#bandG)" stroke-width="7"/>
+<rect x="-116" y="-14" width="22" height="104" rx="5" fill="url(#bandG)" stroke-width="7"/>
+<rect x="94" y="-14" width="22" height="104" rx="5" fill="url(#bandG)" stroke-width="7"/>
+<path d="M-22 4h44v44l-22 14l-22-14z" fill="url(#bandG)" stroke-width="7"/>
+<circle cx="0" cy="24" r="6" fill="#141018" stroke="none"/><path d="M0 28v12" stroke="#141018" stroke-width="5"/>
+<path d="M-100 -6h60" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+</g>
+</symbol>
+
+<g id="sparkle"><path d="M0 -14C1.4 -3.5 3.5 -1.4 14 0C3.5 1.4 1.4 3.5 0 14C-1.4 3.5 -3.5 1.4 -14 0C-3.5 -1.4 -1.4 -3.5 0 -14Z" fill="#FFFFFF" stroke="#141018" stroke-width="2.5" stroke-linejoin="round"/></g>
+</defs>
+</svg>
+
+<!-- ===== SPEED ===== -->
+<svg data-name="SpeedPack1" width="400" height="300" viewBox="-14 -14 428 322" xmlns="http://www.w3.org/2000/svg">
+<use href="#shoe" x="40" y="20" width="320" height="262"/>
+<use href="#sparkle" transform="translate(340 60) scale(1.4)"/><use href="#sparkle" transform="translate(60 250)"/>
+</svg>
+
+<svg data-name="SpeedPack2" width="400" height="300" viewBox="-20 -24 440 336" xmlns="http://www.w3.org/2000/svg">
+<use href="#shoe" x="0" y="0" width="270" height="222"/>
+<use href="#shoe" x="120" y="74" width="280" height="230"/>
+<use href="#sparkle" transform="translate(350 50) scale(1.4)"/><use href="#sparkle" transform="translate(40 250)"/>
+</svg>
+
+<svg data-name="SpeedPack3" width="400" height="300" viewBox="-24 -30 448 344" xmlns="http://www.w3.org/2000/svg">
+<use href="#shoe" x="90" y="-14" width="230" height="188"/>
+<use href="#shoe" x="-10" y="70" width="240" height="196"/>
+<use href="#shoe" x="170" y="76" width="240" height="196"/>
+<use href="#shoe" x="70" y="110" width="250" height="204"/>
+<use href="#sparkle" transform="translate(360 40) scale(1.5)"/><use href="#sparkle" transform="translate(40 50)"/>
+</svg>
+
+<svg data-name="SpeedPack4" width="400" height="300" viewBox="-20 -45 440 350" xmlns="http://www.w3.org/2000/svg">
+<!-- striped drawstring sack overflowing with sneakers -->
+<use href="#shoe" x="30" y="-24" width="190" height="156"/>
+<use href="#shoe" x="180" y="-30" width="190" height="156"/>
+<use href="#shoe" x="100" y="-6" width="200" height="164"/>
+<g stroke="#141018" stroke-linejoin="round">
+<path d="M84 128 Q50 210 86 282 Q200 306 314 282 Q350 210 316 128 Q200 108 84 128Z" fill="url(#sackBlue)" stroke-width="8"/>
+<path d="M126 132 Q104 210 122 286M200 120 Q196 210 200 298M274 132 Q296 210 278 286" fill="none" stroke="#FFFFFF" stroke-width="18" opacity=".9"/>
+<path d="M84 128 Q200 108 316 128 Q350 210 314 282 Q200 306 86 282 Q50 210 84 128Z" fill="none" stroke-width="8"/>
+<path d="M74 140 Q200 116 326 140" fill="none" stroke="#141018" stroke-width="18" stroke-linecap="round"/>
+<path d="M74 140 Q200 116 326 140" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+<path d="M98 160 Q86 210 98 260" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".65"/>
+</g>
+<use href="#sparkle" transform="translate(360 70) scale(1.5)"/><use href="#sparkle" transform="translate(40 100)"/>
+</svg>
+
+<svg data-name="SpeedPack5" width="400" height="300" viewBox="-20 -40 440 345" xmlns="http://www.w3.org/2000/svg">
+<use href="#chestBack" x="60" y="40" width="280" height="236"/>
+<use href="#shoe" x="40" y="10" width="190" height="156"/>
+<use href="#shoe" x="180" y="6" width="190" height="156"/>
+<use href="#shoe" x="110" y="-20" width="190" height="156"/>
+<use href="#shoe" x="70" y="48" width="180" height="148"/>
+<use href="#shoe" x="170" y="50" width="180" height="148"/>
+<use href="#chestFront" x="60" y="40" width="280" height="236"/>
+<use href="#sparkle" transform="translate(360 40) scale(1.6)"/><use href="#sparkle" transform="translate(40 60) scale(1.1)"/><use href="#sparkle" transform="translate(370 230)"/>
+</svg>
+
+<!-- ===== CASH ===== -->
+<svg data-name="CashPack1" width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(-10 200 150)"><use href="#cash" x="30" y="40" width="340" height="226"/></g>
+<use href="#sparkle" transform="translate(320 70) scale(1.4)"/><use href="#sparkle" transform="translate(80 230)"/>
+</svg>
+
+<svg data-name="CashPack2" width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<g transform="rotate(8 120 170)"><use href="#cash" x="20" y="110" width="200" height="130"/></g>
+<g transform="rotate(-6 280 170)"><use href="#cash" x="180" y="110" width="200" height="130"/></g>
+<g transform="rotate(-12 200 110)"><use href="#cash" x="96" y="40" width="210" height="140"/></g>
+<use href="#sparkle" transform="translate(350 60) scale(1.4)"/><use href="#sparkle" transform="translate(50 70)"/><use href="#sparkle" transform="translate(360 250) scale(.8)"/>
+</svg>
+
+<svg data-name="CashPack3" width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<use href="#cash" x="10" y="160" width="190" height="120"/>
+<use href="#cash" x="200" y="160" width="190" height="120"/>
+<use href="#cash" x="104" y="170" width="190" height="120"/>
+<g transform="rotate(-8 140 140)"><use href="#cash" x="44" y="90" width="190" height="120"/></g>
+<g transform="rotate(10 260 140)"><use href="#cash" x="166" y="90" width="190" height="120"/></g>
+<g transform="rotate(-4 200 80)"><use href="#cash" x="110" y="20" width="190" height="120"/></g>
+<use href="#sparkle" transform="translate(360 50) scale(1.5)"/><use href="#sparkle" transform="translate(40 70)"/>
+</svg>
+
+<svg data-name="CashPack4" width="400" height="300" viewBox="-20 -30 440 340" xmlns="http://www.w3.org/2000/svg">
+<!-- money sack with bundles poking out -->
+<g transform="rotate(-20 150 60)"><use href="#cash" x="70" y="10" width="150" height="100"/></g>
+<g transform="rotate(16 250 60)"><use href="#cash" x="180" y="8" width="150" height="100"/></g>
+<g transform="rotate(-4 200 40)"><use href="#cash" x="122" y="-6" width="160" height="104"/></g>
+<g stroke="#141018" stroke-linejoin="round">
+<path d="M130 110 Q60 170 90 250 Q200 300 310 250 Q340 170 270 110 Z" fill="url(#sackG)" stroke-width="8"/>
+<path d="M118 112 Q200 92 282 112 L276 132 Q200 114 124 132Z" fill="url(#bandG)" stroke-width="7"/>
+<circle cx="200" cy="200" r="40" fill="#2E9B3A" stroke="#1C6E26" stroke-width="5" opacity=".9"/>
+<text x="200" y="222" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="60" fill="#C8FFB0" stroke="none">$</text>
+<path d="M104 170 Q96 210 112 244" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".75"/>
+</g>
+<use href="#sparkle" transform="translate(340 60) scale(1.5)"/><use href="#sparkle" transform="translate(60 120)"/><use href="#sparkle" transform="translate(340 220)"/>
+</svg>
+
+<svg data-name="CashPack5" width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+<use href="#chestBack" x="70" y="40" width="260" height="220"/>
+<g transform="rotate(-14 150 90)"><use href="#cash" x="80" y="40" width="150" height="100"/></g>
+<g transform="rotate(12 250 90)"><use href="#cash" x="170" y="40" width="150" height="100"/></g>
+<g transform="rotate(-2 200 60)"><use href="#cash" x="124" y="14" width="150" height="100"/></g>
+<g transform="rotate(6 160 120)"><use href="#cash" x="96" y="72" width="140" height="92"/></g>
+<g transform="rotate(-8 240 120)"><use href="#cash" x="168" y="72" width="140" height="92"/></g>
+<use href="#chestFront" x="70" y="40" width="260" height="220"/>
+<use href="#sparkle" transform="translate(350 50) scale(1.6)"/><use href="#sparkle" transform="translate(50 70) scale(1.1)"/><use href="#sparkle" transform="translate(360 220)"/><use href="#sparkle" transform="translate(44 230) scale(.8)"/>
+</svg>
+
+<script>
+const k = new URLSearchParams(location.search).get('i');
+if (k) { document.body.className = 'one'; const s = document.querySelector('svg[data-name="' + k + '"]'); if (s) s.classList.add('show'); }
+</script>
+</body></html>

@@ -59,10 +59,9 @@ local function build(S: number): any
 	-- Unchanged from the old burrows, so game code that finds these keeps working. half = half the footprint in x and z.
 	MapConfig.BURROW_LAYOUT = {
 		LockButton = { position = Vector3.new(-30, 0, 12) * S, half = Vector3.new(4.5, 0, 4.5) * S },
-		CashPile = { position = Vector3.new(28, 0, 14) * S, half = Vector3.new(5.5, 0, 5.5) * S },
-		-- right behind the cash pile, so you wake up facing your cash and walk over it on the way out (Dylan, 19 Oct)
+		-- an invisible spawn pad where the matchbox bed was (the bed and the cash thimble went, Dylan 19 Oct)
 		Spawn = { position = Vector3.new(28, 0, 30) * S, half = Vector3.new(8, 0, 5.2) * S },
-		ToyIndex = { position = Vector3.new(-52, 0, 30) * S, half = Vector3.new(4.5, 0, 3.5) * S },
+		ToyIndex = { position = Vector3.new(-52, 0, 30) * S, half = Vector3.new(5.5, 0, 5.5) * S }, -- turned 45 degrees
 		TrainingWheel = { position = Vector3.new(50, 0, 22) * S, half = Vector3.new(7, 0, 10.5) * S },
 	} :: { [string]: BurrowProp }
 

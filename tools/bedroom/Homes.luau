@@ -1,28 +1,120 @@
 --!strict
 -- The 8 player homes in the curved wall: open bays in the wall framing (studs, blocking, top plate, OSB at the back),
 -- torn drywall up the front edges, cables stapled up the studs, an outlet, a fairy light, the toy pen at the back, and
--- the door props (cash thimble, lock push pin, Index domino, levelled Speed wheel, matchbox spawn bed), a sign on a
--- lolly stick and the lock bars.
+-- the door props (a toy padlock, the Toy Index box and book, the levelled Speed wheel, an invisible spawn pad), the
+-- floating sign and the lock bars.
 --
 -- Home space: origin at the middle of the open front, on the floor; LookVector into the room, +Z back into the wall,
 -- x across (walking in, -x is on your right). MapConfig.BURROW_LAYOUT positions are in this space.
 --
--- Used by tools/build-bedroom.luau (build) and by game code (applyLevel, setSign, setLocked) to change a home live.
+-- Used by tools/build-bedroom.luau (build) and by game code (applyLevel, buildWheel, setSign, setLocked) to change a
+-- home live.
 
 local Homes = {}
 
 -- A studded toy-brick material in MaterialService, when the place has one
 Homes.STUDS = "" -- none yet (the AI stud materials came out as grids and bricks)
 
--- How each level looks: fairy light, pen floor, wheel (sides, rungs, frame), and the dressing in the bays
+-- How each level looks: fairy light, pen floor and the dressing in the bays
 Homes.LEVEL_LOOK = {
-	{ fairy = 0xFFD27A, pen = 0xC49A6C, wheel = { 0xD9B27C, 0xFFC93C, 0x8A5A34 } }, -- 1 Cardboard
-	{ fairy = 0xFFB0C8, pen = 0xF28DB2, wheel = { 0xF28DB2, 0xFFFFFF, 0x7FD6E8 } }, -- 2 Sock-lined
-	{ fairy = 0xFFE08A, pen = 0x3DA5FF, wheel = { 0xE04848, 0xFFC93C, 0x4DA8FF } }, -- 3 Toy bricks
-	{ fairy = 0xFF9A4A, pen = 0xC89A62, wheel = { 0xB07A48, 0xE8C890, 0x6B4A2E } }, -- 4 Cosy cabin
-	{ fairy = 0xFF8FC8, pen = 0xFF8FC8, wheel = { 0xFF8FC8, 0xFFFFFF, 0x8FE8D0 } }, -- 5 Candy land
-	{ fairy = 0x7AE8FF, pen = 0x1A1430, wheel = { 0x1A1430, 0x7AE8FF, 0x9B7BFF } }, -- 6 Arcade neon
-	{ fairy = 0xFFE07A, pen = 0xFFC93C, wheel = { 0xFFC93C, 0xFFF1B0, 0xD9A21E } }, -- 7 Golden vault
+	{ fairy = 0xFFD27A, pen = 0xC49A6C }, -- 1 Cardboard
+	{ fairy = 0xFFB0C8, pen = 0xF28DB2 }, -- 2 Sock-lined
+	{ fairy = 0xFFE08A, pen = 0x3DA5FF }, -- 3 Toy bricks
+	{ fairy = 0xFF9A4A, pen = 0xC89A62 }, -- 4 Cosy cabin
+	{ fairy = 0xFF8FC8, pen = 0xFF8FC8 }, -- 5 Candy land
+	{ fairy = 0x7AE8FF, pen = 0x1A1430 }, -- 6 Arcade neon
+	{ fairy = 0xFFE07A, pen = 0xFFC93C }, -- 7 Golden vault
+}
+
+-- How each Speed wheel level looks, plainest to grandest: the ring's segments (colours cycle round it), spokes, rungs
+-- (colours cycle), the stand, the tag, and the extras (studs, ship's-wheel handles, a lollipop or vault hub, neon,
+-- gems, a light)
+Homes.WHEEL_LOOK = {
+	{ -- 1 a plain cardboard spool
+		ring = { 0xD9B27C, 0xC49A6C },
+		segments = 8,
+		spokes = 4,
+		spoke = 0xC49A6C,
+		rungs = { 0xFFC93C },
+		frame = 0x8A5A34,
+		tag = 0xD9B27C,
+		material = Enum.Material.Cardboard,
+	},
+	{ -- 2 sock stripes
+		ring = { 0xF28DB2, 0xFFFFFF },
+		segments = 10,
+		spokes = 4,
+		spoke = 0xF28DB2,
+		rungs = { 0xFFFFFF },
+		frame = 0x7FD6E8,
+		tag = 0xF28DB2,
+		material = Enum.Material.Fabric,
+	},
+	{ -- 3 toy bricks, studs and all
+		ring = { 0xE04848, 0xFFC93C, 0x4DA8FF },
+		segments = 12,
+		spokes = 6,
+		spoke = 0xE04848,
+		rungs = { 0xFFC93C },
+		frame = 0x4DA8FF,
+		tag = 0xFF6B6B,
+		material = Enum.Material.SmoothPlastic,
+		studs = true,
+	},
+	{ -- 4 a ship's wheel from the cabin
+		ring = { 0xB07A48, 0x9A6A3C },
+		segments = 12,
+		spokes = 6,
+		spoke = 0x6B4A2E,
+		rungs = { 0xE8C890 },
+		frame = 0x6B4A2E,
+		tag = 0xE0A060,
+		material = Enum.Material.Wood,
+		handles = true,
+	},
+	{ -- 5 candy: a candy-cane ring and a lollipop hub
+		ring = { 0xFF5FA8, 0xFFFFFF },
+		segments = 14,
+		spokes = 6,
+		spoke = 0xFFFFFF,
+		rungs = { 0xFF8FC8, 0xFFFFFF },
+		frame = 0x8FE8D0,
+		hub = 0xFF5FA8,
+		tag = 0xFF8FC8,
+		material = Enum.Material.SmoothPlastic,
+		lollipop = true,
+	},
+	{ -- 6 arcade neon: glowing ring, spokes and rungs
+		ring = { 0x1A1430, 0x22B8E8 },
+		segments = 14,
+		spokes = 8,
+		spoke = 0x7A4CFF,
+		rungs = { 0x22B8E8 },
+		frame = 0x1A1430,
+		tag = 0x7AE8FF,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		neonSpokes = true,
+		neonRungs = true,
+		neon = 0x7A4CFF,
+		light = 0x7AE8FF,
+	},
+	{ -- 7 the golden vault: gold, jewels and a vault-dial hub
+		ring = { 0xFFC93C, 0xFFB31A },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xFFC93C,
+		rungs = { 0xFFF1B0 },
+		frame = 0xE0A82E,
+		hub = 0xFFE07A,
+		tag = 0xFFD43B,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		gems = { 0xFF4D5E, 0x7AE8FF, 0x5BE36A, 0xB45CFF },
+		vault = true,
+		neon = 0xFFE07A,
+		light = 0xFFE07A,
+	},
 }
 
 local PINE, PINE_DARK, OSB, GOLD = 0xF2D3A4, 0xD8B07A, 0xDDBB88, 0xFFC93C
@@ -41,7 +133,7 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 	local BW, BD, H = MapConfig.BURROW_WIDTH, MapConfig.BURROW_DEPTH, MapConfig.WALL_HEIGHT
 	local LIFT = MapConfig.BURROW_FLOOR_LIFT
 	local frame = MapConfig.homeFrame(index)
-	local rgb, part, block = Kit.rgb, Kit.part, Kit.block
+	local part, block = Kit.part, Kit.block
 	local function at(x: number, y: number, z: number): CFrame
 		return frame * CFrame.new(x, y, z)
 	end
@@ -169,122 +261,25 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 		return at(p.X, LIFT, p.Z)
 	end
 
-	-- Cash pile: a steel thimble heaped with gold coins, a few spilled. Walk over it to collect.
-	local thimbleAt = prop("CashPile")
-	local cash = Kit.disc(home, "CashPile", 5.2, 8, thimbleAt * CFrame.new(0, 4, 0), 0xC9CED8, {
-		material = Enum.Material.Metal,
-		attributes = { Cash = 0 },
-	})
-	Kit.disc(cash, "Rim", 5.5, 1, thimbleAt * CFrame.new(0, 7.6, 0), 0xB8BFC8, {
-		material = Enum.Material.Metal,
-		collide = false,
-	})
-	for k = 0, 15 do
-		local angle = k * 2.4
-		local r = if k < 9 then math.sqrt(k) * 1.4 else 7 + (k * 3) % 4
-		local y = if k < 9 then 8.4 + math.max(0, 2.4 - r) else 0.3
-		local coin = Kit.disc(
-			cash,
-			"Coin",
-			1.8,
-			0.6,
-			thimbleAt
-				* CFrame.new(math.cos(angle) * r, y, math.sin(angle) * r)
-				* CFrame.Angles(math.sin(k) * 0.4, 0, math.cos(k) * 0.4),
-			0xF2C94C,
-			{ material = Enum.Material.Foil, collide = false }
-		)
-		coin.Reflectance = 0.1
-	end
+	-- the lock and the Index stand turn to face the middle of the home and the open front
+	local facing = CFrame.Angles(0, -math.pi / 4, 0)
+	Homes.buildLock(Kit, home, prop("LockButton") * facing)
+	Homes.buildIndex(Kit, home, prop("ToyIndex") * facing)
 
-	-- Door Lock button: a big red push pin, stuck in the floor on its needle, leaning a little
-	local pinAt = prop("LockButton") * CFrame.Angles(0, 0, 0.12)
-	local lock =
-		Kit.disc(home, "LockButton", 4.5, 2, pinAt * CFrame.new(0, 4, 0), RED, { material = Enum.Material.Plastic })
-	Kit.disc(lock, "Waist", 2.7, 4, pinAt * CFrame.new(0, 7, 0), RED, { material = Enum.Material.Plastic })
-	Kit.disc(lock, "Cap", 3.6, 1.6, pinAt * CFrame.new(0, 9.6, 0), RED, { material = Enum.Material.Plastic })
-	Kit.disc(lock, "Needle", 0.35, 3, pinAt * CFrame.new(0, 1.5, 0), 0xB8BFC8, {
-		material = Enum.Material.Metal,
-		collide = false,
-	})
-	local prompt = Instance.new("ProximityPrompt")
-	prompt.Name = "LockPrompt"
-	prompt.ActionText = "Lock door"
-	prompt.ObjectText = "Door Lock"
-	prompt.HoldDuration = 0
-	prompt.MaxActivationDistance = 10
-	prompt.RequiresLineOfSight = false
-	prompt.Parent = lock
-
-	-- Toy Index: a black domino stand with white pips, a matchbook propped open on top
-	local indexAt = prop("ToyIndex")
-	local stand = block(home, "IndexStand", 9, 5, 5, indexAt, 0, 0, 0, 0x1A1430)
-	for k, pip in { { -2.6, 1.4 }, { -2.6, 3.6 }, { -1.4, 2.5 }, { 1.4, 1.4 }, { 2.6, 3.6 }, { 2.6, 1.4 } } do
-		block(stand, "Pip", 0.9, 0.9, 0.3, indexAt, pip[1], pip[2] - 0.45, -2.6, 0xFFFFFF, { collide = false })
-		if k == 3 then
-			block(stand, "Line", 0.3, 4.4, 0.3, indexAt, 0, 0.3, -2.6, 0xFFFFFF, { collide = false })
-		end
-	end
-	local book = block(
-		home,
-		"IndexBook",
-		5,
-		0.6,
-		7,
-		indexAt * CFrame.new(-2.3, 5.4, 0) * CFrame.Angles(0, 0, 0.35),
-		0,
-		0,
-		0,
-		0xE04848
-	)
-	block(book, "Cover", 5, 0.6, 7, indexAt * CFrame.new(2.3, 5.4, 0) * CFrame.Angles(0, 0, -0.35), 0, 0, 0, 0xF4F1E8)
-
-	-- Spawn: the matchbox bed is the SpawnLocation, so you wake up on it
-	local bedAt = prop("Spawn")
+	-- Spawn: an invisible pad on the floor where you wake up (the matchbox bed is gone, Dylan 19 Oct)
 	local spawnPad = Instance.new("SpawnLocation")
 	spawnPad.Name = "Spawn"
 	spawnPad.Anchored = true
-	spawnPad.Size = Vector3.new(16, 3.4, 10)
-	spawnPad.CFrame = bedAt * CFrame.new(0, 1.7, 0)
-	spawnPad.Color = rgb(0xE8D2A8)
-	spawnPad.Material = Enum.Material.Cardboard
-	spawnPad.TopSurface = Enum.SurfaceType.Smooth
+	spawnPad.Size = Vector3.new(16, 0.2, 10)
+	spawnPad.CFrame = prop("Spawn") * CFrame.new(0, 0.1, 0)
+	spawnPad.Transparency = 1
+	spawnPad.CanCollide = false
+	spawnPad.CanQuery = false
+	spawnPad.CanTouch = false
+	spawnPad.CastShadow = false
 	spawnPad.Duration = 0
 	spawnPad.Neutral = true
-	spawnPad.CastShadow = false
 	spawnPad.Parent = home
-	block(spawnPad, "Sleeve", 9, 3.8, 10.4, bedAt, -4, 0, 0, 0x2F6FB9, { collide = false })
-	for k = 0, 5 do
-		block(
-			spawnPad,
-			"Blanket",
-			11 / 6,
-			1,
-			8,
-			bedAt,
-			1.5 - 5.5 + (k + 0.5) * 11 / 6,
-			3.4,
-			0,
-			if k % 2 == 0 then 0xF28DB2 else 0xFFFFFF,
-			{
-				material = Enum.Material.Fabric,
-				collide = false,
-			}
-		)
-	end
-	for k = 0, 15 do
-		local a0, a1 = k / 16 * 2 * math.pi, (k + 1) / 16 * 2 * math.pi
-		local r = 9.75
-		Kit.rod(
-			spawnPad,
-			"Ring",
-			(bedAt * CFrame.new(math.cos(a0) * r, 0.12, math.sin(a0) * r)).Position,
-			(bedAt * CFrame.new(math.cos(a1) * r, 0.12, math.sin(a1) * r)).Position,
-			0.75,
-			0x3DDC97,
-			{ material = Enum.Material.Neon, collide = false, transparency = 0.35 }
-		)
-	end
 
 	-- The sign: text floating over the middle of the open front (an invisible anchor carries it)
 	local sp = MapConfig.SIGN
@@ -317,9 +312,99 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 		{ material = Enum.Material.Neon, collide = false, transparency = 1 }
 	)
 	block(home, "DoorBarrier", BW + 10, 60, 2, frame, 0, 0, -1.5, RED, { collide = false, transparency = 1 })
+	Homes.setLocked(home, false) -- opens the padlock's shackle
 
 	Homes.applyLevel(Kit, MapConfig, home, level)
 	return home
+end
+
+-- The Door Lock: a chunky toy padlock standing on the floor (Dylan: "make it a toy lock so it's more reasonable").
+-- A red body with a yellow face plate and a keyhole, and a blue shackle that pops up when the home is unlocked.
+-- `at` is the floor under it; it faces at's LookVector. The body is LockButton (with LockPrompt on it).
+function Homes.buildLock(Kit: any, home: Instance, at: CFrame): BasePart
+	local plastic = { material = Enum.Material.SmoothPlastic, collide = false }
+	local lock = Kit.block(home, "LockButton", 8, 7, 4, at, 0, 0, 0, RED, { material = Enum.Material.SmoothPlastic })
+	-- a darker base, so it reads as a moulded toy
+	Kit.block(lock, "Base", 8.4, 0.8, 4.4, at, 0, 0, 0, 0x8A1F2A, plastic)
+	Kit.block(lock, "Plate", 6, 5, 0.4, at, 0, 1, -2.1, 0xFFC93C, plastic)
+	-- the keyhole: a round hole and a slot
+	Kit.part(
+		lock,
+		"Keyhole",
+		Vector3.new(0.3, 2, 2),
+		at * CFrame.new(0, 4.4, -2.35) * CFrame.Angles(0, math.pi / 2, 0),
+		0x1A1430,
+		{
+			material = Enum.Material.SmoothPlastic,
+			collide = false,
+			shape = Enum.PartType.Cylinder,
+		}
+	)
+	Kit.block(lock, "Keyhole", 0.8, 1.8, 0.3, at, 0, 2.4, -2.35, 0x1A1430, plastic)
+	-- two studs on top, like a toy brick
+	for _, x in { -2.4, 2.4 } do
+		Kit.disc(lock, "Stud", 0.9, 0.6, at * CFrame.new(x, 7.3, 1.2), RED, plastic)
+	end
+	-- the shackle: two posts and a top bar (the left post is the Shackle model's PrimaryPart)
+	local shackle = Kit.model(lock, "Shackle")
+	local post = Kit.block(shackle, "Post", 1.6, 5, 1.6, at, -2.6, 6.2, 0, 0x4DA8FF, plastic)
+	Kit.block(shackle, "Post", 1.6, 5, 1.6, at, 2.6, 6.2, 0, 0x4DA8FF, plastic)
+	Kit.block(shackle, "Bar", 6.8, 1.6, 1.6, at, 0, 11.2, 0, 0x4DA8FF, plastic)
+	shackle.PrimaryPart = post
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "LockPrompt"
+	prompt.ActionText = "Lock door"
+	prompt.ObjectText = "Door Lock"
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = lock
+	return lock
+end
+
+-- The Toy Index: a toy box with INDEX on the front and a big open picture book propped on top, showing toys.
+-- `at` is the floor under it; it faces at's LookVector. The box is IndexStand (with IndexPrompt on it), the book
+-- IndexBook.
+function Homes.buildIndex(Kit: any, home: Instance, at: CFrame): BasePart
+	local plastic = { material = Enum.Material.SmoothPlastic, collide = false }
+	local box =
+		Kit.block(home, "IndexStand", 9, 5, 6, at, 0, 0, 0, 0x3A6FD8, { material = Enum.Material.SmoothPlastic })
+	Kit.block(box, "Trim", 9.4, 0.8, 6.4, at, 0, 0, 0, 0xFFC93C, plastic)
+	Kit.block(box, "Trim", 9.4, 0.8, 6.4, at, 0, 4.4, 0, 0xFFC93C, plastic)
+	local label = Kit.block(box, "Label", 7, 2.4, 0.3, at, 0, 1.3, -3.1, 0xFFF6D5, plastic)
+	Kit.text(label, "INDEX", { color = Color3.fromRGB(224, 72, 72), font = Enum.Font.GothamBlack, glow = true })
+	-- the book, propped open and tipped toward you
+	local tilt = at * CFrame.new(0, 6.2, 0.6) * CFrame.Angles(math.rad(-28), 0, 0)
+	Kit.block(box, "Prop", 6, 1.6, 1.2, at, 0, 5.2, 2.2, 0x2B4E9E, plastic)
+	local book = Kit.part(
+		box,
+		"IndexBook",
+		Vector3.new(8.6, 0.5, 6.2),
+		tilt,
+		0xE04848,
+		{ material = Enum.Material.SmoothPlastic }
+	)
+	for _, s in { -1, 1 } do
+		local page = tilt * CFrame.new(s * 2.05, 0.5, 0) * CFrame.Angles(0, 0, -s * 0.1)
+		Kit.part(book, "Page", Vector3.new(3.9, 0.6, 5.6), page, 0xFFFFFF, plastic)
+		-- toy pictures on the pages
+		for k, z in { -1.3, 1.3 } do
+			local color = ({ 0xFFD23F, 0xFF7AA8, 0x3DDC97, 0x4DA8FF })[(s + 1) + k]
+			Kit.part(book, "Picture", Vector3.new(1.6, 0.1, 1.6), page * CFrame.new(0, 0.33, z), color, plastic)
+		end
+	end
+	Kit.part(book, "Spine", Vector3.new(0.6, 0.7, 6.2), tilt * CFrame.new(0, 0.3, 0), 0x8A1F2A, plastic)
+
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "IndexPrompt"
+	prompt.ActionText = "Open Index"
+	prompt.ObjectText = "Toy Index"
+	prompt.HoldDuration = 0
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = box
+	return box
 end
 
 -- The floating sign over a home: big white outlined text with no board, on a BillboardGui so it always faces you
@@ -372,8 +457,8 @@ function Homes.setSign(sign: BasePart, title: string, line2: string, titleColor:
 	second.TextColor3 = hex(line2Color or 0xFFE58A)
 end
 
--- Show or hide the lock bars and darken the push pin. The barrier stays walk-through: game code puts strangers who
--- walk into a locked home back outside, so the owner can still come and go.
+-- Show or hide the lock bars, darken the padlock and swing its shackle shut or open. The barrier stays walk-through:
+-- game code puts strangers who walk into a locked home back outside, so the owner can still come and go.
 function Homes.setLocked(home: Model, locked: boolean)
 	local bars = home:FindFirstChild("LockBars")
 	if bars then
@@ -383,14 +468,22 @@ function Homes.setLocked(home: Model, locked: boolean)
 			end
 		end
 	end
-	local pin = home:FindFirstChild("LockButton")
-	if pin and pin:IsA("BasePart") then
+	local lock = home:FindFirstChild("LockButton")
+	if lock and lock:IsA("BasePart") then
 		local color = if locked then Color3.fromRGB(138, 31, 42) else Color3.fromRGB(255, 77, 94)
-		pin.Color = color
-		for _, p in pin:GetChildren() do
-			if p:IsA("BasePart") and p.Name ~= "Needle" then
+		lock.Color = color
+		for _, p in lock:GetChildren() do
+			if p:IsA("BasePart") and p.Name == "Stud" then
 				p.Color = color
 			end
+		end
+		-- open = the shackle popped up out of the body
+		local shackle = lock:FindFirstChild("Shackle")
+		if shackle and shackle:IsA("Model") and shackle.PrimaryPart and shackle:GetAttribute("Open") ~= not locked then
+			local post = shackle.PrimaryPart
+			local open = CFrame.new(0, post.Size.Y * 0.5, 0)
+			shackle:PivotTo(shackle:GetPivot() * (if locked then open:Inverse() else open))
+			shackle:SetAttribute("Open", not locked)
 		end
 	end
 	home:SetAttribute("Locked", locked)
@@ -555,13 +648,14 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 		collide = false,
 		transparency = 1,
 	})
-	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 2.4 else 2, 60, { Shadows = true })
-	-- a soft cool fill near the front, so the home reads at night (the room's moonlight can't reach in)
+	-- soft: a warm wash on the back, not a flood (Dylan: "too bright of lights in base")
+	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 1.2 else 1, 50, { Shadows = true })
+	-- a faint cool fill near the front, so the home reads at night (the room's moonlight can't reach in)
 	local fill = Kit.part(fairy, "Fill", Vector3.one, frame * CFrame.new(0, 45, 40), 0xFFFFFF, {
 		collide = false,
 		transparency = 1,
 	})
-	Kit.light(fill, "PointLight", 0xD8E0FF, 1.4, 60)
+	Kit.light(fill, "PointLight", 0xD8E0FF, 0.65, 60)
 
 	-- The pen floor, dressed for the level (a layer on the pen part)
 	local pen = home:FindFirstChild("Pen") :: BasePart
@@ -614,59 +708,135 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 		end
 	end
 
-	Homes.buildWheel(Kit, MapConfig, home, frame, level)
+	-- the wheel has its own level (the home's WheelLevel attribute) when game code has set one
+	Homes.buildWheel(Kit, MapConfig, home, frame, (home:GetAttribute("WheelLevel") :: number?) or level)
 end
 
--- The Speed wheel, grown and dressed for the level. Game code spins TrainingWheel.Wheel about its axle (Wheel's
--- PrimaryPart, which runs along the home's x) and puts the runner at RunPoint.
+-- The Speed wheel, dressed for its level: open sides (a ring, spokes and a hub, so you can see the runner inside)
+-- that get grander with every level, from a plain cardboard spool to the golden vault. Replaces the home's old
+-- wheel. Game code spins TrainingWheel.Wheel about its axle (Wheel's PrimaryPart, which runs along the home's x) by
+-- the Wheel's Spin attribute and puts the runner at RunPoint; TrainPrompt is on the axle.
 function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, level: number)
-	local look = Homes.LEVEL_LOOK[level].wheel
+	level = math.clamp(level, 1, #Homes.WHEEL_LOOK)
+	local old = home:FindFirstChild("TrainingWheel")
+	if old then
+		old:Destroy()
+	end
+	local look = Homes.WHEEL_LOOK[level]
 	local R, W = MapConfig.wheelSize(level)
 	local p = MapConfig.BURROW_LAYOUT.TrainingWheel.position
 	local base = frame * CFrame.new(p.X, MapConfig.BURROW_FLOOR_LIFT, p.Z)
 	local hub = base * CFrame.new(0, R + 2.2, 0)
 	local model = Kit.model(home, "TrainingWheel", { Stat = "Speed", Level = level })
-	local metal = level == 7
-	local frameMaterial = if metal then Enum.Material.Foil else Enum.Material.Wood
+	local material = look.material
+	local function opts(mat: Enum.Material?): any
+		return { collide = false, material = mat or material }
+	end
+
+	-- the stand: two posts each side and a brace across the top
 	for _, sx in { -1, 1 } do
 		local x = sx * (W / 2 + 1.4)
 		for _, z in { -3, 3 } do
-			Kit.block(model, "Post", 1.4, R + 2.2, 1.4, base, x, 0, z, look[3], { material = frameMaterial })
+			Kit.block(model, "Post", 1.4, R + 2.2, 1.4, base, x, 0, z, look.frame, { material = material })
 		end
-		Kit.block(model, "Brace", 1.6, 1.6, 7.6, base, x, R + 2.2 - 1.8, 0, look[3], { material = frameMaterial })
-	end
-
-	local wheel = Kit.model(model, "Wheel")
-	local free = { collide = false, material = if metal then Enum.Material.Foil else Enum.Material.SmoothPlastic }
-	local axle = Kit.part(
-		wheel,
-		"Axle",
-		Vector3.new(W + 3.6, 1.2, 1.2),
-		hub,
-		look[3],
-		{ collide = false, shape = Enum.PartType.Cylinder, material = frameMaterial }
-	)
-	for _, sx in { -1, 1 } do
-		Kit.part(wheel, "Side", Vector3.new(0.9, 2 * R, 2 * R), hub * CFrame.new(sx * W / 2, 0, 0), look[1], {
-			collide = false,
-			shape = Enum.PartType.Cylinder,
-			material = free.material,
-		})
-		if level >= 3 then
+		Kit.block(model, "Brace", 1.6, 1.6, 7.6, base, x, R + 2.2 - 1.8, 0, look.frame, { material = material })
+		if look.neon then
+			-- a glowing strip along the brace
+			Kit.block(model, "Strip", 0.4, 0.4, 7.8, base, x + sx * 0.8, R + 1, 0, look.neon, opts(Enum.Material.Neon))
+		end
+		if look.gems then
 			Kit.part(
-				wheel,
-				"Rim",
-				Vector3.new(0.5, 2 * R + 1, 2 * R + 1),
-				hub * CFrame.new(sx * (W / 2 + 0.6), 0, 0),
-				look[3],
-				{
-					collide = false,
-					shape = Enum.PartType.Cylinder,
-					material = if level == 6 then Enum.Material.Neon else free.material,
-				}
+				model,
+				"Gem",
+				Vector3.one * 1.3,
+				base * CFrame.new(x, R + 2.8, 0) * CFrame.Angles(math.pi / 4, 0, math.pi / 4),
+				look.gems[1],
+				opts(Enum.Material.Neon)
 			)
 		end
 	end
+
+	local wheel = Kit.model(model, "Wheel")
+	local axle = Kit.part(wheel, "Axle", Vector3.new(W + 3.6, 1.2, 1.2), hub, look.frame, {
+		collide = false,
+		shape = Enum.PartType.Cylinder,
+		material = material,
+	})
+	local function onSide(sx: number, angle: number, radius: number): CFrame
+		return hub * CFrame.new(sx * W / 2, 0, 0) * CFrame.Angles(angle, 0, 0) * CFrame.new(0, radius, 0)
+	end
+	for _, sx in { -1, 1 } do
+		-- the ring: segments in the level's colours
+		local n = look.segments
+		local chord = 2 * (R + 0.5) * math.sin(math.pi / n)
+		for k = 0, n - 1 do
+			local color = look.ring[k % #look.ring + 1]
+			local at = onSide(sx, 2 * math.pi * k / n, R)
+			local glow = look.neonRing and k % 2 == 1
+			Kit.part(
+				wheel,
+				"Rim",
+				Vector3.new(0.9, 1, chord),
+				at,
+				color,
+				opts(if glow then Enum.Material.Neon else nil)
+			)
+			if look.studs and k % 2 == 0 then
+				-- toy-brick studs on the outside of the ring
+				Kit.part(wheel, "Stud", Vector3.new(0.4, 0.8, 0.8), at * CFrame.new(sx * 0.6, 0, 0), color, {
+					collide = false,
+					material = material,
+					shape = Enum.PartType.Cylinder,
+				})
+			end
+			if look.gems and k % 2 == 1 then
+				-- jewels set round the vault's ring
+				Kit.part(
+					wheel,
+					"Gem",
+					Vector3.one * 0.8,
+					at * CFrame.new(sx * 0.55, 0, 0) * CFrame.Angles(math.pi / 4, 0, 0),
+					look.gems[(k // 2) % #look.gems + 1],
+					opts(Enum.Material.Neon)
+				)
+			end
+		end
+		-- the spokes, and on the cabin wheel ship's-wheel handles past the ring
+		for k = 0, look.spokes - 1 do
+			local a = 2 * math.pi * (k + 0.5) / look.spokes
+			local spokeMaterial = if look.neonSpokes then Enum.Material.Neon else nil
+			Kit.part(
+				wheel,
+				"Spoke",
+				Vector3.new(0.6, R - 0.5, 0.7),
+				onSide(sx, a, (R - 0.5) / 2),
+				look.spoke,
+				opts(spokeMaterial)
+			)
+			if look.handles then
+				Kit.part(wheel, "Handle", Vector3.new(0.8, 1.8, 0.8), onSide(sx, a, R + 1.4), look.spoke, opts())
+			end
+		end
+		-- the hub: a plain cap, a lollipop swirl (candy) or a vault dial (gold)
+		local capAt = hub * CFrame.new(sx * (W / 2 + 0.15), 0, 0)
+		local capR = if look.lollipop then 0.3 * R elseif look.vault then 0.24 * R else 1.3
+		Kit.part(wheel, "Hub", Vector3.new(0.8, 2 * capR, 2 * capR), capAt, look.hub or look.frame, {
+			collide = false,
+			shape = Enum.PartType.Cylinder,
+			material = material,
+		})
+		if look.lollipop or look.vault then
+			Kit.part(
+				wheel,
+				"Hub",
+				Vector3.new(0.9, capR, capR),
+				capAt * CFrame.new(sx * 0.1, 0, 0),
+				if look.lollipop then 0xFFFFFF else 0xD9A21E,
+				{ collide = false, shape = Enum.PartType.Cylinder, material = material }
+			)
+		end
+	end
+	-- the rungs you run on
 	local rungs = MapConfig.wheelRungs(level)
 	for k = 0, rungs - 1 do
 		local a = 2 * math.pi * k / rungs
@@ -675,18 +845,18 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 			"Rung",
 			Vector3.new(W - 0.2, 0.8, 0.8),
 			hub * CFrame.new(0, math.cos(a) * (R - 0.5), math.sin(a) * (R - 0.5)),
-			look[2],
+			look.rungs[k % #look.rungs + 1],
 			{
 				collide = false,
 				shape = Enum.PartType.Cylinder,
-				material = if level == 6 then Enum.Material.Neon else Enum.Material.SmoothPlastic,
+				material = if look.neonRungs then Enum.Material.Neon else Enum.Material.SmoothPlastic,
 			}
 		)
 	end
 	wheel.PrimaryPart = axle
 	wheel:SetAttribute("Spin", MapConfig.wheelSpin(level))
-	if level >= 6 then
-		Kit.light(axle, "PointLight", if level == 6 then 0x7AE8FF else 0xFFE07A, 1.2, 16)
+	if look.light then
+		Kit.light(axle, "PointLight", look.light, 0.6, 16)
 	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "TrainPrompt"
@@ -701,7 +871,7 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		transparency = 1,
 	})
 
-	-- the tag over the wheel
+	-- the tag over the wheel, in the level's colour
 	local tagAnchor = Kit.part(model, "Tag", Vector3.one, hub * CFrame.new(0, R + 4, 0), 0xFFFFFF, {
 		collide = false,
 		transparency = 1,
@@ -713,11 +883,11 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 	billboard.Parent = tagAnchor
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundColor3 = Color3.fromRGB(77, 168, 255)
+	label.BackgroundColor3 = Kit.rgb(look.tag)
 	label.TextColor3 = Color3.fromRGB(26, 20, 48)
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
-	label.Text = "SPEED · Lv " .. level
+	label.Text = (if level == 7 then "★ " else "") .. "SPEED · Lv " .. level
 	label.Parent = billboard
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0.4, 0)

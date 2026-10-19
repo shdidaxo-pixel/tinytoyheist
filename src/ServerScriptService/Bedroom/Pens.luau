@@ -190,6 +190,18 @@ local function penPoint(hole: Model, u: number?, v: number?): CFrame
 end
 Pens.penPoint = penPoint
 
+-- Where waiting blankets lie, as penPoint (u, v): three across the front of the pen, then a staggered row behind,
+-- far enough apart that two Large blankets and their timers don't overlap
+local BLANKET_SPOTS = {
+	Vector2.new(0.5, 0.08),
+	Vector2.new(0.2, 0.08),
+	Vector2.new(0.8, 0.08),
+	Vector2.new(0.35, 0.3),
+	Vector2.new(0.65, 0.3),
+	Vector2.new(0.05, 0.3),
+	Vector2.new(0.95, 0.3),
+}
+
 -- A toy model for a saved toy: the prebuilt voxel model with its mutation, at its blanket's size
 function Pens.buildToy(entry: Toy): Model?
 	local assets = ServerStorage:FindFirstChild("TinyToyHeistAssets")
@@ -386,10 +398,23 @@ local function placeBlanket(player: Player, b: Blanket, model: Model?)
 	local waking = s.hole:FindFirstChild("Waking") or Instance.new("Folder")
 	waking.Name = "Waking"
 	waking.Parent = s.hole
-	-- blankets lie along the front of the pen, the first ones in the middle
-	local k = #waking:GetChildren()
-	local u = 0.5 + (if k % 2 == 0 then 1 else -1) * (k + 1) // 2 * 0.16
-	m:PivotTo(penPoint(s.hole, math.clamp(u, 0.08, 0.92), 0.08) * CFrame.Angles(0, rng:NextNumber() * 0.6 - 0.3, 0))
+	-- blankets lie along the front of the pen, the first ones in the middle, each on its own spot so they never
+	-- pile up (Dylan, 19 Oct). Spots taken by blankets that were hatched or held keep counting until they're gone.
+	local taken = {}
+	for _, other in s.blankets do
+		local slot = other:GetAttribute("Slot")
+		if slot then
+			taken[slot] = true
+		end
+	end
+	local slot = 1
+	while taken[slot] do
+		slot += 1
+	end
+	local spot = BLANKET_SPOTS[(slot - 1) % #BLANKET_SPOTS + 1]
+	local extra = (slot - 1) // #BLANKET_SPOTS -- more blankets than spots (rewards): another layer further in
+	m:SetAttribute("Slot", slot)
+	m:PivotTo(penPoint(s.hole, spot.X, spot.Y + extra * 0.44) * CFrame.Angles(0, rng:NextNumber() * 0.3 - 0.15, 0))
 	local left = math.max(0, b.w - os.time())
 	local data = ToyCatalog.get(b.id)
 	local wake = math.max(b.t or ToySize.wakeSeconds(b.s, data and data.Rarity), left, 1)

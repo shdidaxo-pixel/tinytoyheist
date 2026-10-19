@@ -168,7 +168,15 @@ function Giant.start(bedroom: Model)
 		end
 		return Vector3.new(x, 0, z)
 	end
+	-- He gets out at the foot of the bed (the end facing the run). Pushing his lying spot out of the bed's footprint
+	-- the shortest way left him boxed in by the bed, the chair and the desk, so he never reached the run.
 	local start = allowed(position)
+	for _, f in MapConfig.FOOTPRINTS do
+		if position.X > f[1] and position.X < f[3] and position.Z > f[2] and position.Z < f[4] then
+			start = allowed(Vector3.new((f[1] + f[3]) / 2, 0, f[2] - 44 * MapConfig.SCALE))
+			break
+		end
+	end
 	local function inRun(p: Vector3): boolean
 		return MapConfig.inRoom(p) and not MapConfig.inSafeZone(p) and p.Z >= 560 * MapConfig.SCALE
 	end
@@ -225,7 +233,7 @@ function Giant.start(bedroom: Model)
 						end
 					end
 				end
-				goal = goal or Vector3.new(0, 0, 1000)
+				goal = goal or Vector3.new(0, 0, MapConfig.LENGTH * 0.55) -- nobody about: the middle of the room
 				local d = Vector3.new(goal.X - position.X, 0, goal.Z - position.Z)
 				if d.Magnitude > 4 * MapConfig.SCALE then
 					position = allowed(position + d.Unit * math.min(d.Magnitude, Giant.WALK_SPEED * dt))

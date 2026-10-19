@@ -168,7 +168,7 @@ function CatView.start(bedroom: Model)
 
 		-- the head: looks around on patrol, locks forward when hunting, licks the paw while grooming
 		local wantYaw = if hunting then 0 else math.sin(t * 0.7) * 0.35
-		lookYaw += (wantYaw - lookYaw) * math.min(1, dt * 4)
+		lookYaw += (wantYaw - lookYaw) * math.min(1, dt * (if hunting then 12 else 4))
 		local rub = math.max(0, math.sin(t * 0.9)) ^ 4 -- now and then the paw goes over the ear
 		local lick = math.sin(t * 11) * 0.1
 		local neck = NECK

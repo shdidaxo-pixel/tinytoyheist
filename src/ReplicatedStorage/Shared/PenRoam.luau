@@ -172,7 +172,8 @@ local function plan(seed: number, epoch: number, box: Box, speed: number, reach:
 	return { legs = legs, endX = ex, endZ = ez }
 end
 
--- one cached plan per toy per chunk (and the chunk before, for the way it faced coming in)
+-- cached plans: two chunks per toy (odd and even), so looking a moment ahead into the next chunk doesn't throw
+-- away the current one; each keeps the chunk before it too, for the way the toy faced coming in
 type Entry = { epoch: number, key: number, plan: Plan, before: Plan? }
 local cache: { [number]: Entry } = {}
 local cached = 0
@@ -183,20 +184,22 @@ end
 
 local function planFor(seed: number, epoch: number, box: Box, speed: number, reach: number): Entry
 	local key = sizeKey(box, speed, reach)
-	local e = cache[seed]
+	local slot = seed * 2 + epoch % 2
+	local e = cache[slot]
 	if e and e.epoch == epoch and e.key == key then
 		return e
 	end
-	local before = if e and e.epoch == epoch - 1 and e.key == key then e.plan else nil
+	local other = cache[seed * 2 + (epoch - 1) % 2]
+	local before = if other and other.epoch == epoch - 1 and other.key == key then other.plan else nil
 	if cached > 4000 then
 		table.clear(cache)
 		cached = 0
 	end
-	if not cache[seed] then
+	if not e then
 		cached += 1
 	end
 	local entry = { epoch = epoch, key = key, plan = plan(seed, epoch, box, speed, reach), before = before }
-	cache[seed] = entry
+	cache[slot] = entry
 	return entry
 end
 

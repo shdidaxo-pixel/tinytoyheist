@@ -40,10 +40,30 @@ Now (`src/ReplicatedStorage/Shared/PenRoam.luau`):
 - `PenRoam.pose(seed, t, penMin, penMax, size, reach)` is unchanged for callers; it now also returns the speed
   (studs/s, 0 standing) as a third value. New helpers: `PenRoam.box`, `PenRoam.speedOf`.
 
-HomeView (`roamPen`): poses every toy in the pen, then nudges toys apart on that client: any two closer than 85% of
-their reaches added push apart, partly sideways to the walk so they step round each other; the nudge eases in, drifts
-back to the path when clear and is capped at 7 studs (`HomeView.NUDGE`). The server's steal check allows 30 + Reach
-studs, so a nudged toy is still stealable. Raids is unchanged (pose's extra return value is ignored).
+HomeView (`roamPen`), on each client:
+- Poses every toy in the pen now and 0.6 s ahead (`HomeView.LOOK`). Any two that are, or are about to be, closer than
+  90% of their reaches added push apart, mostly sideways to the walk, so they step round each other instead of walking
+  through and then sliding apart.
+- The nudge changes by at most 6 studs/s (`NUDGE_SPEED`, so nothing jumps), drifts back to the path when clear and is
+  capped at 10 studs + half the toy's Reach (`NUDGE`). The server's steal check allows 30 + Reach, so a nudged toy is
+  still stealable. Raids is unchanged (pose's extra return value is ignored).
+- The toy faces the way it really goes (its walk plus half of any sidestep) and turns at most 8 rad/s (`TURN_RATE`).
+- PenRoam keeps two chunks per toy in its cache (odd/even), so looking ahead across a chunk edge costs nothing.
+
+## Tested (Studio Play, 19 Oct)
+- Maths (in memory, 5 min at 60 fps, S/M/L/Huge): no jumps (max 0.22 studs a frame), each toy covers the whole pen,
+  walking ~60-65% of the time, 50% of the time in each half over 2 h; toys are independent of each other (even with
+  neighbouring seeds).
+- Server and client give the same pose to 4 decimals for all 16 toys checked (Dylan's 6 + 10 test toys), so the steal
+  check still lines up.
+- 10 test toys (S/M/L, Hole 5, built on the server only, not saved): deep overlap (centres closer than 60% of their
+  reaches) 0.00 pairs a frame, brief touches 0.16, fastest 15 studs/s (a trot), turning at most ~9 rad/s.
+- Dylan's own pen (6 toys incl. a Giant owl, Reach 18.9, and a Yo-Yo Kid, Reach 13.3): deep overlap 0.03 pairs a
+  frame (was 0.31 before the bigger cap for big toys). A Giant in a level-1 pen is still crowded; that's its size.
+- 160 toys cost about 0.17 ms a frame for the poses.
+- Not tested: an actual 2-player steal (needs a second player); the maths check above covers it.
+- Capture: `design/pen-roam/pen-roam-vs-recording.mp4` (local only, mp4s stay out of git) and
+  `design/pen-roam/pen-roam-vs-recording-still.jpg`.
 
 ## For the other sessions
 - animations: no new attribute; ToyAnimator reads speed from the position change, which works with continuous
@@ -54,4 +74,5 @@ studs, so a nudged toy is still stealable. Raids is unchanged (pose's extra retu
 
 ## Performance
 Per frame per toy: one cached plan lookup (a handful of legs), a few Vector3s and a PivotTo. The nudge is pairs within
-one pen (20 toys max = 190 pairs). A plan is built once per toy every 45 s.
+one pen (20 toys max = 190 pairs), and a second pose 0.6 s ahead (a cached lookup). A plan is built once per toy
+every 45 s.

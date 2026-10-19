@@ -29,11 +29,30 @@ local function seedOf(toy: Instance): number
 	return h
 end
 
--- Toys keep out of each other's way: each one walks its PenRoam path, plus a small sideways nudge (on this screen
--- only) when it would bump into another toy. The nudge stays within NUDGE studs, well inside the server's steal reach.
-HomeView.NUDGE = 7
+-- Toys keep out of each other's way: each one walks its PenRoam path, plus a sideways nudge (on this screen only)
+-- when it is about to bump into another toy. It looks LOOK seconds ahead, so toys step round each other instead of
+-- walking through and then sliding apart. The nudge stays within NUDGE studs (plus half its Reach), well inside the
+-- server's steal reach (30 + Reach).
+HomeView.NUDGE = 10
+HomeView.LOOK = 0.6
+HomeView.NUDGE_SPEED = 6 -- studs a second the nudge can change by (on top of the walk), so nothing jumps
+HomeView.TURN_RATE = 8 -- radians a second a toy turns at most
 local nudges: { [Model]: Vector3 } = setmetatable({}, { __mode = "k" }) :: any
-type Roamer = { toy: Model, p: Vector3, dir: Vector3, r: number, reach: number?, push: Vector3 }
+local facings: { [Model]: Vector3 } = setmetatable({}, { __mode = "k" }) :: any
+type Roamer = {
+	toy: Model,
+	p: Vector3,
+	q: Vector3,
+	dir: Vector3,
+	speed: number,
+	r: number,
+	reach: number?,
+	push: Vector3,
+}
+
+local function flat(v: Vector3): Vector3
+	return Vector3.new(v.X, 0, v.Z)
+end
 
 local function roamPen(frame: CFrame, pen: BasePart, toys: Instance, t: number, dt: number)
 	local penMin = pen:GetAttribute("PenMin") :: Vector3
@@ -45,20 +64,33 @@ local function roamPen(frame: CFrame, pen: BasePart, toys: Instance, t: number, 
 			local size = toy:GetAttribute("Size")
 			local reach = toy:GetAttribute("Reach")
 			local r = if typeof(reach) == "number" then reach else nil
-			local p, dir =
-				PenRoam.pose(seedOf(toy), t, penMin, penMax, if typeof(size) == "string" then size else "M", r)
-			table.insert(list, { toy = toy, p = p, dir = dir, r = math.max(r or 3, 2), reach = r, push = Vector3.zero })
+			local s = if typeof(size) == "string" then size else "M"
+			local seed = seedOf(toy)
+			local p, dir, speed = PenRoam.pose(seed, t, penMin, penMax, s, r)
+			local q = PenRoam.pose(seed, t + HomeView.LOOK, penMin, penMax, s, r)
+			local n = nudges[toy] or Vector3.zero
+			table.insert(list, {
+				toy = toy,
+				p = p,
+				q = flat(q + n),
+				dir = dir,
+				speed = speed,
+				r = math.max(r or 3, 2),
+				reach = r,
+				push = Vector3.zero,
+			})
 		end
 	end
-	-- pairs that are too close push apart, sideways to the way they walk so they step round each other
+	-- pairs that are (or are about to be) too close push apart, mostly sideways to the way they walk
 	for i = 1, #list do
 		local a = list[i]
-		local pa = a.p + (nudges[a.toy] or Vector3.zero)
+		local pa = flat(a.p + (nudges[a.toy] or Vector3.zero))
 		for j = i + 1, #list do
 			local b = list[j]
-			local d = pa - (b.p + (nudges[b.toy] or Vector3.zero))
-			d = Vector3.new(d.X, 0, d.Z)
-			local gap = (a.r + b.r) * 0.85
+			local gap = (a.r + b.r) * 0.9
+			local now = pa - flat(b.p + (nudges[b.toy] or Vector3.zero))
+			local soon = a.q - b.q
+			local d = if soon.Magnitude < now.Magnitude then soon else now
 			local dist = d.Magnitude
 			if dist < gap then
 				local n = if dist > 1e-3 then d / dist else Vector3.new(1, 0, 0)
@@ -66,26 +98,47 @@ local function roamPen(frame: CFrame, pen: BasePart, toys: Instance, t: number, 
 				if side:Dot(n) < 0 then
 					side = -side
 				end
-				local push = (n + side * 0.7).Unit * (gap - dist) * 0.5
+				local push = (n + side).Unit * (gap - dist) * 0.5
 				a.push += push
 				b.push -= push
 			end
 		end
 	end
-	local ease = math.min(1, dt * 5)
+	local ease = math.min(1, dt * 8)
 	for _, e in list do
 		local nudge = nudges[e.toy] or Vector3.zero
-		-- lean into the push, drift back onto the path when clear
-		nudge += e.push * ease * 1.6 - nudge * math.min(1, dt * 0.7)
-		if nudge.Magnitude > HomeView.NUDGE then
-			nudge = nudge.Unit * HomeView.NUDGE
+		-- step into the push, drift back onto the path when clear
+		local step = e.push * ease - nudge * math.min(1, dt * 0.6)
+		if step.Magnitude > HomeView.NUDGE_SPEED * dt then
+			step = step.Unit * HomeView.NUDGE_SPEED * dt
+		end
+		local old = nudge
+		nudge += step
+		-- a big toy (Huge, Giant) may step further aside: it's wider, and the server allows 30 + Reach
+		local cap = HomeView.NUDGE + e.r * 0.5
+		if nudge.Magnitude > cap then
+			nudge = nudge.Unit * cap
 		end
 		nudges[e.toy] = nudge
 		local box = PenRoam.box(penMin, penMax, e.reach)
 		local x = math.clamp(e.p.X + nudge.X, box.x0, box.x1)
 		local z = math.clamp(e.p.Z + nudge.Z, box.z0, box.z1)
 		local at = (frame * CFrame.new(x, top + e.p.Y, z)).Position
-		local facing = frame:VectorToWorldSpace(e.dir)
+		-- face the way it really goes (the walk plus a bit of any sidestep), turning at most TURN_RATE
+		local want = e.dir
+		if e.speed > 0.5 and dt > 0 then
+			local v = e.dir * math.max(e.speed, 2) + (nudge - old) / dt * 0.5
+			if v.Magnitude > 0.5 then
+				want = v.Unit
+			end
+		end
+		local heading = facings[e.toy] or want
+		local a0, a1 = math.atan2(heading.X, heading.Z), math.atan2(want.X, want.Z)
+		local da = (a1 - a0 + math.pi) % (2 * math.pi) - math.pi
+		local a = a0 + math.clamp(da, -HomeView.TURN_RATE * dt, HomeView.TURN_RATE * dt)
+		heading = Vector3.new(math.sin(a), 0, math.cos(a))
+		facings[e.toy] = heading
+		local facing = frame:VectorToWorldSpace(heading)
 		e.toy:PivotTo(CFrame.lookAt(at, at + facing))
 	end
 end

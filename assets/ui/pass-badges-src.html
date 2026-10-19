@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Game pass badges</title>
+<!-- Source for the game-pass badges (assets/ui/Pass*.png, 320 px). Render one with ?i=<Name>.
+     Style from Steal An Egg / Break and Steal an Egg: thick bevelled gold coin, coloured inner disc with rays,
+     a big detailed object breaking out of the coin, white sparkles and a gold "x2" with a heavy outline. -->
+<style>
+html,body{margin:0;background:transparent}
+body.sheet{display:flex;flex-wrap:wrap;gap:20px;padding:20px;background:#2F2F36}
+svg{display:block}
+body.one svg:not(.defs){display:none}
+body.one svg.show{display:block}
+</style></head>
+<body class="sheet">
+<svg class="defs" width="0" height="0" style="position:absolute">
+<defs>
+<linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4A8"/><stop offset=".35" stop-color="#FFC93A"/><stop offset=".7" stop-color="#E08A0C"/><stop offset="1" stop-color="#FFD860"/></linearGradient>
+<linearGradient id="rimIn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFF4A8"/><stop offset=".5" stop-color="#F2A81E"/><stop offset="1" stop-color="#B86A06"/></linearGradient>
+<linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFBD0"/><stop offset=".45" stop-color="#FFD23F"/><stop offset="1" stop-color="#E88A0A"/></linearGradient>
+<radialGradient id="dSpeed" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#C8F6FF"/><stop offset=".5" stop-color="#3FB8FF"/><stop offset="1" stop-color="#1250C8"/></radialGradient>
+<radialGradient id="dCash" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#E9FFB8"/><stop offset=".5" stop-color="#4CD64A"/><stop offset="1" stop-color="#127A2A"/></radialGradient>
+<radialGradient id="dLuck" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#FFF6C0"/><stop offset=".5" stop-color="#FFB63A"/><stop offset="1" stop-color="#D0560A"/></radialGradient>
+<radialGradient id="dVip" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#F4D6FF"/><stop offset=".5" stop-color="#B05CFF"/><stop offset="1" stop-color="#5418B8"/></radialGradient>
+<g id="raysA"><path d="M160 160 L160 40 L182 42 Z M160 160 L245 75 L258 92 Z M160 160 L280 160 L278 182 Z M160 160 L245 245 L228 258 Z M160 160 L160 280 L138 278 Z M160 160 L75 245 L62 228 Z M160 160 L40 160 L42 138 Z M160 160 L75 75 L92 62 Z" fill="#FFFFFF" opacity=".22"/></g>
+<g id="spark"><path d="M0 -16C1.6 -4 4 -1.6 16 0C4 1.6 1.6 4 0 16C-1.6 4 -4 1.6 -16 0C-4 -1.6 -1.6 -4 0 -16Z" fill="#FFFFFF" stroke="#2A1600" stroke-width="2.5" stroke-linejoin="round"/></g>
+</defs>
+</svg>
+
+<!-- coin shell used by every badge: disc fill id passed via the <use> wrapper below -->
+
+<svg data-name="PassSpeed" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<circle cx="160" cy="160" r="146" fill="url(#rim)" stroke="#2A1600" stroke-width="10"/>
+<circle cx="160" cy="160" r="122" fill="url(#rimIn)" stroke="#8A4A04" stroke-width="4"/>
+<circle cx="160" cy="160" r="110" fill="url(#dSpeed)" stroke="#2A1600" stroke-width="6"/>
+<use href="#raysA"/>
+<path d="M58 118a110 110 0 0 1 70-62" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+<g transform="translate(150 150) rotate(-12)">
+<path d="M-118 -8h40M-128 18h46M-112 44h36" stroke="#2A1600" stroke-width="16" stroke-linecap="round"/>
+<path d="M-118 -8h40M-128 18h46M-112 44h36" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+<path d="M-70 52c0-36 6-80 20-104l38 14c8 26 26 34 52 38l34 8c20 4 34 16 34 34v10H-70z" fill="#3F9BFF" stroke="#2A1600" stroke-width="10" stroke-linejoin="round"/>
+<path d="M-56 30c0-26 4-52 12-70" fill="none" stroke="#B8E4FF" stroke-width="8" stroke-linecap="round"/>
+<path d="M-36 -20l26-10M-28 0l26-10M-18 20l26-10" stroke="#2A1600" stroke-width="13" stroke-linecap="round"/>
+<path d="M-36 -20l26-10M-28 0l26-10M-18 20l26-10" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+<path d="M-76 52h206v18a14 14 0 0 1-14 14H-62a14 14 0 0 1-14-14z" fill="#FFFFFF" stroke="#2A1600" stroke-width="10" stroke-linejoin="round"/>
+<path d="M-62 74h176" stroke="#BFD0E4" stroke-width="7" stroke-linecap="round"/>
+<path d="M30 -70l-30 46h24l-10 38 38-52H28l12-32z" fill="#FFE04A" stroke="#2A1600" stroke-width="8" stroke-linejoin="round"/>
+</g>
+<use href="#spark" transform="translate(250 70) scale(1.5)"/><use href="#spark" transform="translate(64 236)"/><use href="#spark" transform="translate(272 150) scale(.8)"/>
+<text x="230" y="282" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="88" fill="url(#goldText)" stroke="#2A1600" stroke-width="16" paint-order="stroke" stroke-linejoin="round">x2</text>
+</svg>
+
+<svg data-name="PassCash" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<circle cx="160" cy="160" r="146" fill="url(#rim)" stroke="#2A1600" stroke-width="10"/>
+<circle cx="160" cy="160" r="122" fill="url(#rimIn)" stroke="#8A4A04" stroke-width="4"/>
+<circle cx="160" cy="160" r="110" fill="url(#dCash)" stroke="#2A1600" stroke-width="6"/>
+<use href="#raysA"/>
+<path d="M58 118a110 110 0 0 1 70-62" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+<g transform="translate(160 150) rotate(-14)" stroke="#2A1600" stroke-linejoin="round">
+<rect x="-104" y="18" width="200" height="62" rx="10" fill="#1F8A30" stroke-width="10"/>
+<rect x="-100" y="-14" width="200" height="62" rx="10" fill="#2EAA3A" stroke-width="10"/>
+<rect x="-96" y="-48" width="200" height="66" rx="10" fill="#5FDE5A" stroke-width="10"/>
+<rect x="-84" y="-38" width="176" height="46" rx="6" fill="none" stroke="#2E9B3A" stroke-width="5"/>
+<circle cx="40" cy="-15" r="19" fill="#2E9B3A" stroke="#1C6E26" stroke-width="4"/>
+<text x="40" y="-3" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="34" fill="#C8FFB0" stroke="none">$</text>
+<rect x="-34" y="-58" width="34" height="146" rx="6" fill="#FFD23F" stroke-width="9"/>
+<path d="M-26 -48v40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+<path d="M6 -40h70" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".6"/>
+</g>
+<use href="#spark" transform="translate(252 66) scale(1.5)"/><use href="#spark" transform="translate(70 92)"/><use href="#spark" transform="translate(276 170) scale(.8)"/>
+<text x="230" y="282" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="88" fill="url(#goldText)" stroke="#2A1600" stroke-width="16" paint-order="stroke" stroke-linejoin="round">x2</text>
+</svg>
+
+<svg data-name="PassLuck" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<circle cx="160" cy="160" r="146" fill="url(#rim)" stroke="#2A1600" stroke-width="10"/>
+<circle cx="160" cy="160" r="122" fill="url(#rimIn)" stroke="#8A4A04" stroke-width="4"/>
+<circle cx="160" cy="160" r="110" fill="url(#dLuck)" stroke="#2A1600" stroke-width="6"/>
+<use href="#raysA"/>
+<path d="M58 118a110 110 0 0 1 70-62" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+<g transform="translate(150 140) rotate(-10)" stroke="#2A1600" stroke-linejoin="round">
+<path d="M6 30c10 36 22 56 40 70" fill="none" stroke-width="20" stroke-linecap="round"/>
+<path d="M6 30c10 36 22 56 40 70" fill="none" stroke="#2EA82A" stroke-width="9" stroke-linecap="round"/>
+<g stroke-width="10">
+<path d="M0 0C-10 -50 -70 -62 -66 -20C-64 0 -30 6 0 0Z" fill="#52D44A"/>
+<path d="M0 0C50 -10 62 -70 20 -66C0 -64 -6 -30 0 0Z" fill="#52D44A"/>
+<path d="M0 0C10 50 70 62 66 20C64 0 30 -6 0 0Z" fill="#3CBC3A"/>
+<path d="M0 0C-50 10 -62 70 -20 66C0 64 6 30 0 0Z" fill="#3CBC3A"/>
+</g>
+<circle cx="0" cy="0" r="12" fill="#2A9A2A" stroke-width="6"/>
+<path d="M-50 -34c4-10 12-16 22-18M30 -52c8 2 14 8 16 16" fill="none" stroke="#C8FFB0" stroke-width="7" stroke-linecap="round"/>
+</g>
+<use href="#spark" transform="translate(256 70) scale(1.6)"/><use href="#spark" transform="translate(62 220)"/><use href="#spark" transform="translate(230 150) scale(.8)"/><use href="#spark" transform="translate(96 60) scale(.7)"/>
+<text x="230" y="282" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="88" fill="url(#goldText)" stroke="#2A1600" stroke-width="16" paint-order="stroke" stroke-linejoin="round">x2</text>
+</svg>
+
+<svg data-name="PassVIP" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<circle cx="160" cy="160" r="146" fill="url(#rim)" stroke="#2A1600" stroke-width="10"/>
+<circle cx="160" cy="160" r="122" fill="url(#rimIn)" stroke="#8A4A04" stroke-width="4"/>
+<circle cx="160" cy="160" r="110" fill="url(#dVip)" stroke="#2A1600" stroke-width="6"/>
+<use href="#raysA"/>
+<path d="M58 118a110 110 0 0 1 70-62" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".7"/>
+<g transform="translate(160 140)" stroke="#2A1600" stroke-linejoin="round">
+<path d="M-96 54L-110 -50L-54 -4L0 -76L54 -4L110 -50L96 54Z" fill="url(#goldText)" stroke-width="11"/>
+<path d="M-96 54h192v26H-96z" fill="#F2A81E" stroke-width="10"/>
+<circle cx="-110" cy="-50" r="11" fill="#FFE04A" stroke-width="6"/><circle cx="0" cy="-76" r="12" fill="#FFE04A" stroke-width="6"/><circle cx="110" cy="-50" r="11" fill="#FFE04A" stroke-width="6"/>
+<path d="M-20 20l20-24 20 24-20 24z" fill="#E8202E" stroke-width="6"/>
+<circle cx="-56" cy="28" r="10" fill="#3DA5FF" stroke-width="5"/><circle cx="56" cy="28" r="10" fill="#3ED83A" stroke-width="5"/>
+<path d="M-80 40l-8-60M-30 -14L0 -56" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<circle cx="-62" cy="67" r="5" fill="#FFF4A8" stroke="none"/><circle cx="0" cy="67" r="5" fill="#FFF4A8" stroke="none"/><circle cx="62" cy="67" r="5" fill="#FFF4A8" stroke="none"/>
+</g>
+<use href="#spark" transform="translate(262 78) scale(1.5)"/><use href="#spark" transform="translate(60 92) scale(1.1)"/><use href="#spark" transform="translate(268 200) scale(.8)"/>
+<text x="160" y="290" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="72" fill="url(#goldText)" stroke="#2A1600" stroke-width="15" paint-order="stroke" stroke-linejoin="round">VIP</text>
+</svg>
+
+<script>
+const k = new URLSearchParams(location.search).get('i');
+if (k) { document.body.className = 'one'; const s = document.querySelector('svg[data-name="' + k + '"]'); if (s) s.classList.add('show'); }
+</script>
+</body></html>

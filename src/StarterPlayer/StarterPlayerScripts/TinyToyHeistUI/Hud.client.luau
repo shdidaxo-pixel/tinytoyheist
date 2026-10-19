@@ -90,7 +90,13 @@ do
 	UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 16) }, scroll)
 
 	-- Small gift button + green Robux price button, used on every card.
-	local function buyRow(parent: Instance, price: string, position: UDim2, width: number): { Frame }
+	local function buyRow(
+		parent: Instance,
+		price: string,
+		position: UDim2,
+		width: number,
+		palette: UIKit.Palette?
+	): { Frame }
 		local giftHolder, giftFace = UIKit.block(parent, {
 			name = "Gift",
 			size = UDim2.fromOffset(44, 44),
@@ -100,7 +106,7 @@ do
 		UIKit.icon(giftFace, img("Gift"), 30, center, mid)
 		UIKit.clickable(giftHolder)
 		local priceHolder = UIKit.button(parent, price, {
-			palette = P.green,
+			palette = palette or P.green,
 			icon = img("Robux"),
 			size = UDim2.fromOffset(width - 50, 44),
 			position = position + UDim2.fromOffset(50, 0),
@@ -261,7 +267,9 @@ do
 		})
 	end
 
-	-- Game passes: round gold "x2" badges, a title, a line of description and a price.
+	-- Game passes, like Break and Steal an Egg: a colour card with rays bursting from behind a big detailed gold coin
+	-- badge, a bold title, a two-line description with the "2x" in green, and a wide lime price button. VIP is the
+	-- special one: a rainbow card centred on its own row.
 	jump.Passes = UIKit.section(scroll, "Game Passes", nil, 3)
 	local passes = UIKit.new("Frame", {
 		Name = "Game Passes",
@@ -271,38 +279,68 @@ do
 		LayoutOrder = 4,
 	}, scroll)
 	UIKit.new("UIGridLayout", {
-		CellSize = UDim2.fromOffset(350, 160),
+		CellSize = UDim2.fromOffset(350, 190),
 		CellPadding = UDim2.fromOffset(12, 12),
 		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 	}, passes)
+	local green = '<font color="#5BF25A">2x</font>'
 	local passList = {
-		{ "x2 Speed", 'Run <font color="#5BF25A">2x</font> faster!', "PassSpeed", "299", "5FD8FF", "1E7FE0" },
-		{ "x2 Cash", 'Earn <font color="#5BF25A">2x</font> money!', "PassCash", "499", "FFE45A", "F0A818" },
-		{ "x2 Luck", "Rarer toys under blankets!", "PassLuck", "399", "9BF06A", "2EB82A" },
-		{ "VIP", "Chat tag, x2 offline cash", "PassVIP", "799", "D07BFF", "7A2BD0" },
+		{ "x2 Speed", "Run " .. green .. " faster!", "PassSpeed3", "299", "Speed", "1250C8" },
+		{ "x2 Cash", "Earn " .. green .. " money!", "PassCash3", "499", "Cash", "B8600A" },
+		{ "x2 Luck", "Rarer toys under the blankets!", "PassLuck3", "399", "Luck", "17702A" },
+		{ "VIP", "Chat tag and " .. green .. " offline cash!", "PassVIP3", "799", "VIP", "5418B8" },
 	}
 	for i, ps in passList do
-		local _, c = UIKit.tile(passes, {
-			name = ps[1],
-			size = UDim2.fromOffset(350, 160),
-			top = hex(ps[5]),
-			bottom = hex(ps[6]),
-			edgeWidth = 3,
-			layoutOrder = i,
-		})
-		UIKit.burst(clip(c, 4), UDim2.fromOffset(70, 70), 260, 0.18)
-		local badge = UIKit.icon(c, img(ps[3]), 120, UDim2.fromOffset(70, 74), mid)
-		UIKit.hoverWiggle(c, badge)
-		UIKit.pulse(badge, 0.05, 1.1 + i * 0.1)
-		UIKit.text(c, ps[1], 30, { position = UDim2.fromOffset(222, 10), anchor = Vector2.new(0.5, 0), stroke = 3.5 })
-		local d = UIKit.text(c, ps[2], 18, {
-			position = UDim2.fromOffset(222, 50),
+		local cardFrame = UIKit.new("Frame", {
+			Name = ps[1],
+			BackgroundColor3 = UIKit.Ink,
+			LayoutOrder = i,
+		}, passes)
+		UIKit.corner(cardFrame, 6)
+		UIKit.stroke(cardFrame, hex("141018"), 4, true)
+		local bg = UIKit.new("ImageLabel", {
+			Name = "Background",
+			BackgroundTransparency = 1,
+			Image = img("PassCard_" .. ps[5]),
+			ScaleType = Enum.ScaleType.Crop,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 1,
+		}, cardFrame)
+		UIKit.corner(bg, 6)
+		-- a light inner edge so the card looks like a raised tile
+		local rim = UIKit.new("Frame", {
+			Name = "Rim",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, -6, 1, -6),
+			Position = UDim2.fromOffset(3, 3),
+			ZIndex = 2,
+		}, cardFrame)
+		UIKit.corner(rim, 4)
+		UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.55, Thickness = 2 }, rim)
+		local badge = UIKit.icon(cardFrame, img(ps[3]), 158, UDim2.fromOffset(84, 92), mid, 5)
+		UIKit.hoverWiggle(cardFrame, badge)
+		UIKit.pulse(badge, 0.04, 1.2 + i * 0.1)
+		local title = UIKit.shadowText(cardFrame, ps[1], 32)
+		title.AnchorPoint = Vector2.new(0.5, 0)
+		title.Position = UDim2.fromOffset(258, 14)
+		local d = UIKit.text(cardFrame, ps[2], 21, {
+			position = UDim2.fromOffset(258, 56),
 			anchor = Vector2.new(0.5, 0),
-			size = UDim2.fromOffset(240, 46),
+			size = UDim2.fromOffset(176, 52),
+			stroke = 3,
+			z = 6,
 		})
 		d.RichText = true
 		d.TextWrapped = true
-		buyRow(c, ps[4], UDim2.fromOffset(146, 106), 196)
+		d.TextYAlignment = Enum.TextYAlignment.Center
+		local dStroke = d:FindFirstChildOfClass("UIStroke")
+		if dStroke then
+			dStroke.Color = hex(ps[6]):Lerp(Color3.new(0, 0, 0), 0.55)
+		end
+		for _, h in buyRow(cardFrame, ps[4], UDim2.fromOffset(160, 126), 182, P.lime) do
+			h.ZIndex = 6
+		end
 	end
 
 	-- Speed and cash packs: a pile picture over rays, the amount, and a price.

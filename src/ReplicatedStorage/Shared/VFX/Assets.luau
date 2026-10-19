@@ -4,6 +4,8 @@
 -- the new id. A texture with id = "" falls back to a local copy in Studio's content folder (TTHVFX1, copied from
 -- design/vfx/out/), which only works in Studio.
 -- sheet = a 4x4 flipbook (1024 px, 16 frames of 256).
+local RunService = game:GetService("RunService")
+
 local LOCAL = "rbxasset://textures/TTHVFX1/" -- bump the folder name when pictures change; Studio caches by path
 
 export type Tex = { id: string, file: string, sheet: boolean }
@@ -30,12 +32,20 @@ local Assets: { [string]: Tex } = {
 }
 
 -- The texture to use for `name` (the uploaded id, or the local Studio copy).
+-- Studio uses the local copies (they always load, even while a new upload waits for moderation); live servers use
+-- the uploaded ids. Set to true to check the uploaded ones in Studio.
+local UPLOADED_IN_STUDIO = false
+local inStudio = RunService:IsStudio()
+
 local function get(name: string): string
 	local t = Assets[name]
 	if not t then
 		return ""
 	end
-	return if t.id ~= "" then t.id else LOCAL .. t.file .. ".png"
+	if t.id ~= "" and (UPLOADED_IN_STUDIO or not inStudio) then
+		return t.id
+	end
+	return LOCAL .. t.file .. ".png"
 end
 
 return {

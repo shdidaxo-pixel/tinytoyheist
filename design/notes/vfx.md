@@ -114,6 +114,9 @@ If you add a moment, add a row here.
 ## Textures
 - All 18 PNGs in `design/vfx/out/` were uploaded to Roblox on 19 Oct (Dylan said yes); the ids are in `Assets.luau`.
   To change one: edit and re-run `make_sprites.py` / `render_coin.py`, upload the PNG, paste the new id.
+- Studio uses the local copies (Studio's `content/textures/TTHVFX1/`); live servers use the ids. New uploads fail to
+  load until Roblox moderation passes them (they did right after upload). They're owned by samrtly (user), and the
+  game is group-owned: check they show in a live server before launch, or re-upload them to the group.
 
 ## Tested (19 Oct, Studio Play)
 - Captures in `design/studio-vfx/` (hatch frames + gif, Mythic Giant reveal card, mutation auras, home level-up,

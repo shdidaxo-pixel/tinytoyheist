@@ -52,8 +52,11 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
 - **Spawn**: each home's bed is right behind its cash thimble (Dylan's ask).
 - **Raids** (`Raids.luau` + `Carry.luau`): hold Steal 2 s on a toy in someone's pen, drag it home; dropped stolen toys
   glow red and slide home after 15 s; owner grabbing one sends it home. Anti-grief: under 3 toys, the 10-min new-player
-  shield (unless 5+ toys), 90 s per-victim cooldown, can't steal with a full pen. **Not play-tested yet: needs two
-  players** (Studio: Test > Clients and Servers, 2 players).
+  shield (unless 5+ toys), 90 s per-victim cooldown, can't steal with a full pen. Pen toys roam only on the
+  clients, so the client reports the steal (`GameRemotes.Steal`) and the server checks it against `PenRoam`.
+  **Play-tested with 2 players** (shield, steal, bank, cooldown, lock, drop and return, owner grab-back, owner
+  leaving). Studio: Test > Start Test Session > server + 2 clients; a test window renders (and shows prompts) only
+  while it's in front, so bring it forward before driving it.
 - **Rewards** (`Rewards.luau`): 7-day streak and 10 playtime gifts; rewards are cash, x2 money boosts or a mystery toy
   delivered to your pen (gadgets don't exist yet, so they were swapped out of the reward lists).
 - **UI** (`TinyToyHeistUI/GameUI.luau`): cash and $/s, the quest banner, the reveal card, and real Upgrades, Your Toys
@@ -65,7 +68,7 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
 - Gotcha: BillboardGuis with `AlwaysOnTop` don't show up in Studio screen captures.
 
 ### Still to do
-1. Two-player raid test; publish and test saving.
+1. Publish and test saving.
 2. Shop: passes and products need IDs made on the Roblox site (the shop UI isn't wired).
 3. Gadgets (Flashlight, Decoy, ...), the Pencil Bonk, door lock upgrades, alarm bell.
 4. The wheel's solid sides hide you while you train (see-through sides or a cut-away would fix it).

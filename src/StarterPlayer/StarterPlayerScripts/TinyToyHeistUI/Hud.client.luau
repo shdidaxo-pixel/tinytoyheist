@@ -402,14 +402,103 @@ do
 			UIKit.pulse(ribbon, 0.08, 0.7)
 		end
 	end
-	local function packs(titleText: string, color: Color3, order: number, cardKind: string, items: { { any } })
+	-- "DOUBLE Your Speed": a wide sunny banner above the speed packs, like Break and Steal an Egg's. A big gold bolt
+	-- in the ray burst on the left; the title, "x1 > x2" and the price row centred in the space to its right.
+	local function doubleBanner(order: number)
+		local cardFrame = UIKit.new("Frame", {
+			Name = "Double Speed",
+			BackgroundColor3 = UIKit.Ink,
+			Size = UDim2.fromOffset(712, 160),
+			LayoutOrder = order,
+		}, scroll)
+		UIKit.corner(cardFrame, 6)
+		UIKit.stroke(cardFrame, UIKit.Ink, 4, true)
+		local bg = UIKit.new("ImageLabel", {
+			Name = "Background",
+			BackgroundTransparency = 1,
+			Image = img("PassCard_Double"),
+			ScaleType = Enum.ScaleType.Crop,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 1,
+		}, cardFrame)
+		UIKit.corner(bg, 6)
+		local rim = UIKit.new("Frame", {
+			Name = "Rim",
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, -6, 1, -6),
+			Position = UDim2.fromOffset(3, 3),
+			ZIndex = 2,
+		}, cardFrame)
+		UIKit.corner(rim, 4)
+		UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.45, Thickness = 2 }, rim)
+		local bolt = UIKit.icon(cardFrame, img("BoltBig"), 148, UDim2.fromOffset(96, 80), mid, 5)
+		UIKit.hoverWiggle(cardFrame, bolt)
+		UIKit.pulse(bolt, 0.04, 1.1)
+		local cx = 440 -- centre of the space right of the bolt
+		local title = UIKit.text(cardFrame, '<font color="#5BF25A">DOUBLE</font> Your Speed', 36, {
+			position = UDim2.fromOffset(cx, 6),
+			anchor = Vector2.new(0.5, 0),
+			stroke = 4,
+			z = 6,
+		})
+		title.RichText = true
+		local row = UIKit.new("Frame", {
+			Name = "Multiplier",
+			BackgroundTransparency = 1,
+			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromOffset(0, 48),
+			Position = UDim2.fromOffset(cx, 52),
+			AnchorPoint = Vector2.new(0.5, 0),
+			ZIndex = 6,
+		}, cardFrame)
+		UIKit.new("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			Padding = UDim.new(0, 18),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+		}, row)
+		UIKit.text(row, "x1", 44, { font = UIKit.Fonts.label, stroke = 4, z = 6 }).LayoutOrder = 1
+		UIKit.icon(row, img("PlayArrow"), 40, nil, nil, 6).LayoutOrder = 2
+		-- fixed-size slot so the green "x2" can pulse from its centre without nudging the row
+		local x2Holder = UIKit.new("Frame", {
+			Name = "x2",
+			BackgroundTransparency = 1,
+			Size = UDim2.fromOffset(72, 48),
+			LayoutOrder = 3,
+			ZIndex = 6,
+		}, row)
+		local x2 = UIKit.text(x2Holder, "x2", 44, {
+			font = UIKit.Fonts.label,
+			color = hex("5BF25A"),
+			stroke = 4,
+			position = center,
+			anchor = mid,
+			z = 6,
+		})
+		UIKit.pulse(x2, 0.08, 0.8)
+		for _, h in buyRow(cardFrame, "3", UDim2.fromOffset(cx - 150, 104), 300, P.lime) do
+			h.ZIndex = 6
+		end
+	end
+
+	local function packs(
+		titleText: string,
+		color: Color3,
+		order: number,
+		cardKind: string,
+		items: { { any } },
+		banner: ((number) -> ())?
+	)
 		jump[titleText] = UIKit.section(scroll, titleText, color, order)
+		if banner then
+			banner(order + 1)
+		end
 		local small = UIKit.new("Frame", {
 			Name = titleText,
 			BackgroundTransparency = 1,
 			Size = UDim2.fromOffset(712, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
-			LayoutOrder = order + 1,
+			LayoutOrder = order + 2,
 		}, scroll)
 		UIKit.new("UIGridLayout", {
 			CellSize = UDim2.fromOffset(229, 210),
@@ -423,7 +512,7 @@ do
 			BackgroundTransparency = 1,
 			Size = UDim2.fromOffset(712, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
-			LayoutOrder = order + 2,
+			LayoutOrder = order + 3,
 		}, scroll)
 		UIKit.new("UIGridLayout", {
 			CellSize = UDim2.fromOffset(350, 210),
@@ -449,8 +538,8 @@ do
 		{ g("+10M") .. " SPEED", "SpeedPack3", "459" },
 		{ g("+50M") .. " SPEED", "SpeedPack4", "999" },
 		{ g("+250M") .. " SPEED", "SpeedPack5", "1,999", "BEST DEAL!" },
-	})
-	packs("Cash Packs", hex("6AF26A"), 8, "CashPack", {
+	}, doubleBanner)
+	packs("Cash Packs", hex("6AF26A"), 9, "CashPack", {
 		{ g("+$100K"), "CashPack1", "59" },
 		{ g("+$500K"), "CashPack2", "199", "BEST SELLING!" },
 		{ g("+$2M"), "CashPack3", "459" },

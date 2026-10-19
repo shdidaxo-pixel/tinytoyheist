@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Double speed art</title>
+<!-- Art for the shop's "DOUBLE Your Speed" banner (256 px each, transparent):
+     ?i=BoltBig   chunky gold bolt with a dark outline, orange shaded side and a white shine (assets/ui/BoltBig.png)
+     ?i=PlayArrow white play arrow with a soft grey underside and the same dark outline (assets/ui/PlayArrow.png) -->
+<style>html,body{margin:0;background:transparent}svg{display:none}svg.on{display:block}</style></head><body>
+<svg id="BoltBig" width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE985"/><stop offset=".45" stop-color="#FFC21E"/><stop offset="1" stop-color="#F59100"/></linearGradient>
+<linearGradient id="side" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F08A00"/><stop offset="1" stop-color="#C45E00"/></linearGradient>
+</defs>
+<g transform="rotate(-8 128 128)">
+<!-- the bolt: a tall rounded slab on top, a kick to the right, a tail down to the left -->
+<path id="b" d="M92 20 L170 20 Q182 20 178 32 L156 98 L196 98 Q210 98 202 110 L112 236 Q104 246 104 232 L118 150 L80 150 Q68 150 70 138 L80 32 Q82 20 92 20 Z"
+ fill="#141018" stroke="#141018" stroke-width="26" stroke-linejoin="round"/>
+<!-- darker right side gives it thickness -->
+<path d="M100 28 L172 28 L150 104 L192 104 L114 228 L124 146 L84 146 L92 28 Z" fill="url(#side)" stroke="#C45E00" stroke-width="14" stroke-linejoin="round"/>
+<path d="M98 26 L160 26 L140 100 L184 100 L112 216 L118 142 L80 142 L88 26 Z" fill="url(#gold)" stroke="#FFC21E" stroke-width="12" stroke-linejoin="round"/>
+<!-- shine -->
+<ellipse cx="104" cy="58" rx="13" ry="17" fill="#FFFFFF" transform="rotate(10 104 58)"/>
+<path d="M98 92 Q96 116 94 128" stroke="#FFFFFF" stroke-opacity=".7" stroke-width="7" stroke-linecap="round" fill="none"/>
+</g>
+</svg>
+<svg id="PlayArrow" width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#F2F4FA"/><stop offset="1" stop-color="#B8C0D4"/></linearGradient></defs>
+<path d="M70 44 L206 128 L70 212 Z" fill="#141018" stroke="#141018" stroke-width="40" stroke-linejoin="round"/>
+<path d="M70 44 L206 128 L70 212 Z" fill="url(#wg)" stroke="url(#wg)" stroke-width="14" stroke-linejoin="round"/>
+<path d="M80 74 L80 120" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+</svg>
+<script>const k=new URLSearchParams(location.search).get('i')||'BoltBig';document.getElementById(k).classList.add('on')</script>
+</body></html>

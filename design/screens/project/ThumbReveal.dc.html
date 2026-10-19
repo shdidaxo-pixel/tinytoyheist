@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Thumbnail C · The reveal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; font-family: 'Nunito', sans-serif; background: #1E1440">
+  <div aria-hidden="true" style="position: absolute; left: 240px; top: -180px; width: 1080px; height: 1080px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255,120,150,0.5) 0deg 9deg, rgba(120,170,255,0.0) 9deg 18deg); -webkit-mask-image: radial-gradient(circle, #000 25%, transparent 66%); mask-image: radial-gradient(circle, #000 25%, transparent 66%)"></div>
+  <div aria-hidden="true" style="position: absolute; left: 560px; top: 140px; width: 440px; height: 440px; border-radius: 50%; background: radial-gradient(circle, rgba(255,210,240,0.9), rgba(160,90,255,0) 70%)"></div>
+  <svg role="img" aria-label="A blanket flies off to reveal a glowing Galaxy Unicorn Plush while a tiny player gasps" width="1280" height="720" viewBox="0 0 1280 720" style="position: absolute; inset: 0">
+    <defs>
+      <linearGradient id="mane" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#7B5CFF"/><stop offset="0.5" stop-color="#FF5CC8"/><stop offset="1" stop-color="#4DD8FF"/>
+      </linearGradient>
+      <linearGradient id="horn" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#FF4D5E"/><stop offset="0.25" stop-color="#FFC93C"/><stop offset="0.5" stop-color="#3DDC97"/><stop offset="0.75" stop-color="#4DA8FF"/><stop offset="1" stop-color="#9B7BFF"/>
+      </linearGradient>
+      <pattern id="checks" width="40" height="40" patternUnits="userSpaceOnUse">
+        <rect width="40" height="40" fill="#3DDC97"/><rect width="20" height="20" fill="#FFFFFF"/><rect x="20" y="20" width="20" height="20" fill="#FFFFFF"/>
+      </pattern>
+    </defs>
+    <!-- floor -->
+    <path d="M0 600 Q640 570 1280 600 L1280 720 L0 720 Z" fill="#4B3F7C" stroke="#1A1430" stroke-width="6"/>
+    <!-- blanket flying off, top right -->
+    <g transform="translate(1010 150) rotate(28)">
+      <path d="M-150 60 C-140 -10 -80 -70 0 -74 C80 -70 140 -10 150 60 C130 72 110 58 90 70 C70 58 50 74 30 64 C10 76 -10 60 -30 70 C-50 60 -70 76 -90 66 C-110 76 -130 62 -150 60 Z" fill="url(#checks)" stroke="#1A1430" stroke-width="8" stroke-linejoin="round"/>
+      <path d="M-150 60 C-130 62 -110 76 -90 66 C-70 76 -50 60 -30 70 C-10 60 10 76 30 64 C50 74 70 58 90 70 C110 58 130 72 150 60" fill="none" stroke="#1F9A68" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <path d="M900 260 L860 300 M940 280 L920 330 M870 230 L820 250" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+    <!-- Galaxy Unicorn Plush -->
+    <ellipse cx="780" cy="600" rx="180" ry="20" fill="#1A1430" opacity="0.4"/>
+    <rect x="660" y="500" width="40" height="96" rx="14" fill="#FFFFFF" stroke="#1A1430" stroke-width="8"/>
+    <rect x="720" y="510" width="40" height="88" rx="14" fill="#F0ECFF" stroke="#1A1430" stroke-width="8"/>
+    <rect x="820" y="510" width="40" height="88" rx="14" fill="#F0ECFF" stroke="#1A1430" stroke-width="8"/>
+    <rect x="876" y="500" width="40" height="96" rx="14" fill="#FFFFFF" stroke="#1A1430" stroke-width="8"/>
+    <rect x="640" y="400" width="300" height="140" rx="60" fill="#FFFFFF" stroke="#1A1430" stroke-width="8"/>
+    <path d="M640 440 Q590 420 580 480 Q570 540 620 520 Q600 480 640 470 Z" fill="url(#mane)" stroke="#1A1430" stroke-width="7" stroke-linejoin="round"/>
+    <rect x="860" y="270" width="150" height="150" rx="50" fill="#FFFFFF" stroke="#1A1430" stroke-width="8"/>
+    <rect x="950" y="350" width="90" height="70" rx="30" fill="#FFE6F4" stroke="#1A1430" stroke-width="8"/>
+    <circle cx="1004" cy="380" r="5" fill="#1A1430"/><circle cx="1024" cy="380" r="5" fill="#1A1430"/>
+    <path d="M840 300 Q820 360 860 420 Q880 360 900 330 Q900 280 860 266 Z" fill="url(#mane)" stroke="#1A1430" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M840 300 Q860 250 900 262 Q930 230 960 270 L900 300 Z" fill="url(#mane)" stroke="#1A1430" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M950 280 L990 190 L1000 290 Z" fill="url(#horn)" stroke="#1A1430" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M900 254 L912 232 L926 256 Z" fill="#FFFFFF" stroke="#1A1430" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="944" cy="330" r="13" fill="#1A1430"/><circle cx="949" cy="325" r="5" fill="#FFFFFF"/>
+    <circle cx="966" cy="366" r="9" fill="#FFB0D8"/>
+    <path d="M700 430 l5 -12 l5 12 l12 5 l-12 5 l-5 12 l-5 -12 l-12 -5 z M780 470 l4 -9 l4 9 l9 4 l-9 4 l-4 9 l-4 -9 l-9 -4 z M890 470 l3 -7 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 z" fill="#9B7BFF"/>
+    <!-- sparkles around -->
+    <path d="M590 300 l8 -20 l8 20 l20 8 l-20 8 l-8 20 l-8 -20 l-20 -8 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/>
+    <path d="M1090 470 l6 -16 l6 16 l16 6 l-16 6 l-6 16 l-6 -16 l-16 -6 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/>
+    <path d="M1060 240 l4 -10 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="3"/>
+    <!-- tiny shocked player, bottom left of the toy -->
+    <g transform="translate(470 560) scale(1.15)">
+      <rect x="-26" y="40" width="22" height="40" rx="5" fill="#2E4FA0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="6" y="40" width="22" height="40" rx="5" fill="#2E4FA0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="-32" y="-26" width="64" height="72" rx="8" fill="#3DDC97" stroke="#1A1430" stroke-width="6"/>
+      <rect x="-60" y="-80" width="20" height="58" rx="8" fill="#FFD9B0" stroke="#1A1430" stroke-width="6" transform="rotate(-20 -50 -22)"/>
+      <rect x="40" y="-80" width="20" height="58" rx="8" fill="#FFD9B0" stroke="#1A1430" stroke-width="6" transform="rotate(20 50 -22)"/>
+      <rect x="-26" y="-84" width="56" height="56" rx="12" fill="#FFD9B0" stroke="#1A1430" stroke-width="6"/>
+      <circle cx="-8" cy="-62" r="6" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/><circle cx="14" cy="-62" r="6" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/>
+      <ellipse cx="3" cy="-42" rx="7" ry="9" fill="#1A1430"/>
+      <path d="M-26 -84 Q2 -104 30 -84 L30 -74 L-26 -74 Z" fill="#FF4D5E" stroke="#1A1430" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+  </svg>
+
+  <div style="position: absolute; left: 48px; top: 60px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px">
+    <div style="padding: 8px 20px; background: #FF4D5E; border: 5px solid #1A1430; border-radius: 16px; box-shadow: 0 6px 0 #1A1430; transform: rotate(-4deg); font: 400 44px 'Lilita One', sans-serif; color: #FFFFFF; letter-spacing: 0.04em">MYTHIC!!</div>
+    <div style="font: 400 120px 'Lilita One', sans-serif; line-height: 0.95; color: #FFC93C; text-shadow: 0 8px 0 #1A1430, 6px 0 0 #1A1430, -6px 0 0 #1A1430, 0 -6px 0 #1A1430, 5px 5px 0 #1A1430, -5px 5px 0 #1A1430">1 IN<br>3,333</div>
+    <div style="font: 400 40px 'Lilita One', sans-serif; color: #7CF2B0; text-shadow: 0 4px 0 #1A1430, 3px 0 0 #1A1430, -3px 0 0 #1A1430">$15,000 / sec</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<title>Tiny Toy Heist House Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a level-design sheet. Header, layer toggles, the big plan, an inspector, then reference tables. */
+:root{
+  --paper:#EEF1F4; --panel:#FFFFFF; --ink:#1B2A3A; --ink-soft:#5A6B7C; --line:#A3B1BF; --wall:#1B2A3A;
+  --carpet:#DCD4EE; --carpet-dot:#C3B8DE; --wood:#EAD6B8; --wood-line:#D5BC97; --tile:#D4EAEF; --tile-line:#B4D3DA; --locked:#DDE2E8;
+  --furn:#FFFFFF; --furn-line:#7D8C9B;
+  --giant:#D23B3B; --cat:#D9822B; --roomba:#3F73E0; --hole:#2A1F16; --hide:#2E9A62; --trap:#B0323A;
+  --s:#7C8896; --m:#2F7BD8; --l:#9246D4;
+  --display:'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --body:'IBM Plex Sans', system-ui, sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111922; --panel:#18232F; --ink:#E4EBF2; --ink-soft:#9AA9B8; --line:#3A4A5C; --wall:#C9D5E1;
+  --carpet:#3A3450; --carpet-dot:#4B4366; --wood:#4A3B29; --wood-line:#5C4A33; --tile:#21424A; --tile-line:#2C5660; --locked:#1D2630;
+  --furn:#22303E; --furn-line:#7F92A6; --hole:#05070A;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111922; --panel:#18232F; --ink:#E4EBF2; --ink-soft:#9AA9B8; --line:#3A4A5C; --wall:#C9D5E1;
+  --carpet:#3A3450; --carpet-dot:#4B4366; --wood:#4A3B29; --wood-line:#5C4A33; --tile:#21424A; --tile-line:#2C5660; --locked:#1D2630;
+  --furn:#22303E; --furn-line:#7F92A6; --hole:#05070A;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:26px;margin:0 0 10px;letter-spacing:.02em;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-soft)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:6px 12px;border-radius:999px;font:500 13px var(--body);cursor:pointer}
+.chip[aria-pressed="false"]{opacity:.5}
+.chip:focus-visible{outline:2px solid var(--m);outline-offset:2px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.mapbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.mapbox svg{display:block;min-width:820px;width:100%;height:auto}
+.inspector{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:8px;min-width:0}
+.card h3{font-family:var(--display);font-weight:600;font-size:22px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--ink-soft)} .kv dd{margin:0;font-family:var(--mono);font-size:13px}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 18px;font-size:13px}
+.legend span{display:flex;align-items:center;gap:8px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:620px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+section{display:grid;gap:12px}
+ul.notes{margin:0;padding-left:20px;display:grid;gap:6px;max-width:80ch}
+.elev svg{display:block;min-width:720px;width:100%;height:auto}
+/* SVG classes (colors from tokens) */
+.wall{fill:none;stroke:var(--wall);stroke-width:8}
+.f-carpet{fill:url(#pCarpet)} .f-wood{fill:url(#pWood)} .f-tile{fill:url(#pTile)} .f-locked{fill:url(#pLocked)}
+.pc-bg{fill:var(--carpet)} .pc-dot{fill:var(--carpet-dot)} .pw-bg{fill:var(--wood)} .pw-ln{stroke:var(--wood-line);stroke-width:2}
+.pt-bg{fill:var(--tile)} .pt-ln{stroke:var(--tile-line);stroke-width:1.5;fill:none} .pl-bg{fill:var(--locked)} .pl-ln{stroke:var(--line);stroke-width:1.5}
+.furn{fill:var(--furn);stroke:var(--furn-line);stroke-width:1.5}
+.furn-label{fill:var(--ink-soft);font:500 11px var(--body)}
+.door{stroke:none}
+.locked-door{fill:none;stroke:var(--giant);stroke-width:3;stroke-dasharray:6 5}
+.room-label{fill:var(--ink);font:700 17px var(--display);letter-spacing:.04em}
+.room-sub{fill:var(--ink-soft);font:400 11px var(--mono)}
+.hole{fill:var(--hole);stroke:var(--wall);stroke-width:1}
+.hole-label{fill:var(--ink);font:600 11px var(--mono)}
+.spawn{stroke:var(--panel);stroke-width:2}
+.spawn-S{fill:var(--s)} .spawn-M{fill:var(--m)} .spawn-L{fill:var(--l)}
+.spawn-t{fill:#fff;font:600 10px var(--mono);pointer-events:none}
+.hide-zone{fill:var(--hide);fill-opacity:.12;stroke:var(--hide);stroke-width:2;stroke-dasharray:5 4}
+.giant-path{fill:none;stroke:var(--giant);stroke-width:3;stroke-dasharray:10 7}
+.giant-body{fill:var(--giant);fill-opacity:.18;stroke:var(--giant);stroke-width:2}
+.giant-t{fill:var(--giant);font:600 12px var(--body)}
+.reach{fill:var(--giant);fill-opacity:.06;stroke:var(--giant);stroke-width:1;stroke-dasharray:3 4}
+.cat-path{fill:none;stroke:var(--cat);stroke-width:3;stroke-dasharray:2 7;stroke-linecap:round}
+.cat-t{fill:var(--cat);font:600 12px var(--body)}
+.roomba-path{fill:none;stroke:var(--roomba);stroke-width:3;stroke-dasharray:12 6}
+.roomba-t{fill:var(--roomba);font:600 12px var(--body)}
+.trap{stroke:var(--trap);stroke-width:3}
+.quiet{fill:none;stroke:var(--hide);stroke-width:2}
+.quiet-t{fill:var(--hide);font:600 11px var(--body)}
+.scale-ln{stroke:var(--ink);stroke-width:2}
+.scale-t{fill:var(--ink-soft);font:400 11px var(--mono)}
+[data-k]{cursor:pointer}
+[data-k]:focus{outline:none}
+.sel{stroke:var(--m)!important;stroke-width:3!important}
+.elev-bar{stroke:var(--furn-line);stroke-width:1.5}
+.elev-t{fill:var(--ink);font:500 11px var(--body)}
+.elev-n{fill:var(--ink-soft);font:400 10px var(--mono)}
+.ground{stroke:var(--ink);stroke-width:2}
+@media (max-width:760px){.inspector{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:no-preference){.giant-path{animation:march 1.6s linear infinite}@keyframes march{to{stroke-dashoffset:-34}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tiny Toy Heist · Level design · MVP floor</div>
+    <h1>The House, at mouse height</h1>
+    <p class="lede">Top-down plan of the three MVP rooms: Kid's Bedroom, Hallway and Kitchen. 1 stud on this plan is 1 cm in a real house, so a 5-stud player is about the size of a toy figure and the bed is a cliff. Tap anything on the plan to see its numbers.</p>
+  </header>
+
+  <div class="toolbar" id="toolbar" aria-label="Map layers"></div>
+
+  <div class="mapbox"><svg id="map" viewBox="-20 -44 1140 700" role="img" aria-label="Floor plan of the bedroom, hallway and kitchen"></svg></div>
+
+  <div class="inspector">
+    <div class="card" id="inspect" aria-live="polite">
+      <h3>Tap something on the plan</h3>
+      <p class="lede">Mouse holes, spawn points, furniture, hiding spots, traps and the Giant's path all show their numbers here.</p>
+    </div>
+    <div class="card">
+      <h3>Legend</h3>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--carpet)"></i>Carpet: noise x1</span>
+        <span><i class="sw" style="background:var(--wood)"></i>Wood: noise x2</span>
+        <span><i class="sw" style="background:var(--tile)"></i>Tile: noise x3</span>
+        <span><i class="sw" style="background:var(--locked)"></i>Locked room</span>
+        <span><i class="sw" style="background:var(--s);border-radius:50%"></i>Spawn: Small</span>
+        <span><i class="sw" style="background:var(--m);border-radius:50%"></i>Spawn: Medium</span>
+        <span><i class="sw" style="background:var(--l);border-radius:50%"></i>Spawn: Large</span>
+        <span><i class="sw" style="background:var(--hole)"></i>Mouse hole (H1–H8)</span>
+        <span><i class="sw" style="border:2px dashed var(--hide)"></i>Hiding spot</span>
+        <span><i class="sw" style="background:var(--giant)"></i>Giant Kid</span>
+        <span><i class="sw" style="background:var(--cat)"></i>Cat (week 2 update)</span>
+        <span><i class="sw" style="background:var(--roomba)"></i>Roomba (week 5 update)</span>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>How big everything is</h2>
+    <p class="lede">Side view, drawn to one scale. Heights in studs. Anything taller than about 45 studs is a wall to a player; anything under 12 is something you can drag.</p>
+    <div class="mapbox elev"><svg id="elev" viewBox="0 0 1000 300" role="img" aria-label="Side view comparing heights of the player, toys, furniture and the Giant Kid"></svg></div>
+  </section>
+
+  <section>
+    <h2>Rooms</h2>
+    <div class="scroll"><table id="rooms"></table></div>
+  </section>
+
+  <section>
+    <h2>Trip times</h2>
+    <p class="lede">Measured along the drawn routes at Roblox's default walk speed (16 studs a second), coming back at that toy size's carry speed. The design target is a 30–120 second run.</p>
+    <div class="scroll"><table id="trips"></table></div>
+  </section>
+
+  <section>
+    <h2>Why it's laid out this way</h2>
+    <ul class="notes">
+      <li><strong>All 8 mouse holes are in the Hallway.</strong> It's the hub between the two loot rooms, so every player passes everyone else's door and sign. Raids happen on the way to loot, not as a separate trip.</li>
+      <li><strong>The Hallway runner is the quiet lane.</strong> A strip of carpet down the middle of a loud wood floor. Dragging on it is x1 noise; step off it with a Medium toy and you double your noise. It's also the cat's route later, so the safe lane stops being safe.</li>
+      <li><strong>The Giant sleeps in the Bedroom, the best loot is in the Kitchen.</strong> Close loot is quiet but cheap; far loot is on loud tile and worth 2.5x. The Giant's snack run goes through the Hallway to the fridge, straight past every mouse hole.</li>
+      <li><strong>Every room has two hiding spots within 8 seconds of any spawn.</strong> Getting caught should feel like a mistake, not bad luck.</li>
+      <li><strong>Locked doors show what's next.</strong> The Living Room door and the Garage door are visible from the main routes, with a glowing toy behind each gap.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Grey-box build list</h2>
+    <p class="lede">What to block out in Studio for week 1. Plain parts, no art yet; heights from the side view.</p>
+    <div class="scroll"><table id="build"></table></div>
+  </section>
+</div>
+
+<script>
+const ROOMS=[
+ {id:'bedroom',name:"Kid's Bedroom",x:0,y:0,w:400,h:360,floor:'carpet',noise:'x1',sizes:'Small, Medium',spawns:12,unlock:'Start',status:'MVP',real:'4.0 × 3.6 m'},
+ {id:'hallway',name:'Hallway',x:400,y:0,w:120,h:600,floor:'wood',noise:'x2 (runner x1)',sizes:'Small, Medium',spawns:8,unlock:'Strength 3',status:'MVP',real:'1.2 × 6.0 m'},
+ {id:'kitchen',name:'Kitchen',x:520,y:180,w:480,h:420,floor:'tile',noise:'x3 (sink mat x1)',sizes:'Medium, Large',spawns:14,unlock:'Strength 6 + $10K',status:'MVP',real:'4.8 × 4.2 m'},
+ {id:'living',name:'Living Room',x:0,y:360,w:400,h:240,floor:'locked',noise:'x1 / x2',sizes:'Medium, Large',spawns:16,unlock:'Strength 10 + $250K',status:'Week 3 update',real:'4.0 × 2.4 m (this wing)'},
+ {id:'laundry',name:'Laundry',x:520,y:0,w:480,h:180,floor:'locked',noise:'—',sizes:'—',spawns:0,unlock:'Not planned',status:'Spare space',real:'4.8 × 1.8 m'}
+];
+const FURN=[
+ {n:'Bed',room:'bedroom',x:20,y:20,w:110,h:210,ht:55,hide:true,note:'The Giant Kid sleeps here. Under the bed is the biggest hiding spot: he can\'t reach under it.'},
+ {n:'Nightstand',room:'bedroom',x:140,y:20,w:50,h:50,ht:60,note:'Holds the night-light, so the Bedroom is never fully dark.'},
+ {n:'Toy chest',room:'bedroom',x:300,y:20,w:90,h:60,ht:45,hide:true,note:'Hide in the gap behind it.'},
+ {n:'Desk',room:'bedroom',x:290,y:170,w:100,h:60,ht:75,hide:true,note:'Hide underneath.'},
+ {n:'Chair',room:'bedroom',x:315,y:240,w:40,h:36,ht:45,note:'Climbable later (jump boost).'},
+ {n:'Bookshelf',room:'bedroom',x:20,y:304,w:110,h:48,ht:120,note:'Books knocked off a shelf: +30 noise.'},
+ {n:'Bean bag',room:'bedroom',x:195,y:285,w:70,h:55,ht:35,hide:true,note:'Sink into it to hide. Funny clip spot.'},
+ {n:'Shoe rack',room:'hallway',x:404,y:216,w:32,h:46,ht:40,hide:true,note:'Crawl under it.'},
+ {n:'Umbrella stand',room:'hallway',x:488,y:64,w:28,h:30,ht:60,note:'Coat-Hook Kraken and Umbrella Bat theme.'},
+ {n:'Key table',room:'hallway',x:488,y:296,w:28,h:70,ht:80,note:'Keys on top: knock them off for +30 noise.'},
+ {n:'Fridge',room:'kitchen',x:524,y:184,w:80,h:70,ht:180,hide:true,note:'The Giant\'s snack target. Hide in the gap beside it.'},
+ {n:'Counter',room:'kitchen',x:604,y:184,w:392,h:56,ht:90,note:'Cabinets underneath. Mousetraps sit along the cabinet edge.'},
+ {n:'Counter',room:'kitchen',x:936,y:240,w:60,h:240,ht:90,note:'Cabinets underneath.'},
+ {n:'Island',room:'kitchen',x:680,y:360,w:160,h:80,ht:90,hide:true,note:'Hide under the overhang.'},
+ {n:'Table',room:'kitchen',x:560,y:470,w:100,h:100,ht:75,hide:true,note:'Hide underneath; the Roomba drives under it too.'},
+ {n:'Chair',room:'kitchen',x:546,y:500,w:12,h:40,ht:45},
+ {n:'Chair',room:'kitchen',x:662,y:500,w:12,h:40,ht:45},
+ {n:'Trash can',room:'kitchen',x:944,y:490,w:44,h:44,ht:65,note:'Knock it over: +30 noise.'},
+ {n:'Roomba dock',room:'kitchen',x:950,y:556,w:40,h:40,ht:8,note:'Week 5: dropped toys get dumped here. Jackpot pile.'},
+ {n:'Couch',room:'living',x:40,y:520,w:200,h:60,ht:42,note:'Locked room. The cat naps here from week 2.'}
+];
+const ZONES=[{x:440,y:8,w:40,h:584,cls:'f-carpet',n:'Hallway runner (quiet lane)'},{x:690,y:244,w:100,h:30,cls:'f-carpet',n:'Sink mat'}];
+const HOLES=[
+ {id:'H1',x:400,y:40,side:'L'},{id:'H2',x:400,y:120,side:'L'},{id:'H3',x:400,y:200,side:'L'},{id:'H4',x:400,y:410,side:'L'},
+ {id:'H5',x:520,y:40,side:'R'},{id:'H6',x:520,y:120,side:'R'},{id:'H7',x:520,y:260,side:'R'},{id:'H8',x:520,y:400,side:'R'}];
+const SPAWNS=[
+ // Bedroom: 12 (Small/Medium)
+ [160,120,'S'],[165,250,'S'],[230,60,'S'],[240,180,'M'],[262,120,'S'],[330,120,'M'],[350,300,'S'],[60,265,'M'],[160,330,'S'],[290,320,'M'],[225,240,'S'],[120,262,'S'],
+ // Hallway: 8
+ [460,80,'S'],[500,150,'M'],[424,150,'S'],[460,330,'M'],[500,440,'S'],[422,470,'M'],[460,560,'S'],[500,520,'M'],
+ // Kitchen: 14 (Medium/Large)
+ [640,300,'L'],[760,300,'M'],[880,300,'L'],[560,300,'M'],[600,370,'M'],[900,420,'L'],[760,480,'M'],[860,520,'M'],[700,560,'L'],[800,580,'M'],[880,380,'M'],[680,500,'L'],[620,440,'M'],[840,470,'L']];
+const TRAPS=[[660,250],[850,250],[925,330],[925,450]];
+const GIANT_PATH=[[140,160],[360,305],[460,305],[460,520],[540,520],[564,290]];
+const CAT_PATH=[[460,580],[460,24],[426,24],[426,300],[380,305]];
+const CAT_PATH2=[[426,480],[300,480],[160,540]];
+const ROOMBA_PATH=[[970,576],[680,588],[540,588],[540,300],[900,300],[900,470],[970,576]];
+const TRIPS=[
+ {n:'Bedroom, by the desk',from:'H3',pts:[[408,200],[408,305],[380,305],[330,120]],size:'Small',carry:.95},
+ {n:'Bedroom, beside the bed',from:'H1',pts:[[408,40],[408,305],[380,305],[120,262]],size:'Medium',carry:.80},
+ {n:'Kitchen, by the table',from:'H8',pts:[[512,400],[512,520],[540,520],[620,440]],size:'Medium',carry:.80},
+ {n:'Kitchen, far counter',from:'H5',pts:[[512,40],[512,520],[540,520],[880,300]],size:'Large',carry:.60}];
+const SIZE_NAME={S:'Small',M:'Medium',L:'Large'};
+const SIZE_INFO={S:{speed:'95%',noise:'0.5 /s on carpet'},M:{speed:'80%',noise:'1 /s on carpet'},L:{speed:'60%',noise:'2 /s on carpet'}};
+
+const INFO=[]; // index -> {title, rows:[[k,v]], text}
+const reg=(title,rows,text)=>{INFO.push({title,rows,text});return INFO.length-1};
+const pts=a=>a.map(p=>p.join(',')).join(' ');
+const len=a=>a.slice(1).reduce((s,p,i)=>s+Math.hypot(p[0]-a[i][0],p[1]-a[i][1]),0);
+const roomOf=(x,y)=>ROOMS.find(r=>x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h);
+
+function buildMap(){
+  const L={};
+  let s=`<defs>
+   <pattern id="pCarpet" width="10" height="10" patternUnits="userSpaceOnUse"><rect class="pc-bg" width="10" height="10"/><circle class="pc-dot" cx="5" cy="5" r="1.1"/></pattern>
+   <pattern id="pWood" width="120" height="24" patternUnits="userSpaceOnUse"><rect class="pw-bg" width="120" height="24"/><line class="pw-ln" x1="0" y1="24" x2="120" y2="24"/><line class="pw-ln" x1="70" y1="0" x2="70" y2="24"/></pattern>
+   <pattern id="pTile" width="30" height="30" patternUnits="userSpaceOnUse"><rect class="pt-bg" width="30" height="30"/><path class="pt-ln" d="M30 0V30M0 30H30"/></pattern>
+   <pattern id="pLocked" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="pl-bg" width="14" height="14"/><line class="pl-ln" x1="0" y1="0" x2="0" y2="14"/></pattern>
+  </defs>`;
+  // floors
+  let floors='';
+  ROOMS.forEach(r=>{const k=reg(r.name,[['Size',`${r.w} × ${r.h} studs (${r.real})`],['Floor',r.floor==='locked'?'Locked':r.floor],['Noise',r.noise],['Spawns',`${r.spawns} (${r.sizes})`],['Unlocks at',r.unlock],['Status',r.status]],'');
+    floors+=`<rect class="f-${r.floor}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" data-k="${k}"><title>${r.name}</title></rect>`});
+  ZONES.forEach(z=>{const k=reg(z.n,[['Floor','carpet'],['Noise','x1']],z.n.includes('runner')?'A carpet strip down a wood floor. Drag on it to halve your noise.':'A quiet patch right where the loudest loot is.');
+    floors+=`<rect class="${z.cls}" x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" data-k="${k}"><title>${z.n}</title></rect>`});
+  // walls + doors
+  let walls=ROOMS.map(r=>`<rect class="wall" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/>`).join('');
+  walls+=`<rect class="door" style="fill:url(#pCarpet)" x="395" y="270" width="10" height="70"/>`;
+  walls+=`<rect class="door" style="fill:url(#pTile)" x="515" y="480" width="10" height="80"/>`;
+  const kLiv=reg('Living Room door (locked)',[['Opens at','Strength 10 + $250K'],['Update','Week 3']],'A glowing toy shows through the gap so players can see the next goal.');
+  walls+=`<line class="locked-door" x1="400" y1="440" x2="400" y2="520" data-k="${kLiv}"><title>Locked door</title></line>`;
+  const kGar=reg('Garage door (locked)',[['Opens at','Strength 14 + $5M'],['Update','Week 5']],'Garage is where Giant-size toys start to spawn.');
+  walls+=`<line class="locked-door" x1="1000" y1="480" x2="1000" y2="560" data-k="${kGar}"><title>Locked door</title></line>`;
+  const kAtt=reg('Attic ladder (locked)',[['Opens at','Rebirth 1 + Strength 18'],['Update','Week 6']],'A ceiling hatch above the hallway. The pull-cord dangles just out of reach until you rebirth.');
+  walls+=`<rect class="locked-door" x="430" y="10" width="60" height="38" rx="3" data-k="${kAtt}"><title>Attic hatch</title></rect>`;
+  // furniture
+  let furn='';
+  FURN.forEach((f,i)=>{const k=reg(f.n,[['Room',ROOMS.find(r=>r.id===f.room).name],['Footprint',`${f.w} × ${f.h} studs`],['Height',`${f.ht} studs`],['Hiding spot',f.hide?'Yes':'No']],f.note||'');
+    f.k=k;
+    const op=f.room==='living'?' style="opacity:.55"':'';
+    furn+=`<rect class="furn" x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h}" rx="4" data-k="${k}"${op}><title>${f.n}</title></rect>`;
+    if(f.w>=40&&f.h>=30) furn+=`<text class="furn-label" x="${f.x+f.w/2}" y="${f.y+f.h/2+4}" text-anchor="middle" pointer-events="none">${f.n}</text>`});
+  // hide zones
+  L.hide=FURN.filter(f=>f.hide).map(f=>`<rect class="hide-zone" x="${f.x-6}" y="${f.y-6}" width="${f.w+12}" height="${f.h+12}" rx="8" data-k="${f.k}"><title>Hiding spot: ${f.n}</title></rect>`).join('');
+  // quiet lane label
+  L.floor=`<text class="quiet-t" x="452" y="440" transform="rotate(-90 452 440)">QUIET LANE · CARPET x1</text>`;
+  // holes
+  L.holes=HOLES.map((h,i)=>{const dx=h.side==='L'?4:-4;const cx=h.x+dx;
+    const d=h.side==='L'?`M${cx} ${h.y-11} A11 11 0 0 1 ${cx} ${h.y+11} Z`:`M${cx} ${h.y-11} A11 11 0 0 0 ${cx} ${h.y+11} Z`;
+    const near=h.side==='L'?'Bedroom side wall':'Kitchen side wall';
+    const k=reg(`Mouse hole ${h.id}`,[['Wall',`${h.side==='L'?'West':'East'} hallway wall (${near})`],['Position',`y = ${h.y}`],['Inside','Burrow with 6–20 shelf slots, cash pile, Index book'],['Door lock','45 s, free']],'Spawn point for one player. The sign above shows the owner\'s name and best toy.');
+    const tx=h.side==='L'?h.x+20:h.x-34;
+    return `<path class="hole" d="${d}" data-k="${k}"><title>${h.id}</title></path><text class="hole-label" x="${tx}" y="${h.y+4}">${h.id}</text>`}).join('');
+  // spawns
+  L.spawns=SPAWNS.map(([x,y,sz],i)=>{const r=roomOf(x,y);const k=reg(`Spawn point · ${SIZE_NAME[sz]}`,[['Room',r?r.name:'—'],['Position',`${x}, ${y}`],['Carry speed',SIZE_INFO[sz].speed],['Drag noise',SIZE_INFO[sz].noise]],`Sizes shown are this point's usual size; the room's size mix decides each spawn.`);
+    return `<circle class="spawn spawn-${sz}" cx="${x}" cy="${y}" r="9" data-k="${k}"><title>${SIZE_NAME[sz]} spawn</title></circle><text class="spawn-t" x="${x}" y="${y+3.5}" text-anchor="middle">${sz}</text>`}).join('');
+  // traps
+  L.hazards=TRAPS.map(([x,y])=>{const k=reg('Mousetrap',[['Room','Kitchen'],['Effect','3 s stun, drop what you carry'],['Noise','+20 when it snaps']],'Placed next to the best Large spawns along the cabinets.');
+    return `<g data-k="${k}"><title>Mousetrap</title><rect x="${x-9}" y="${y-6}" width="18" height="12" rx="2" class="furn"/><line class="trap" x1="${x-6}" y1="${y-3}" x2="${x+6}" y2="${y+3}"/><line class="trap" x1="${x+6}" y1="${y-3}" x2="${x-6}" y2="${y+3}"/></g>`}).join('');
+  // giant
+  const kG=reg('Giant Kid',[['Height standing','140 studs'],['Asleep','~4 min (deep + light sleep)'],['Awake','60 s'],['Grab reach','30 studs'],['Snack run',`${Math.round(len(GIANT_PATH))} studs`]],'When awake he walks to the loudest noise of the last 5 seconds. If nothing is loud, he does the snack run to the fridge and back, straight past every mouse hole.');
+  L.giant=`<rect class="giant-body" x="35" y="78" width="80" height="140" rx="20" data-k="${kG}"><title>Giant Kid (asleep)</title></rect><circle class="giant-body" cx="75" cy="52" r="22" data-k="${kG}"/>
+   <text class="giant-t" x="75" y="56" text-anchor="middle" pointer-events="none">zZ</text>
+   <polyline class="giant-path" points="${pts(GIANT_PATH)}" data-k="${kG}"/>
+   
+   <text class="giant-t" x="574" y="292">Snack run</text>`;
+  // cat
+  const kC=reg('Cat (week 2)',[['Route','Hallway loop, naps on the couch'],['Pounce','Makes you drop what you carry'],['Wakes on','Noise near the couch']],'Its route runs down the quiet lane, so the safest path stops being safe once the cat arrives.');
+  L.cat=`<polyline class="cat-path" points="${pts(CAT_PATH)}" data-k="${kC}"/><polyline class="cat-path" points="${pts(CAT_PATH2)}" data-k="${kC}"/><text class="cat-t" x="170" y="510">Cat nap spot</text>`;
+  // roomba
+  const kR=reg('Roomba (week 5)',[['Route',`${Math.round(len(ROOMBA_PATH))}-stud kitchen loop`],['Speed','8 studs/s'],['Effect','Sucks up dropped toys, dumps them at the dock']],'Drives under the table and island. The dock pile is worth raiding.');
+  L.roomba=`<polyline class="roomba-path" points="${pts(ROOMBA_PATH)}" data-k="${kR}"/><text class="roomba-t" x="560" y="610">Roomba loop</text>`;
+  // labels in margins
+  const labels=`<text class="room-label" x="0" y="-22">KID'S BEDROOM</text><text class="room-sub" x="0" y="-8">carpet · x1 · Small, Medium</text>
+   <text class="room-label" x="406" y="-22">HALLWAY</text><text class="room-sub" x="406" y="-8">wood · x2</text>
+   <text class="room-label" x="560" y="-22">LAUNDRY</text><text class="room-sub" x="560" y="-8">spare space · not in the MVP</text>
+   <text class="room-label" x="0" y="628">LIVING ROOM · LOCKED</text><text class="room-sub" x="0" y="642">Strength 10 + $250K · week 3</text>
+   <text class="room-label" x="526" y="628">KITCHEN</text><text class="room-sub" x="526" y="642">tile · x3 · Medium, Large · best loot</text>
+   <text class="room-label" x="1012" y="512">GARAGE</text><text class="room-sub" x="1012" y="526">locked</text><text class="room-sub" x="1012" y="540">week 5</text>
+   <g transform="translate(830 -30)"><line class="scale-ln" x1="0" y1="0" x2="100" y2="0"/><line class="scale-ln" x1="0" y1="-5" x2="0" y2="5"/><line class="scale-ln" x1="100" y1="-5" x2="100" y2="5"/><text class="scale-t" x="108" y="4">100 studs = 1 m</text></g>`;
+  s+=`<g id="L-floor-base">${floors}</g><g>${walls}</g><g>${furn}</g>`;
+  s+=['floor','hide','hazards','roomba','cat','giant','holes','spawns'].map(id=>`<g data-layer="${id}">${L[id]||''}</g>`).join('');
+  s+=labels;
+  document.getElementById('map').innerHTML=s;
+}
+
+const LAYERS=[['spawns','Spawn points','var(--m)',true],['holes','Mouse holes','var(--hole)',true],['giant','Giant Kid','var(--giant)',true],['hide','Hiding spots','var(--hide)',true],['hazards','Mousetraps','var(--trap)',true],['floor','Quiet lane','var(--carpet)',true],['cat','Cat (week 2)','var(--cat)',false],['roomba','Roomba (week 5)','var(--roomba)',false]];
+function buildToolbar(){
+  const tb=document.getElementById('toolbar');
+  tb.innerHTML=LAYERS.map(([id,n,c,on])=>`<button class="chip" id="t-${id}" data-layer="${id}" aria-pressed="${on}"><i class="sw" style="background:${c}"></i>${n}</button>`).join('');
+  LAYERS.forEach(([id,,,on])=>setLayer(id,on));
+  tb.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);setLayer(b.dataset.layer,on)});
+}
+function setLayer(id,on){const g=document.querySelector(`#map g[data-layer="${id}"]`);if(g)g.setAttribute('display',on?'inline':'none')}
+
+let selEl=null;
+document.getElementById('map').addEventListener('click',e=>{
+  const el=e.target.closest('[data-k]');if(!el)return;
+  const it=INFO[+el.dataset.k];
+  if(selEl)selEl.classList.remove('sel');selEl=el;el.classList.add('sel');
+  document.getElementById('inspect').innerHTML=`<h3>${it.title}</h3><dl class="kv">${it.rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>${it.text?`<p class="lede">${it.text}</p>`:''}`;
+});
+
+function buildElev(){
+  const items=[
+   ['Player',5,'var(--m)'],['Small toy',3,'var(--s)'],['Medium toy',6,'var(--m)'],['Large toy',12,'var(--l)'],['Giant toy',22,'var(--l)'],
+   ['Bean bag',35,'var(--furn)'],['Chair seat',45,'var(--furn)'],['Bed',55,'var(--furn)'],['Desk',75,'var(--furn)'],['Counter',90,'var(--furn)'],
+   ['Bookshelf',120,'var(--furn)'],['Giant Kid',140,'var(--giant)'],['Fridge',180,'var(--furn)']];
+  const k=1.25, base=262, gap=74, x0=24;
+  let s=`<line class="ground" x1="10" y1="${base}" x2="990" y2="${base}"/>`;
+  items.forEach(([n,h,c],i)=>{const x=x0+i*gap, w=n.includes('toy')||n==='Player'?20:46, hh=h*k;
+    s+=`<rect class="elev-bar" x="${x+(46-w)/2}" y="${base-hh}" width="${w}" height="${hh}" rx="3" style="fill:${c};${c==='var(--giant)'?'fill-opacity:.25;stroke:var(--giant)':''}"/>`;
+    s+=`<text class="elev-t" x="${x+23}" y="${base+16}" text-anchor="middle">${n}</text><text class="elev-n" x="${x+23}" y="${base-hh-6}" text-anchor="middle">${h}</text>`});
+  s+=`<line x1="10" x2="990" y1="${base-45*k}" y2="${base-45*k}" stroke="var(--line)" stroke-dasharray="4 4"/><text class="elev-n" x="990" y="${base-45*k-6}" text-anchor="end">45: too tall to climb</text>`;
+  document.getElementById('elev').innerHTML=s;
+}
+
+function buildTables(){
+  document.getElementById('rooms').innerHTML=`<thead><tr><th>Room</th><th>Size (studs)</th><th>Real size</th><th>Floor and noise</th><th>Spawns</th><th>Unlocks at</th><th>Status</th></tr></thead><tbody>${
+   ROOMS.map(r=>`<tr><td>${r.name}</td><td class="num">${r.w} × ${r.h}</td><td class="num">${r.real}</td><td>${r.floor==='locked'?'—':r.floor+', '+r.noise}</td><td class="num">${r.spawns?r.spawns+' · '+r.sizes:'—'}</td><td>${r.unlock}</td><td>${r.status}</td></tr>`).join('')}</tbody>`;
+  const sp=16;
+  document.getElementById('trips').innerHTML=`<thead><tr><th>Trip</th><th>From</th><th>Distance</th><th>Out (walking)</th><th>Back (carrying)</th><th>Round trip</th><th>Toy size</th></tr></thead><tbody>${
+   TRIPS.map(t=>{const d=len(t.pts),o=d/sp,b=d/(sp*t.carry);return `<tr><td>${t.n}</td><td class="num">${t.from}</td><td class="num">${Math.round(d)} studs</td><td class="num">${o.toFixed(0)} s</td><td class="num">${b.toFixed(0)} s</td><td class="num">${(o+b).toFixed(0)} s</td><td>${t.size} (${Math.round(t.carry*100)}% speed)</td></tr>`}).join('')}</tbody>`;
+  const build=[
+   ['Floor slabs','3 parts: Bedroom 400×360, Hallway 120×600, Kitchen 480×420','Material per room: Fabric (carpet), WoodPlanks, Marble/tile. Tag each with its noise multiplier'],
+   ['Walls','Height 240 studs, thickness 8','Leave the two open doorways and the two locked doors as gaps with a barrier'],
+   ['Hallway runner','40×584 strip, 0.2 studs thick','Tagged carpet so the noise system reads it'],
+   ['Mouse holes','8 arched cut-outs 22 wide × 18 tall','Each teleports into its own burrow room built off-map'],
+   ['Furniture blocks','Sizes and heights from the plan','Leave a 10-stud gap under the bed, desk, rack, island and table so players fit underneath'],
+   ['Spawn markers','34 invisible parts, attribute Size = S/M/L','Spawner reads Room and Size attributes'],
+   ['Giant Kid','A 140-stud tall placeholder rig','Waypoints from the snack-run path; a 30-stud reach sphere'],
+   ['Mousetraps','4 small parts with a touch trigger','Kitchen only for the MVP']];
+  document.getElementById('build').innerHTML=`<thead><tr><th>Piece</th><th>Size</th><th>Notes</th></tr></thead><tbody>${build.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody>`;
+}
+buildMap();buildToolbar();buildElev();buildTables();
+</script>

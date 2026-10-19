@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Game icon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 512px; height: 512px; overflow: hidden; background: #FFC93C">
+  <div aria-hidden="true" style="position: absolute; left: -256px; top: -256px; width: 1024px; height: 1024px; background: repeating-conic-gradient(from 0deg at 50% 50%, #FFD966 0deg 12deg, #FFC93C 12deg 24deg)"></div>
+  <svg role="img" aria-label="A tiny player peeks out of a mouse hole, dragging a starry blanket-covered toy" width="512" height="512" viewBox="0 0 512 512" style="position: absolute; inset: 0">
+    <defs>
+      <pattern id="istars" width="44" height="44" patternUnits="userSpaceOnUse">
+        <rect width="44" height="44" fill="#9B7BFF"/>
+        <path d="M14 6 l3 7 l7 1 l-5 5 l1 7 l-6 -4 l-6 4 l1 -7 l-5 -5 l7 -1 z" fill="#FFFFFF"/>
+        <circle cx="34" cy="32" r="4" fill="#FFC93C"/>
+      </pattern>
+    </defs>
+    <!-- wall slab with mouse hole -->
+    <rect x="0" y="380" width="512" height="132" fill="#8A5A34"/>
+    <rect x="0" y="360" width="512" height="26" fill="#E9DFC8" stroke="#1A1430" stroke-width="8"/>
+    <path d="M60 386 L60 230 Q60 120 176 120 Q292 120 292 230 L292 386 Z" fill="#1A1430"/>
+    <path d="M60 386 L60 230 Q60 120 176 120 Q292 120 292 230 L292 386" fill="none" stroke="#1A1430" stroke-width="12"/>
+    <path d="M78 386 L78 234 Q78 138 176 138 Q274 138 274 234 L274 386" fill="none" stroke="#B48A5A" stroke-width="10"/>
+    <!-- player leaning out of the hole -->
+    <g transform="translate(200 300) scale(1.6) rotate(-10)">
+      <rect x="-32" y="-26" width="64" height="72" rx="8" fill="#3DDC97" stroke="#1A1430" stroke-width="6"/>
+      <rect x="28" y="-24" width="70" height="20" rx="8" fill="#FFD9B0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="-26" y="-84" width="56" height="56" rx="12" fill="#FFD9B0" stroke="#1A1430" stroke-width="6"/>
+      <circle cx="-6" cy="-60" r="5" fill="#1A1430"/><circle cx="16" cy="-60" r="5" fill="#1A1430"/>
+      <path d="M-2 -44 Q8 -38 18 -46" fill="none" stroke="#1A1430" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-26 -84 Q2 -104 30 -84 L30 -74 L-26 -74 Z" fill="#FF4D5E" stroke="#1A1430" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <!-- blanket toy being dragged -->
+    <ellipse cx="400" cy="470" rx="110" ry="14" fill="#1A1430" opacity="0.35"/>
+    <path d="M296 470 C300 390 340 320 400 316 C460 320 496 390 504 466 C490 476 478 466 464 474 C450 466 438 478 424 470 C410 478 396 466 382 474 C368 466 354 478 340 470 C326 478 312 466 296 470 Z" fill="url(#istars)" stroke="#1A1430" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M296 470 C312 466 326 478 340 470 C354 478 368 466 382 474 C396 466 410 478 424 470 C438 478 450 466 464 474 C478 466 490 476 504 466" fill="none" stroke="#FFC93C" stroke-width="12" stroke-linecap="round"/>
+    <ellipse cx="386" cy="452" rx="7" ry="9" fill="#FFF6A8" stroke="#1A1430" stroke-width="3"/>
+    <ellipse cx="420" cy="452" rx="7" ry="9" fill="#FFF6A8" stroke="#1A1430" stroke-width="3"/>
+    <path d="M352 252 Q326 320 334 396" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+    <!-- sparkle -->
+    <path d="M440 260 l8 -22 l8 22 l22 8 l-22 8 l-8 22 l-8 -22 l-22 -8 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="5"/>
+  </svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":512,"height":512}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

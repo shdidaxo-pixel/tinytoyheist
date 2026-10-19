@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upgrades</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; font-family: 'Nunito', sans-serif; color: #1A1430; background: #5A3A26">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, #5A3A26 0px, #5A3A26 38px, #4E3220 38px, #4E3220 42px)"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(12,8,28,0.55)"></div>
+
+  <div role="dialog" aria-label="Upgrades" style="position: absolute; left: 70px; top: 46px; width: 1140px; height: 628px; background: #EAFBF2; border: 5px solid #1A1430; border-radius: 28px; box-shadow: 0 10px 0 #1A1430; display: flex; flex-direction: column; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; background: #3DDC97; border-bottom: 5px solid #1A1430">
+      <div style="font: 400 40px 'Lilita One', sans-serif">Upgrades</div>
+      <div style="display: flex; align-items: center; gap: 14px">
+        <div style="padding: 6px 14px; background: #1A1430; color: #7CF2B0; border-radius: 12px; font: 400 26px 'Lilita One', sans-serif">$3,120</div>
+        <button aria-label="Close upgrades" style="width: 48px; height: 48px; background: #FF4D5E; color: #FFFFFF; border: 4px solid #1A1430; border-radius: 14px; font: 400 26px 'Lilita One', sans-serif; cursor: pointer">X</button>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; padding: 18px; flex: 1; min-height: 0">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px">
+            <div style="width: 58px; height: 58px; flex: none; display: grid; place-items: center; background: {{s.color}}; border: 4px solid #1A1430; border-radius: 16px; font: 400 26px 'Lilita One', sans-serif; color: #1A1430">{{s.letter}}</div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+              <div style="display: flex; align-items: baseline; gap: 10px">
+                <div style="font: 400 26px 'Lilita One', sans-serif">{{s.name}}</div>
+                <div style="font: 900 14px 'Nunito', sans-serif; color: #5B6577">Level {{s.level}} → {{s.next}}</div>
+              </div>
+              <div style="font: 800 14px 'Nunito', sans-serif; color: #3F4458">{{s.effect}}</div>
+              <div style="display: flex; gap: 3px">
+                <sc-for list="{{s.pips}}" as="p" hint-placeholder-count="20">
+                  <div style="width: 14px; height: 10px; border-radius: 3px; border: 2px solid #1A1430; background: {{p.bg}}"></div>
+                </sc-for>
+              </div>
+              <div style="font: 700 13px 'Nunito', sans-serif; color: #7A5A10">{{s.milestone}}</div>
+            </div>
+            <button style="width: 132px; height: 52px; flex: none; background: {{s.btn}}; border: 4px solid #1A1430; border-radius: 14px; box-shadow: 0 4px 0 #1A1430; font: 400 22px 'Lilita One', sans-serif; color: #1A1430; cursor: pointer">{{s.cost}}</button>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font: 400 26px 'Lilita One', sans-serif">Your hole</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <div style="padding: 10px; border: 3px solid #1A1430; border-radius: 14px; background: repeating-linear-gradient(45deg, #F7D9E6 0px, #F7D9E6 10px, #FFFFFF 10px, #FFFFFF 20px)">
+              <div style="font: 900 12px 'Nunito', sans-serif; letter-spacing: 0.06em">NOW · LEVEL 2</div>
+              <div style="font: 400 20px 'Lilita One', sans-serif">Sock-lined</div>
+              <div style="font: 800 13px 'Nunito', sans-serif">8 shelf slots</div>
+            </div>
+            <div style="padding: 10px; border: 3px solid #1A1430; border-radius: 14px; background: linear-gradient(#E04848 0 25%, #FFC93C 25% 50%, #4DA8FF 50% 75%, #3DDC97 75%); color: #1A1430">
+              <div style="display: inline-block; padding: 2px 6px; background: #FFFFFF; border-radius: 6px; font: 900 12px 'Nunito', sans-serif; letter-spacing: 0.06em">NEXT · LEVEL 3</div>
+              <div style="display: inline-block; margin-top: 4px; padding: 2px 6px; background: #FFFFFF; border-radius: 6px; font: 400 20px 'Lilita One', sans-serif">Toy-brick walls</div>
+              <div style="display: inline-block; margin-top: 4px; padding: 2px 6px; background: #FFFFFF; border-radius: 6px; font: 800 13px 'Nunito', sans-serif">10 shelf slots</div>
+            </div>
+          </div>
+          <button style="height: 50px; background: #FFC93C; border: 4px solid #1A1430; border-radius: 14px; box-shadow: 0 4px 0 #1A1430; font: 400 22px 'Lilita One', sans-serif; color: #1A1430; cursor: pointer">Upgrade hole · $5,000</button>
+        </div>
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font: 400 24px 'Lilita One', sans-serif">Door Lock</div>
+          <div style="font: 800 14px 'Nunito', sans-serif; color: #3F4458">Seals your door for 45 s. Always free to use.</div>
+          <button style="height: 46px; background: #E8ECF5; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; color: #5B6577; cursor: pointer">60 s lock · $20,000</button>
+        </div>
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font: 400 24px 'Lilita One', sans-serif">Flashlight</div>
+          <div style="font: 800 14px 'Nunito', sans-serif; color: #3F4458">Shows silhouettes within 25 studs for 5 s.</div>
+          <button style="height: 46px; background: #3DDC97; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; color: #1A1430; cursor: pointer">Wider beam · $2,500</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+const STATS = [
+  { name: 'Strength', letter: 'S', color: '#FF8A3D', level: 5, max: 20, cost: 1049, effect: '+5% carry speed for Large and Giant toys', milestone: 'Giant toys at level 12' },
+  { name: 'Sneak', letter: 'N', color: '#9B7BFF', level: 3, max: 20, cost: 614, effect: '-3% noise from everything you do', milestone: 'Silent footsteps at level 10' },
+  { name: 'Speed', letter: 'P', color: '#4DA8FF', level: 4, max: 20, cost: 786, effect: '+4% walk and sprint speed', milestone: 'Dodge roll at level 15' },
+  { name: 'Grip', letter: 'G', color: '#FFC93C', level: 1, max: 10, cost: 800, effect: '+5% chance to keep holding a toy when hit', milestone: '50% at level 10' }
+];
+class Component extends DCLogic {
+  renderVals() {
+    const money = 3120;
+    const stats = STATS.map(s => ({
+      ...s,
+      next: s.level + 1,
+      cost: '$' + s.cost.toLocaleString('en-US'),
+      btn: s.cost <= money ? '#3DDC97' : '#E8ECF5',
+      pips: Array.from({ length: s.max }, (_, i) => ({ bg: i < s.level ? s.color : '#E8ECF5' }))
+    }));
+    return { stats };
+  }
+}
+</script>
+</body>
+</html>

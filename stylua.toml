@@ -1,0 +1,4 @@
+syntax = "Luau"
+line_endings = "Unix"
+column_width = 120
+indent_type = "Tabs"

@@ -1,0 +1,29 @@
+{
+	"name": "TinyToyHeist",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"Shared": {
+				"$path": "src/ReplicatedStorage/Shared"
+			}
+		},
+		"StarterPlayer": {
+			"StarterPlayerScripts": {
+				"TinyToyHeistUI": {
+					"$path": "src/StarterPlayer/StarterPlayerScripts/TinyToyHeistUI"
+				}
+			}
+		},
+		"ServerStorage": {
+			"TinyToyHeistTests": {
+				"$path": "tests"
+			},
+			"TinyToyHeistTools": {
+				"$className": "Folder",
+				"BuildBedroom": {
+					"$path": "tools/build-bedroom.luau"
+				}
+			}
+		}
+	}
+}

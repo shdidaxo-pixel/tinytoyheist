@@ -1,0 +1,188 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tiny Toy Heist icons</title>
+<!-- Source for the HUD icons. Each <svg data-name> is rendered to assets/ui/<name>.png (256 px) and drawn on the
+     Claude Design canvas page "Icons". Style: thick #141018 outline, light-to-dark gradient fill, a white highlight
+     on the top-left and a sparkle, like the Steal An Egg / Break and Steal an Egg icons. -->
+<style>
+html,body{margin:0;background:transparent}
+body.sheet{display:flex;flex-wrap:wrap;gap:24px;padding:24px;background:#2F2F36}
+svg{display:block}
+body.one svg{display:none}
+body.one svg.show{display:block}
+</style></head>
+<body class="sheet">
+
+<svg data-name="Shoe" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="shoeA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDBFF"/><stop offset=".55" stop-color="#3D9BFF"/><stop offset="1" stop-color="#1C5FCC"/></linearGradient></defs>
+<path d="M3 24h11M1 32h10M4 40h9" stroke="#141018" stroke-width="6" stroke-linecap="round"/>
+<path d="M3 24h11M1 32h10M4 40h9" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M14 44c0-9 2-20 6-27l10 4c2 7 7 9 14 10l9 2c5 1 9 4 9 9v2H14z" fill="url(#shoeA)" stroke="#141018" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M44 33c6 1 12 3 16 8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>
+<path d="M25 26l7-3M27 31l7-3M30 36l7-3" stroke="#141018" stroke-width="5" stroke-linecap="round"/>
+<path d="M25 26l7-3M27 31l7-3M30 36l7-3" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M12 44h52v5a5 5 0 0 1-5 5H17a5 5 0 0 1-5-5z" fill="#FFFFFF" stroke="#141018" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M16 50h44" stroke="#C3CEDC" stroke-width="3" stroke-linecap="round"/>
+<path d="M19 21c1-2 2-3 4-3" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<path d="M56 8l1.5 3.5L61 13l-3.5 1.5L56 18l-1.5-3.5L51 13l3.5-1.5z" fill="#FFFFFF" stroke="#141018" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>
+
+<svg data-name="Cash" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="cashA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A8F78A"/><stop offset="1" stop-color="#36B83A"/></linearGradient>
+<linearGradient id="cashB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#E8A010"/></linearGradient>
+</defs>
+<rect x="7" y="34" width="50" height="20" rx="3" fill="#2A8F33" stroke="#141018" stroke-width="3.5"/>
+<rect x="5" y="25" width="50" height="20" rx="3" fill="#3DB846" stroke="#141018" stroke-width="3.5"/>
+<rect x="9" y="13" width="50" height="24" rx="3" fill="url(#cashA)" stroke="#141018" stroke-width="3.5"/>
+<rect x="14" y="17" width="40" height="16" rx="2" fill="none" stroke="#2E9B3A" stroke-width="2"/>
+<circle cx="43" cy="25" r="6.5" fill="#2E9B3A" stroke="#1F6E26" stroke-width="1.5"/>
+<text x="43" y="29.4" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="12" text-anchor="middle" fill="#B8FF9A">$</text>
+<rect x="20" y="9" width="9" height="47" rx="2" fill="url(#cashB)" stroke="#141018" stroke-width="3"/>
+<path d="M22.5 13v8" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+<path d="M33 17h18" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+<path d="M56 3l1.5 3.5L61 8l-3.5 1.5L56 13l-1.5-3.5L51 8l3.5-1.5z" fill="#FFFFFF" stroke="#141018" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>
+
+<svg data-name="Gift" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="giftA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A80"/><stop offset="1" stop-color="#C8101E"/></linearGradient>
+<linearGradient id="giftC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF9A9E"/><stop offset="1" stop-color="#E42634"/></linearGradient>
+<linearGradient id="giftB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF38A"/><stop offset="1" stop-color="#EB9A10"/></linearGradient>
+</defs>
+<path d="M32 21c-4-11-17-13-16-4 1 6 10 5 16 4z" fill="url(#giftB)" stroke="#141018" stroke-width="3" stroke-linejoin="round"/>
+<path d="M32 21c4-11 17-13 16-4-1 6-10 5-16 4z" fill="url(#giftB)" stroke="#141018" stroke-width="3" stroke-linejoin="round"/>
+<rect x="9" y="30" width="46" height="27" rx="3" fill="url(#giftA)" stroke="#141018" stroke-width="3.5"/>
+<rect x="6" y="21" width="52" height="12" rx="3" fill="url(#giftC)" stroke="#141018" stroke-width="3.5"/>
+<rect x="27.5" y="21" width="9" height="36" fill="url(#giftB)" stroke="#141018" stroke-width="3"/>
+<circle cx="32" cy="21" r="4.5" fill="url(#giftB)" stroke="#141018" stroke-width="3"/>
+<path d="M10 25h13" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+<path d="M13 35v16" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".45"/>
+<path d="M55 4l1.5 3.5L60 9l-3.5 1.5L55 14l-1.5-3.5L50 9l3.5-1.5z" fill="#FFFFFF" stroke="#141018" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>
+
+<svg data-name="Gear" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="gearA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F5F8FC"/><stop offset=".6" stop-color="#B7C0CE"/><stop offset="1" stop-color="#7C8698"/></linearGradient>
+<linearGradient id="gearB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9AA4B5"/><stop offset="1" stop-color="#D6DCE6"/></linearGradient>
+<g id="gearShape">
+<circle cx="32" cy="32" r="20"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(45 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(90 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(135 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(180 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(225 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(270 32 32)"/>
+<rect x="27" y="3" width="10" height="13" rx="2.5" transform="rotate(315 32 32)"/>
+</g>
+</defs>
+<use href="#gearShape" fill="#141018" stroke="#141018" stroke-width="7" stroke-linejoin="round"/>
+<use href="#gearShape" fill="url(#gearA)"/>
+<circle cx="32" cy="32" r="12" fill="url(#gearB)" stroke="#5A6272" stroke-width="2"/>
+<circle cx="32" cy="32" r="6.5" fill="#3A3F4C" stroke="#141018" stroke-width="3"/>
+<path d="M18 22a17 17 0 0 1 9-7" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+</svg>
+
+<svg data-name="ToyChest" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="chestA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8A860"/><stop offset="1" stop-color="#9A5A26"/></linearGradient>
+<linearGradient id="chestL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D08A44"/><stop offset="1" stop-color="#A86630"/></linearGradient>
+<linearGradient id="chestG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#E39A12"/></linearGradient>
+<radialGradient id="chestBall" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF9AA2"/><stop offset="1" stop-color="#D81E32"/></radialGradient>
+</defs>
+<path d="M8 32L13 13h38l5 19z" fill="url(#chestL)" stroke="#141018" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M12 32l4-13h32l4 13z" fill="#4A2810"/>
+<circle cx="40" cy="15" r="3.5" fill="#B87A40" stroke="#141018" stroke-width="2.5"/>
+<circle cx="52" cy="15" r="3.5" fill="#B87A40" stroke="#141018" stroke-width="2.5"/>
+<circle cx="46" cy="24" r="9" fill="#C98A4B" stroke="#141018" stroke-width="3"/>
+<ellipse cx="47" cy="27" rx="4" ry="3" fill="#F3D2A8"/>
+<circle cx="43" cy="22" r="1.3" fill="#141018"/><circle cx="50" cy="22" r="1.3" fill="#141018"/><circle cx="47.5" cy="26.4" r="1.2" fill="#141018"/>
+<circle cx="22" cy="25" r="8" fill="url(#chestBall)" stroke="#141018" stroke-width="3"/>
+<path d="M15 25h14" stroke="#FFFFFF" stroke-width="2.5"/>
+<path d="M18 21a4 4 0 0 1 3-2" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+<rect x="6" y="30" width="52" height="27" rx="3" fill="url(#chestA)" stroke="#141018" stroke-width="3.5"/>
+<path d="M8 43h48" stroke="#7A4520" stroke-width="2"/>
+<rect x="6" y="30" width="7" height="27" rx="2" fill="url(#chestG)" stroke="#141018" stroke-width="3"/>
+<rect x="51" y="30" width="7" height="27" rx="2" fill="url(#chestG)" stroke="#141018" stroke-width="3"/>
+<rect x="27" y="36" width="10" height="11" rx="2" fill="url(#chestG)" stroke="#141018" stroke-width="3"/>
+<circle cx="32" cy="41" r="1.6" fill="#141018"/>
+<path d="M17 34h8" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>
+<path d="M57 3l1.5 3.5L62 8l-3.5 1.5L57 13l-1.5-3.5L52 8l3.5-1.5z" fill="#FFFFFF" stroke="#141018" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>
+
+<svg data-name="Clock" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="clockA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#E8920C"/></linearGradient>
+</defs>
+<path d="M19 51l-6 9M45 51l6 9" stroke="#141018" stroke-width="5" stroke-linecap="round"/>
+<circle cx="15" cy="14" r="8" fill="url(#clockA)" stroke="#141018" stroke-width="3.5"/>
+<circle cx="49" cy="14" r="8" fill="url(#clockA)" stroke="#141018" stroke-width="3.5"/>
+<circle cx="32" cy="35" r="23" fill="url(#clockA)" stroke="#141018" stroke-width="3.5"/>
+<circle cx="32" cy="35" r="16.5" fill="#FFFFFF" stroke="#141018" stroke-width="3"/>
+<path d="M32 21v3M32 46v3M18 35h3M43 35h3" stroke="#141018" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M32 35V25M32 35l7 5" stroke="#141018" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="32" cy="35" r="2.5" fill="#E8202E" stroke="#141018" stroke-width="1.5"/>
+<path d="M14 26a20 20 0 0 1 8-10" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<path d="M12 10a4 4 0 0 1 3-2" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+</svg>
+
+<svg data-name="Moon" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="moonA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6A8"/><stop offset="1" stop-color="#F0B21E"/></linearGradient></defs>
+<path d="M36 6a26 26 0 1 0 22 40A21 21 0 0 1 36 6z" fill="url(#moonA)" stroke="#141018" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M15 24a21 21 0 0 1 10-12" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<circle cx="20" cy="40" r="2.5" fill="#E8A51A" opacity=".7"/><circle cx="27" cy="50" r="1.8" fill="#E8A51A" opacity=".7"/>
+<text x="46" y="25" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="15" fill="#FFFFFF" stroke="#141018" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">z</text>
+<text x="55" y="13" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="11" fill="#FFFFFF" stroke="#141018" stroke-width="3" paint-order="stroke" stroke-linejoin="round">z</text>
+</svg>
+
+<svg data-name="Plus" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="plusA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF38A"/><stop offset="1" stop-color="#EB9A10"/></linearGradient></defs>
+<rect x="5" y="5" width="54" height="54" rx="12" fill="url(#plusA)" stroke="#141018" stroke-width="4.5"/>
+<path d="M32 17v30M17 32h30" stroke="#141018" stroke-width="13" stroke-linecap="round"/>
+<path d="M32 17v30M17 32h30" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round"/>
+<path d="M12 18a8 8 0 0 1 6-6" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>
+</svg>
+
+<svg data-name="Cart" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="cartA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D2DE"/></linearGradient>
+<linearGradient id="cartC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#E39A12"/></linearGradient>
+</defs>
+<circle cx="26" cy="15" r="6.5" fill="url(#cartC)" stroke="#141018" stroke-width="3"/>
+<circle cx="39" cy="12" r="6.5" fill="url(#cartC)" stroke="#141018" stroke-width="3"/>
+<circle cx="50" cy="16" r="5.5" fill="url(#cartC)" stroke="#141018" stroke-width="3"/>
+<path d="M3 9h8l7 32h35" fill="none" stroke="#141018" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3 9h8l7 32h35" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 19h47l-6 21H18z" fill="url(#cartA)" stroke="#141018" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M26 19l1 21M38 19v21M50 19l-1.5 21M16 29.5h43" stroke="#97A3B6" stroke-width="2.2"/>
+<circle cx="22" cy="52" r="6" fill="#3A3F4C" stroke="#141018" stroke-width="3"/><circle cx="22" cy="52" r="2" fill="#C9D2DE"/>
+<circle cx="49" cy="52" r="6" fill="#3A3F4C" stroke="#141018" stroke-width="3"/><circle cx="49" cy="52" r="2" fill="#C9D2DE"/>
+<path d="M18 23h10" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+
+<svg data-name="Book" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="bookA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FD6FF"/><stop offset="1" stop-color="#1E78E0"/></linearGradient>
+<linearGradient id="bookS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF38A"/><stop offset="1" stop-color="#EB9A10"/></linearGradient>
+</defs>
+<path d="M16 10h36a4 4 0 0 1 4 4v42H20a4 4 0 0 1-4-4z" fill="#FFFFFF" stroke="#141018" stroke-width="3.5"/>
+<path d="M20 52h34M20 47h34" stroke="#C9D2DE" stroke-width="2"/>
+<rect x="9" y="5" width="42" height="46" rx="4" fill="url(#bookA)" stroke="#141018" stroke-width="3.5"/>
+<rect x="9" y="5" width="9" height="46" rx="3" fill="#1658B8" stroke="#141018" stroke-width="3"/>
+<path d="M34 14l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.3-5.1 7.3-1z" fill="url(#bookS)" stroke="#141018" stroke-width="2.8" stroke-linejoin="round"/>
+<path d="M22 41h22" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+<path d="M22 10h14" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+</svg>
+
+<svg data-name="Bolt" width="256" height="256" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="boltA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6A8"/><stop offset="1" stop-color="#F2A010"/></linearGradient></defs>
+<path d="M37 3L12 36h16l-5 25 29-36H36z" fill="url(#boltA)" stroke="#141018" stroke-width="4" stroke-linejoin="round"/>
+<path d="M33 10L19 30" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<path d="M54 40l1.5 3.5L59 45l-3.5 1.5L54 50l-1.5-3.5L49 45l3.5-1.5z" fill="#FFFFFF" stroke="#141018" stroke-width="1.4" stroke-linejoin="round"/>
+</svg>
+
+<script>
+const k = new URLSearchParams(location.search).get('i');
+if (k) { document.body.className = 'one'; const s = document.querySelector('svg[data-name="' + k + '"]'); if (s) s.classList.add('show'); }
+</script>
+</body></html>

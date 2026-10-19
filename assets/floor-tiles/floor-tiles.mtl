@@ -1,0 +1,3 @@
+newmtl Palette
+Kd 1 1 1
+map_Kd floor-palette.png

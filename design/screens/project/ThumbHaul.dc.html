@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Thumbnail A · The haul</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; font-family: 'Nunito', sans-serif; background: #2A2150">
+  <svg role="img" aria-label="A tiny player drags a starry blanket-covered toy across the carpet while a giant kid sleeps above" width="1280" height="720" viewBox="0 0 1280 720" style="position: absolute; inset: 0">
+    <defs>
+      <radialGradient id="moon" cx="0.75" cy="0.2" r="0.7">
+        <stop offset="0" stop-color="#7B6CC9"/><stop offset="1" stop-color="#2A2150"/>
+      </radialGradient>
+      <pattern id="stars" width="60" height="60" patternUnits="userSpaceOnUse">
+        <rect width="60" height="60" fill="#FFC93C"/>
+        <path d="M18 10 l4 9 l9 1 l-7 6 l2 9 l-8 -5 l-8 5 l2 -9 l-7 -6 l9 -1 z" fill="#FFFFFF"/>
+        <path d="M46 38 l3 6 l6 1 l-5 4 l2 6 l-6 -3 l-6 3 l2 -6 l-5 -4 l6 -1 z" fill="#FF8A3D"/>
+      </pattern>
+      <pattern id="carpet" width="18" height="18" patternUnits="userSpaceOnUse">
+        <rect width="18" height="18" fill="#6B4FA8"/><circle cx="9" cy="9" r="2" fill="#7A5DB8"/>
+      </pattern>
+    </defs>
+    <rect width="1280" height="720" fill="url(#moon)"/>
+    <!-- window light beam -->
+    <path d="M820 0 L1040 0 L1180 720 L560 720 Z" fill="#B9AEFF" opacity="0.12"/>
+    <!-- floor -->
+    <path d="M0 470 Q640 440 1280 470 L1280 720 L0 720 Z" fill="url(#carpet)"/>
+    <path d="M0 470 Q640 440 1280 470" fill="none" stroke="#1A1430" stroke-width="6"/>
+    <!-- bed -->
+    <rect x="760" y="120" width="560" height="300" rx="30" fill="#3B6FD1" stroke="#1A1430" stroke-width="8"/>
+    <path d="M740 300 Q900 260 1040 300 Q1160 330 1300 290 L1300 470 L740 470 Z" fill="#5C8EF0" stroke="#1A1430" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M800 470 L800 520 M1240 470 L1240 520" stroke="#1A1430" stroke-width="20" stroke-linecap="round"/>
+    <!-- giant sleeping arm dangling off the bed -->
+    <path d="M930 290 L930 400 Q930 420 950 420 L1010 420 Q1030 420 1030 400 L1030 290 Z" fill="#F5C59B" stroke="#1A1430" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M922 300 Q980 270 1040 300 L1040 330 Q980 306 922 330 Z" fill="#FFFFFF" stroke="#1A1430" stroke-width="7" stroke-linejoin="round"/>
+    <rect x="928" y="412" width="22" height="58" rx="11" fill="#F5C59B" stroke="#1A1430" stroke-width="7"/>
+    <rect x="954" y="414" width="22" height="66" rx="11" fill="#F5C59B" stroke="#1A1430" stroke-width="7"/>
+    <rect x="980" y="414" width="22" height="62" rx="11" fill="#F5C59B" stroke="#1A1430" stroke-width="7"/>
+    <rect x="1006" y="410" width="22" height="50" rx="11" fill="#F5C59B" stroke="#1A1430" stroke-width="7"/>
+    <path d="M934 412 L1026 412" stroke="#F5C59B" stroke-width="8"/>
+    <!-- Zzz -->
+    <text x="1110" y="200" font-family="Lilita One, sans-serif" font-size="80" fill="#FFFFFF" stroke="#1A1430" stroke-width="6" paint-order="stroke">Z</text>
+    <text x="1170" y="140" font-family="Lilita One, sans-serif" font-size="56" fill="#FFFFFF" stroke="#1A1430" stroke-width="5" paint-order="stroke">z</text>
+    <text x="1210" y="96" font-family="Lilita One, sans-serif" font-size="40" fill="#FFFFFF" stroke="#1A1430" stroke-width="4" paint-order="stroke">z</text>
+
+    <!-- dust trail -->
+    <path d="M880 650 Q960 640 1040 660" fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
+    <path d="M900 690 Q980 682 1060 696" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+    <!-- big blanket lump -->
+    <ellipse cx="660" cy="690" rx="250" ry="26" fill="#1A1430" opacity="0.35"/>
+    <path d="M420 690 C430 560 500 410 640 400 C780 410 860 540 900 686 C870 700 846 684 820 698 C790 684 770 702 740 692 C712 704 690 688 664 700 C636 688 612 704 586 694 C560 704 534 688 508 700 C480 690 452 704 420 690 Z" fill="url(#stars)" stroke="#1A1430" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M520 470 Q560 560 540 680 M700 430 Q740 540 760 690" fill="none" stroke="#C99A1E" stroke-width="7" stroke-linecap="round" opacity="0.6"/>
+    <path d="M420 690 C452 704 480 690 508 700 C534 688 560 704 586 694 C612 704 636 688 664 700 C690 688 712 704 740 692 C770 702 790 684 820 698 C846 684 870 700 900 686" fill="none" stroke="#FF8A3D" stroke-width="14" stroke-linecap="round"/>
+    <!-- mystery mark -->
+    <text x="660" y="380" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="110" fill="#FFFFFF" stroke="#1A1430" stroke-width="10" paint-order="stroke">?</text>
+    <path d="M760 330 l6 -16 l6 16 l16 6 l-16 6 l-6 16 l-6 -16 l-16 -6 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/>
+    <path d="M560 300 l4 -11 l4 11 l11 4 l-11 4 l-4 11 l-4 -11 l-11 -4 z" fill="#FFFFFF" stroke="#1A1430" stroke-width="3"/>
+    <!-- rope from the blanket hem to the player's hand -->
+    <path d="M440 660 Q400 560 352 500" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+    <path d="M440 660 Q400 560 352 500" fill="none" stroke="#1A1430" stroke-width="12" stroke-linecap="round" stroke-dasharray="1 18" opacity="0.5"/>
+    <!-- tiny player pulling, leaning away -->
+    <g transform="translate(250 540) scale(1.25) rotate(-16)">
+      <rect x="-26" y="40" width="22" height="58" rx="5" fill="#2E4FA0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="6" y="40" width="22" height="58" rx="5" fill="#2E4FA0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="-32" y="-26" width="64" height="72" rx="8" fill="#3DDC97" stroke="#1A1430" stroke-width="6"/>
+      <rect x="28" y="-20" width="58" height="20" rx="8" fill="#FFD9B0" stroke="#1A1430" stroke-width="6"/>
+      <rect x="-26" y="-84" width="56" height="56" rx="12" fill="#FFD9B0" stroke="#1A1430" stroke-width="6"/>
+      <circle cx="-8" cy="-60" r="5" fill="#1A1430"/><circle cx="14" cy="-60" r="5" fill="#1A1430"/>
+      <path d="M-8 -44 Q3 -36 14 -44" fill="none" stroke="#1A1430" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-26 -84 Q2 -104 30 -84 L30 -74 L-26 -74 Z" fill="#FF4D5E" stroke="#1A1430" stroke-width="6" stroke-linejoin="round"/>
+    </g>
+    <!-- sweat drops -->
+    <path d="M200 420 q8 14 0 22 q-8 -8 0 -22 z" fill="#9CDBFF" stroke="#1A1430" stroke-width="4"/>
+    <path d="M176 450 q6 10 0 16 q-6 -6 0 -16 z" fill="#9CDBFF" stroke="#1A1430" stroke-width="3"/>
+  </svg>
+
+  <div style="position: absolute; left: 48px; top: 40px; display: flex; flex-direction: column; gap: 4px">
+    <div style="font: 400 118px 'Lilita One', sans-serif; line-height: 0.92; color: #FFC93C; transform: rotate(-4deg); transform-origin: left; text-shadow: 0 8px 0 #1A1430, 6px 0 0 #1A1430, -6px 0 0 #1A1430, 0 -6px 0 #1A1430, 5px 5px 0 #1A1430, -5px 5px 0 #1A1430">TINY TOY<br>HEIST</div>
+  </div>
+  <div style="position: absolute; left: 70px; top: 300px; padding: 10px 20px; background: #FF4D5E; border: 5px solid #1A1430; border-radius: 16px; box-shadow: 0 6px 0 #1A1430; transform: rotate(-3deg); font: 400 34px 'Lilita One', sans-serif; color: #FFFFFF">DON'T WAKE HIM!</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

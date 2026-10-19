@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFC93C}a:hover{color:#FFE08A}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; font-family: 'Nunito', sans-serif; color: #1A1430; background-color: #4B3F7C; background-image: radial-gradient(#5B4E90 1.3px, transparent 1.5px); background-size: 14px 14px">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(12,8,28,0.6)"></div>
+
+  <div role="dialog" aria-label="Shop" style="position: absolute; left: 90px; top: 50px; width: 1100px; height: 620px; background: #FFF6E3; border: 5px solid #1A1430; border-radius: 28px; box-shadow: 0 10px 0 #1A1430; display: flex; flex-direction: column; overflow: hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #FFC93C; border-bottom: 5px solid #1A1430">
+      <div style="font: 400 40px 'Lilita One', sans-serif">Shop</div>
+      <button aria-label="Close shop" style="width: 48px; height: 48px; background: #FF4D5E; color: #FFFFFF; border: 4px solid #1A1430; border-radius: 14px; font: 400 26px 'Lilita One', sans-serif; cursor: pointer">X</button>
+    </div>
+    <div style="display: flex; flex: 1; min-height: 0">
+      <div style="width: 170px; flex: none; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #F4E6C8; border-right: 4px solid #1A1430">
+        <button style="height: 50px; background: #1A1430; color: #FFFFFF; border: 3px solid #1A1430; border-radius: 14px; font: 400 21px 'Lilita One', sans-serif; cursor: pointer">Featured</button>
+        <button style="height: 50px; background: #FFFFFF; color: #1A1430; border: 3px solid #1A1430; border-radius: 14px; font: 400 21px 'Lilita One', sans-serif; cursor: pointer">Passes</button>
+        <button style="height: 50px; background: #FFFFFF; color: #1A1430; border: 3px solid #1A1430; border-radius: 14px; font: 400 21px 'Lilita One', sans-serif; cursor: pointer">Toys</button>
+        <button style="height: 50px; background: #FFFFFF; color: #1A1430; border: 3px solid #1A1430; border-radius: 14px; font: 400 21px 'Lilita One', sans-serif; cursor: pointer">Boosts</button>
+        <button style="height: 50px; background: #FFFFFF; color: #1A1430; border: 3px solid #1A1430; border-radius: 14px; font: 400 21px 'Lilita One', sans-serif; cursor: pointer">Cash</button>
+      </div>
+      <div style="flex: 1; min-width: 0; padding: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto; gap: 14px; align-content: start">
+
+        <div style="grid-column: span 1; padding: 16px; background: #4DA8FF; border: 4px solid #1A1430; border-radius: 20px; display: flex; flex-direction: column; gap: 8px">
+          <div style="align-self: flex-start; padding: 3px 10px; background: #FFFFFF; border: 3px solid #1A1430; border-radius: 999px; font: 900 12px 'Nunito', sans-serif; letter-spacing: 0.06em">BEST FIRST BUY</div>
+          <div style="font: 400 28px 'Lilita One', sans-serif; color: #FFFFFF; text-shadow: 0 3px 0 #1A1430">Starter Sneakers</div>
+          <div style="font: 800 15px 'Nunito', sans-serif; color: #FFFFFF">Walk twice as fast, forever.</div>
+          <svg aria-hidden="true" width="120" height="70" viewBox="0 0 120 70" style="align-self: center"><path d="M10 50 L10 30 Q30 30 44 18 L64 18 Q70 34 100 38 Q112 40 112 52 L112 58 L10 58 Z" fill="#FF4D5E" stroke="#1A1430" stroke-width="5" stroke-linejoin="round"/><rect x="10" y="52" width="102" height="8" fill="#FFFFFF" stroke="#1A1430" stroke-width="4"/><path d="M50 26 L56 40 M60 24 L66 38" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></svg>
+          <button style="margin-top: auto; height: 50px; background: #3DDC97; border: 4px solid #1A1430; border-radius: 14px; box-shadow: 0 4px 0 #1A1430; font: 400 24px 'Lilita One', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path d="M12 2 L21 7 L21 17 L12 22 L3 17 L3 7 Z" fill="none" stroke="#1A1430" stroke-width="3"/><rect x="9" y="9" width="6" height="6" fill="#1A1430"/></svg>5</button>
+        </div>
+
+        <div style="grid-column: span 2; padding: 16px; background: #9B7BFF; border: 4px solid #1A1430; border-radius: 20px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="font: 400 28px 'Lilita One', sans-serif; color: #FFFFFF; text-shadow: 0 3px 0 #1A1430">Mystery Toy</div>
+            <div style="font: 800 15px 'Nunito', sans-serif; color: #FFFFFF">A Large blanket, delivered to your hole. Wakes up as a random toy.</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+              <button style="height: 44px; background: #FFFFFF; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; cursor: pointer"><span>× 1</span><span>49 Robux</span></button>
+              <button style="height: 44px; background: #FFFFFF; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; cursor: pointer"><span>× 3</span><span>129 Robux</span></button>
+              <button style="height: 44px; background: #FFC93C; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; cursor: pointer"><span>× 10</span><span>399 Robux</span></button>
+            </div>
+          </div>
+          <div style="background: #FFFFFF; border: 3px solid #1A1430; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+            <div style="font: 900 13px 'Nunito', sans-serif; letter-spacing: 0.08em">ODDS PER TOY</div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #6C7684">Common</span><span>20%</span></div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #23884A">Uncommon</span><span>35%</span></div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #2367BE">Rare</span><span>28%</span></div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #7A35BA">Epic</span><span>13%</span></div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #A06F10">Legendary</span><span>3.5%</span></div>
+            <div style="display: flex; justify-content: space-between; font: 800 15px 'Nunito', sans-serif"><span style="color: #B42828">Mythic</span><span>0.5%</span></div>
+            <div style="font: 700 12px 'Nunito', sans-serif; color: #5B6577">Mutation rolled at wake-up, same chances as in play.</div>
+          </div>
+        </div>
+
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 6px">
+          <div style="font: 400 22px 'Lilita One', sans-serif">2× Money</div>
+          <div style="font: 700 14px 'Nunito', sans-serif; color: #4A4F66">Every toy earns double, forever.</div>
+          <button style="margin-top: 4px; height: 42px; background: #3DDC97; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; cursor: pointer">349 Robux</button>
+        </div>
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 6px">
+          <div style="font: 400 22px 'Lilita One', sans-serif">Silent Socks</div>
+          <div style="font: 700 14px 'Nunito', sans-serif; color: #4A4F66">25% less noise from everything you do.</div>
+          <button style="margin-top: 4px; height: 42px; background: #3DDC97; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; cursor: pointer">149 Robux</button>
+        </div>
+        <div style="padding: 14px; background: #FFFFFF; border: 4px solid #1A1430; border-radius: 18px; display: flex; flex-direction: column; gap: 6px">
+          <div style="font: 400 22px 'Lilita One', sans-serif">Server Luck · 30 min</div>
+          <div style="font: 700 14px 'Nunito', sans-serif; color: #4A4F66">Double Epic+ luck for everyone here. Your name goes up in gold.</div>
+          <button style="margin-top: 4px; height: 42px; background: #FFC93C; border: 3px solid #1A1430; border-radius: 12px; font: 900 16px 'Nunito', sans-serif; cursor: pointer">199 Robux</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

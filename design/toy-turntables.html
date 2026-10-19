@@ -1,0 +1,371 @@
+<title>Tiny Toy Heist Toy Shelf</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a toy-shop turntable. Big 3D stage left, spec card right, the shelf of 15 MVP toys underneath. */
+:root{
+  --bg:#EDF1F7; --panel:#FFFFFF; --ink:#172033; --soft:#5B6577; --line:#D3DAE6; --accent:#FF6B3D;
+  --stage:#DCE4F0; --stage-floor:#C6D1E2; --beam:#F4E7B8;
+  --common:#8A96A3; --uncommon:#33A35A; --rare:#2F7BD8; --epic:#9246D4; --legendary:#D99A1E; --mythic:#D23B3B;
+  --display:'Fredoka', 'Trebuchet MS', sans-serif; --body:'Figtree', system-ui, sans-serif; --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E131C; --panel:#161E2B; --ink:#E8EDF5; --soft:#9AA6B8; --line:#2A3446; --stage:#1A2333; --stage-floor:#26324A; --beam:#5A5230; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E131C; --panel:#161E2B; --ink:#E8EDF5; --soft:#9AA6B8; --line:#2A3446; --stage:#1A2333; --stage-floor:#26324A; --beam:#5A5230; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:24px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(32px,5vw,50px);line-height:1.02;margin:4px 0 6px;text-wrap:balance}
+p{margin:0;max-width:68ch}.lede{color:var(--soft)}
+.top{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+.stagebox{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--stage);aspect-ratio:4/3;max-width:100%}
+#stage{display:block;width:100%;height:100%}
+.tag{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:999px;padding:4px 12px;font:600 13px var(--display);white-space:nowrap}
+.hint{position:absolute;right:12px;bottom:10px;font:400 12px var(--mono);color:var(--soft)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;color:var(--ink);font:600 13px var(--body);padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.seg button:focus-visible,select:focus-visible,.toy:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,.btn{font:500 13px var(--body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 12px}
+.btn{cursor:pointer}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:grid;gap:12px;min-width:0}
+.card h2{font-family:var(--display);font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:#fff;padding:3px 10px;border-radius:999px;width:fit-content}
+.money{font:600 28px var(--display);color:var(--ink)}
+.money small{font:400 13px var(--body);color:var(--soft)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+dt{color:var(--soft)} dd{margin:0}
+.perk{border-left:3px solid var(--accent);padding-left:10px;font-size:14px}
+h3{font-family:var(--display);font-weight:600;font-size:24px;margin:0}
+.shelf{display:grid;gap:18px}
+.row{display:grid;gap:8px}
+.rowhead{display:flex;align-items:center;gap:10px;font:600 13px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+.rowhead i{width:10px;height:10px;border-radius:50%}
+.toys{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.toy{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;cursor:pointer;display:grid;gap:4px;text-align:left;color:var(--ink);font:inherit}
+.toy img{width:100%;aspect-ratio:1;border-radius:10px;background:var(--stage);display:block}
+.toy b{font:600 14px var(--display)}
+.toy span{font:400 12px var(--mono);color:var(--soft)}
+.toy[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.err{padding:24px;color:var(--soft)}
+@media (max-width:820px){.top{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tiny Toy Heist · Toy concepts · MVP set</div>
+    <h1>The first 15 toys, on the turntable</h1>
+    <p class="lede">Voxel concept models for every toy in the first build. Drag to spin, scroll or pinch to zoom. Switch views to see what players see on the floor: the blanket, the Flashlight silhouette, or the toy awake with a mutation.</p>
+  </header>
+
+  <div class="top">
+    <div>
+      <div class="stagebox" id="stagebox"><canvas id="stage" aria-label="3D view of the selected toy"></canvas><div class="tag" id="tag" hidden></div><div class="hint">drag to spin</div></div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="View">
+          <button id="v-awake" data-view="awake" aria-pressed="true">Awake</button>
+          <button id="v-blanket" data-view="blanket" aria-pressed="false">Under the blanket</button>
+          <button id="v-flash" data-view="flash" aria-pressed="false">Flashlight</button>
+          <button id="v-drag" data-view="drag" aria-pressed="false">Being dragged</button>
+        </div>
+        <label><span class="lede" style="font-size:13px">Mutation </span><select id="mutation">
+          <option value="none">None</option><option value="gold">Gold (x2)</option><option value="glitter">Glitter (x3)</option><option value="shadow">Shadow (x5)</option><option value="rainbow">Rainbow (x10)</option><option value="cosmic">Cosmic (x25)</option></select></label>
+        <button class="btn" id="spin" aria-pressed="true">Auto-spin on</button>
+        <button class="btn" id="reroll">New blanket colours</button>
+      </div>
+    </div>
+    <div class="card" id="info"></div>
+  </div>
+
+  <section class="shelf" id="shelf" aria-label="Toy shelf"></section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const RARITY={Common:'--common',Uncommon:'--uncommon',Rare:'--rare',Epic:'--epic',Legendary:'--legendary',Mythic:'--mythic'};
+const MUT_X={none:1,gold:2,glitter:3,shadow:5,rainbow:10,cosmic:25};
+const C={Y:0xFFD23F,O:0xFF8A1F,K:0x1b1b1f,W:0xFFFFFF,NAVY:0x1F3A6B,R:0xD83A3A,P:0xF27A9A,G:0x9AA3AD,Pk:0xF3A3B5,Br:0xC9A24A,Y2:0xF7E15A,Cr:0xF2E6D0,
+  AG:0x4E7A3A,AG2:0x60904A,Lime:0x8BD43A,Gy:0x8A8F96,Bn:0x9A6B43,Ct:0xC9A36A,Pc:0xF2C230,Er:0xF28BA0,Sn:0xC9A27A,Fl:0xFF9A2E,Glass:0x7FC8F0,
+  Pu:0x7B3FC4,Bl:0x3D8FD6,Pk2:0xF4B6C9,Gd:0xE2B44A,Skin:0xF7D9C4,Hair:0x6B4226,Sv:0xB8C0C8,Dk:0x7E8892,Re:0xFF3B3B,Cos:0x24306A,Star:0xFFE680,Vel:0x9C1C2E};
+
+function mat(c,o={}){const m=new THREE.MeshStandardMaterial({color:c,roughness:o.r??.55,metalness:o.m??0,emissive:o.e??0x000000,emissiveIntensity:o.ei??1});m.userData.base={color:c,r:m.roughness,m:m.metalness,e:o.e??0x000000};return m}
+function builder(root){
+  const mk=(parent,px,py,pz)=>({
+    box(x,y,z,w,h,d,c,o){const me=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c,o));me.position.set(x+w/2-px,y+h/2-py,z+d/2-pz);me.castShadow=true;parent.add(me);return this},
+    group(name,ox,oy,oz){const g=new THREE.Group();g.position.set(ox-px,oy-py,oz-pz);g.userData.base=g.position.clone();parent.add(g);root.userData.parts[name]=g;return mk(g,ox,oy,oz)}
+  });return mk(root,0,0,0)}
+
+function duck(B,body,beak,royal){
+  B.box(-3,0,-3,7,4,6,body,royal?{m:.75,r:.28}:undefined);B.box(-4.5,2,-2,1.5,2.5,4,body,royal?{m:.75,r:.28}:undefined);
+  B.box(-0.5,-0.5,-2,1.5,0.5,1.5,C.O);B.box(-0.5,-0.5,0.5,1.5,0.5,1.5,C.O);
+  const h=B.group('head',2,4,0);
+  h.box(0.5,4,-2,4,4,4,body,royal?{m:.75,r:.28}:undefined);h.box(4.5,5,-1,2,1,2,beak);
+  h.box(3.5,6.2,-2.2,0.8,0.8,0.3,C.K);h.box(3.5,6.2,1.9,0.8,0.8,0.3,C.K);
+  if(royal){h.box(1,8,-1.5,3,1,3,C.Gd,{m:.8,r:.25});[[1,-1.5],[3.3,-1.5],[1,0.8],[3.3,0.8]].forEach(([x,z])=>h.box(x,9,z,0.7,1.1,0.7,C.Gd,{m:.8,r:.25}));h.box(3.95,8.25,-0.35,0.2,0.6,0.7,C.Re,{e:0x801010});
+    B.box(-4.6,0.2,-3.3,2.2,5.2,6.6,C.Vel);B.box(-4.7,4.9,-3.4,2.4,0.6,6.8,C.W)}
+  else{h.box(0.4,8,-2.1,4.2,0.4,4.2,C.NAVY);h.box(0.6,8.4,-1.8,3.8,0.9,3.6,C.W)}
+}
+function bear(B,fur,snout,opts={}){
+  B.box(-3,0,-2.5,6,6,5,fur,opts.mat);B.box(1.5,0,-2.5,2,1.5,2,fur,opts.mat);B.box(1.5,0,0.5,2,1.5,2,fur,opts.mat);
+  B.box(-0.5,3.5,-3.4,1.5,1.2,1,fur,opts.mat);B.box(-0.5,3.5,2.4,1.5,1.2,1,fur,opts.mat);
+  const h=B.group('head',0,6,0);
+  h.box(-2.5,6,-2.5,5,4.5,5,fur,opts.mat);h.box(2.5,7,-1,1,1.5,2,snout);h.box(3.5,7.8,-0.4,0.4,0.6,0.8,C.K);
+  h.box(2.4,8.6,-1.6,0.3,0.7,0.7,C.K);h.box(2.4,8.6,0.9,0.3,0.7,0.7,C.K);
+  h.box(-1.5,10,-3.4,1.6,1.6,1,fur,opts.mat);h.box(-1.5,10,2.4,1.6,1.6,1,fur,opts.mat);
+  return h;
+}
+const TOYS=[
+ {id:'duck',name:'Rubber Duck',rarity:'Common',room:"Kid's Bedroom",money:2,look:'Classic yellow duck, orange beak, tiny sailor hat',idle:'Waddles in circles, squeaks every few steps',perk:'',anim:'waddle',build:B=>duck(B,C.Y,C.O)},
+ {id:'sock',name:'Sock Puppet',rarity:'Common',room:"Kid's Bedroom",money:3,look:'Striped red-white sock with button eyes and a felt tongue',idle:'Flops forward, "talks" with its mouth',perk:'',anim:'talk',build:B=>{
+   for(let i=0;i<5;i++)B.box(-2,i*2,-2,4,2,4,i%2?C.W:C.R);
+   B.box(-2,10,-2,6,1.5,4,C.R);B.box(1,11.5,-1,3,0.4,2,C.P);
+   const u=B.group('upper',-2,11.6,0);u.box(-2,11.6,-2,6,2.4,4,C.W);u.box(1.5,13.2,-2.2,1,1,0.3,C.K);u.box(1.5,13.2,1.9,1,1,0.3,C.K);u.box(-2,13.6,-2,6,0.4,4,C.R)}},
+ {id:'mouse',name:'Wind-Up Mouse',rarity:'Common',room:'Hallway',money:8,look:'Grey tin mouse with a brass key on its back',idle:'Zooms forward, slows down, winds its own key',perk:'',anim:'zoom',build:B=>{
+   const t={m:.55,r:.35};B.box(-4,0.5,-2,7,3.5,4,C.G,t);B.box(3,0.8,-1.5,3,3,3,C.G,t);B.box(6,1.8,-0.5,1,1,1,C.Pk);
+   B.box(3.5,3.6,-2.6,1,2,1.6,C.Pk);B.box(3.5,3.6,1,1,2,1.6,C.Pk);B.box(5,3,-1.7,0.6,0.6,0.3,C.K);B.box(5,3,1.4,0.6,0.6,0.3,C.K);
+   B.box(-7,1.2,-0.25,3,0.5,0.5,C.Pk);[[-3,-2.2],[-3,1.8],[1.5,-2.2],[1.5,1.8]].forEach(([x,z])=>B.box(x,0,z,1.2,1,0.4,C.K));
+   const k=B.group('key',-1,4,0);k.box(-1.25,4,-0.25,0.5,1.5,0.5,C.Br,{m:.8,r:.3});k.box(-2.5,5.5,-0.25,3,2,0.5,C.Br,{m:.8,r:.3})}},
+ {id:'chicken',name:'Rubber Chicken',rarity:'Common',room:'Kitchen',money:8,look:'Classic floppy yellow rubber chicken',idle:'Flops over and lets out a long squawk',perk:'',anim:'flop',build:B=>{
+   B.box(-2,1,-1.5,5,5,3,C.Y2);B.box(-3.5,3,-1,1.5,2,2,C.Y2);B.box(0,0,-1,0.5,1,0.5,C.O);B.box(0,0,0.5,0.5,1,0.5,C.O);
+   const n=B.group('neck',1,6,0);n.box(0.5,6,-0.75,1.5,6,1.5,C.Y2);n.box(0,12,-1.25,3,2.5,2.5,C.Y2);n.box(3,12.6,-0.5,2,0.8,1,C.O);
+   n.box(0.5,14.5,-0.4,2,1.2,0.8,C.R);n.box(2.5,11.6,-0.3,0.8,1,0.6,C.R);n.box(2,13.3,-1.35,0.6,0.6,0.2,C.K);n.box(2,13.3,1.15,0.6,0.6,0.2,C.K)}},
+ {id:'bunny',name:'Plush Bunny',rarity:'Uncommon',room:"Kid's Bedroom",money:15,look:'Floppy-eared cream bunny with a stitched heart',idle:'Hops, then flops over for a nap',perk:'',anim:'hop',build:B=>{
+   B.box(-3,0,-3,6,6,6,C.Cr);B.box(1,0,-3,3,1.5,2,C.Cr);B.box(1,0,1,3,1.5,2,C.Cr);B.box(2.9,2,-1,0.3,2,2,C.R);B.box(-3.8,1.5,-1,1,2,2,C.W);
+   const h=B.group('head',0,6,0);h.box(-2.5,6,-2.5,5,5,5,C.Cr);h.box(2.4,8.5,-1.8,0.3,0.8,0.8,C.K);h.box(2.4,8.5,1,0.3,0.8,0.8,C.K);h.box(2.4,7.6,-0.4,0.4,0.6,0.8,C.Pk);
+   h.box(-1.5,11,-2,1.5,5,1.5,C.Cr);h.box(-1.1,11.5,-2.1,0.7,4,0.2,C.Pk);
+   const e=h.group('ear2',-0.75,11,1.25);e.box(-1.5,11,0.5,1.5,5,1.5,C.Cr);e.box(-1.1,11.5,0.4,0.7,4,0.2,C.Pk)}},
+ {id:'soldier',name:'Toy Soldier',rarity:'Uncommon',room:'Hallway',money:15,look:'Green plastic soldier on its base',idle:'Marches in place, stands to attention',perk:'',anim:'march',build:B=>{
+   B.box(-3,0,-3,6,1,6,C.AG);B.box(-1.5,1,-1.25,3,5,2.5,C.AG2);B.box(-2,6,-1.6,4,5,3.2,C.AG2);B.box(-2.1,6,-1.7,4.2,0.6,3.4,C.AG);
+   B.box(-1.4,11,-1.4,2.8,2.8,2.8,C.AG2);B.box(-1.9,13.3,-1.9,3.8,1.4,3.8,C.AG);B.box(-0.5,5,2,1,9,1,C.AG);B.box(-0.5,7,1.6,1,4,0.8,C.AG2);
+   B.box(1.3,12,-1,0.2,0.5,0.6,C.K);B.box(1.3,12,0.4,0.2,0.5,0.6,C.K)}},
+ {id:'frog',name:'Pogo Frog',rarity:'Uncommon',room:'Hallway',money:30,look:'Lime frog standing on a red pogo stick',idle:'Pogos in place, croaks on each landing',perk:'',anim:'pogo',build:B=>{
+   B.box(-0.6,0,-0.6,1.2,2,1.2,C.Gy,{m:.6,r:.3});B.box(-0.5,2,-0.5,1,9,1,C.R);B.box(-0.5,10,-2.5,1,0.8,5,C.Gy);B.box(-0.5,3,-2.5,1,0.6,5,C.Gy);
+   B.box(-3.5,3.6,-2,3,4,4,C.Lime);B.box(-3.5,7.6,-2.5,4,3,5,C.Lime);
+   B.box(-1,10.6,-2.3,1.5,1.5,1.5,C.Lime);B.box(-1,10.6,0.8,1.5,1.5,1.5,C.Lime);B.box(0.4,11,-1.9,0.3,0.7,0.7,C.K);B.box(0.4,11,1.2,0.3,0.7,0.7,C.K);
+   B.box(0.45,8.3,-2,0.2,0.3,4,C.K);B.box(-1,9.2,-2.6,1.5,0.8,0.8,C.Lime);B.box(-1,9.2,1.8,1.5,0.8,0.8,C.Lime);
+   B.box(-1.6,3.6,-2.6,1.2,0.8,1,C.Lime);B.box(-1.6,3.6,1.6,1.2,0.8,1,C.Lime)}},
+ {id:'teddyknight',name:'Teddy Knight',rarity:'Rare',room:"Kid's Bedroom",money:75,look:'Brown teddy in cardboard armour with a pencil sword',idle:'Salutes, swings its sword, stands guard',perk:'',anim:'swing',build:B=>{
+   const h=bear(B,C.Bn,C.Sn);B.box(-3.2,1.5,-2.7,6.4,4,5.4,C.Ct);h.box(-2.7,9.8,-2.7,5.4,1.6,5.4,C.Ct);h.box(2.6,9.6,-2.8,0.3,0.5,5.6,C.Ct);
+   B.box(1,4,2.3,2,1.2,1.2,C.Bn);const s=B.group('sword',2,4.5,3);s.box(2.6,3,2.6,0.8,8,0.8,C.Pc);s.box(2.75,11,2.75,0.5,1,0.5,0xE8D2A8);s.box(2.85,12,2.85,0.3,0.5,0.3,0x444444);s.box(2.6,2,2.6,0.8,1,0.8,C.Er)}},
+ {id:'racer',name:'Rocket Racer',rarity:'Rare',room:'Hallway',money:60,look:'Red and white race car with rocket boosters',idle:'Revs, does a short donut, puffs smoke',perk:'',anim:'rev',build:B=>{
+   B.box(-5,1,-2.5,10,2,5,C.R,{r:.35});B.box(5,1,-2,1.5,1.5,4,C.R,{r:.35});B.box(-2,3,-2,4,2,4,C.W);B.box(1.9,3.2,-1.7,0.3,1.6,3.4,C.Glass,{r:.1,m:.2});
+   B.box(-1,1.5,-2.6,2,1.2,0.15,C.W);B.box(-1,1.5,2.45,2,1.2,0.15,C.W);B.box(-5.5,3,-2.5,1.5,0.4,5,C.K);
+   [[-4,-3],[-4,2],[2.5,-3],[2.5,2]].forEach(([x,z])=>B.box(x,0,z,2,2,1,C.K));
+   B.box(-7,2,-2.2,2,1.4,1.4,C.Gy,{m:.7,r:.3});B.box(-7,2,0.8,2,1.4,1.4,C.Gy,{m:.7,r:.3});
+   const f=B.group('flame',-7,2.7,0);f.box(-9,2.3,-2,2,1,1,C.Fl,{e:0xFF6A00,ei:1.2});f.box(-9,2.3,1,2,1,1,C.Fl,{e:0xFF6A00,ei:1.2})}},
+ {id:'jack',name:'Jack-in-the-Box',rarity:'Rare',room:'Hallway',money:85,look:'Purple box with a crank; a grinning clown springs out',idle:'Cranks itself, pops out, giggles',perk:'10% chance to spook a raider into dropping a toy',anim:'pop',build:B=>{
+   B.box(-3,0,-3,6,6,6,C.Pu);B.box(-3.1,5.6,-3.1,6.2,0.5,6.2,C.Pc);B.box(-3.1,0,-3.1,6.2,0.5,6.2,C.Pc);B.box(-3.6,6,-3,0.5,6,6,C.Pu);
+   B.box(2.95,2,-1,0.15,2,2,C.Pc);
+   const k=B.group('crank',0,3,3);k.box(-0.3,2.7,3,0.6,0.6,1.2,C.Gy);k.box(-0.3,2.7,4,0.6,2.2,0.6,C.Gy);k.box(-0.3,4.5,4,0.6,0.6,1.5,C.R);
+   const c=B.group('clown',0,6,0);c.box(-0.75,6,-0.75,1.5,3,1.5,C.Gy,{m:.6,r:.3});c.box(-2.4,8.6,-2.4,4.8,0.6,4.8,C.Pc);c.box(-2,9,-2,4,4,4,C.W);
+   c.box(2,10.5,-0.5,1,1,1,C.R);c.box(1.9,11.5,-1.5,0.3,0.7,0.7,C.K);c.box(1.9,11.5,0.8,0.3,0.7,0.7,C.K);c.box(1.9,9.6,-1.2,0.3,0.4,2.4,C.R);
+   c.box(-1.5,13,-1.5,3,1.5,3,C.R);c.box(-0.75,14.5,-0.75,1.5,1.5,1.5,C.Pc)}},
+ {id:'shark',name:'Bath Shark',rarity:'Rare',room:'Kitchen',money:100,look:'A blue squirt-toy shark with a white belly',idle:'Squirts water arcs, swims in a tiny puddle',perk:'',anim:'swim',build:B=>{
+   B.box(-5,0.5,-2,9,4,4,C.Bl,{r:.3});B.box(4,1,-1.5,2.5,3,3,C.Bl,{r:.3});B.box(-4,0,-1.8,9,1.2,3.6,C.W,{r:.3});B.box(-1.5,4.5,-0.4,2,2.5,0.8,C.Bl,{r:.3});
+   B.box(0,0.5,-3,2,0.6,1,C.Bl);B.box(0,0.5,2,2,0.6,1,C.Bl);B.box(4.5,3,-1.6,0.6,0.6,0.2,C.K);B.box(4.5,3,1.4,0.6,0.6,0.2,C.K);B.box(5.5,1.3,-1.2,1,0.3,2.4,C.W);
+   const t=B.group('tail',-5,2.5,0);t.box(-7,1.2,-0.4,2,2.6,0.8,C.Bl,{r:.3});t.box(-8.5,0,-0.4,1.5,5,0.8,C.Bl,{r:.3})}},
+ {id:'musicbox',name:'Music Box Dancer',rarity:'Epic',room:"Kid's Bedroom",money:300,look:'Tiny ballerina on a wind-up music box, pastel pink',idle:'Twirls while a soft tune plays',perk:'Your carrying noise -5%',anim:'twirl',build:B=>{
+   const g={m:.8,r:.25};B.box(-3.5,0,-3.5,7,3,7,C.Pk2);B.box(-3.6,2.8,-3.6,7.2,0.4,7.2,C.Gd,g);
+   [[-3.5,-3.5],[2.5,-3.5],[-3.5,2.5],[2.5,2.5]].forEach(([x,z])=>B.box(x,-0.6,z,1,0.6,1,C.Gd,g));B.box(-0.3,3.2,-0.3,0.6,1,0.6,C.Gd,g);B.box(3.45,1,-0.5,0.2,1,1,C.Gd,g);
+   const d=B.group('dancer',0,4,0);d.box(-0.3,4.2,-0.3,0.6,4,0.6,C.W);d.box(-0.3,6.8,0.3,0.6,0.6,2.5,C.W);d.box(-2,7.8,-2,4,0.8,4,C.Pk2);
+   d.box(-0.8,8.6,-0.6,1.6,2.4,1.2,C.Pk2);d.box(-0.7,11,-0.7,1.4,1.4,1.4,C.Skin);d.box(-0.4,12.4,-0.4,0.8,0.6,0.8,C.Hair);
+   d.box(-0.2,10.4,-1.4,0.4,2.4,0.4,C.Skin);d.box(-0.2,10.4,1,0.4,2.4,0.4,C.Skin)}},
+ {id:'robodino',name:'Robot Dino',rarity:'Epic',room:'Kitchen',money:500,look:'A silver T-rex robot with red light eyes and a wind-up key',idle:'Stomps, roars with a beep, tail clanks',perk:'+5% money for the toys on either side',anim:'stomp',build:B=>{
+   const m={m:.7,r:.32};B.box(-1.5,0,-2,2,4,1.5,C.Dk,m);B.box(-1.5,0,0.5,2,4,1.5,C.Dk,m);B.box(-1.5,0,-2.2,3,0.8,1.9,C.Dk,m);B.box(-1.5,0,0.3,3,0.8,1.9,C.Dk,m);
+   B.box(-3,3.5,-2,6,5,4,C.Sv,m);[-2,-0.5,1].forEach(x=>B.box(x,8.5,-0.4,1,1,0.8,C.Dk,m));B.box(3,6,-1.8,1.5,0.6,0.6,C.Dk,m);B.box(3,6,1.2,1.5,0.6,0.6,C.Dk,m);
+   const t=B.group('tail',-3,5.5,0);t.box(-6,4.5,-1.25,3,2.5,2.5,C.Sv,m);t.box(-8.5,4,-0.75,2.5,1.5,1.5,C.Sv,m);t.box(-10,3.6,-0.4,1.5,1,0.8,C.Dk,m);
+   const h=B.group('head',2,8,0);h.box(1,8,-1,2,1.5,2,C.Sv,m);h.box(1.5,9,-1.75,5,3,3.5,C.Sv,m);h.box(5.5,10.8,-1.9,0.8,0.6,0.3,C.Re,{e:0xFF2020,ei:1.4});h.box(5.5,10.8,1.6,0.8,0.6,0.3,C.Re,{e:0xFF2020,ei:1.4});
+   const j=h.group('jaw',2,9,0);j.box(2,8.2,-1.5,4.5,0.8,3,C.Dk,m);j.box(5.6,9,-1.4,0.4,0.35,2.8,C.W);
+   const k=B.group('key',-1,6,2.2);k.box(-1.25,5.75,2,0.5,0.5,1,C.Br,{m:.8,r:.3});k.box(-2,5,3,2,2,0.4,C.Br,{m:.8,r:.3})}},
+ {id:'cosmicteddy',name:'Cosmic Teddy',rarity:'Legendary',room:"Kid's Bedroom",money:1500,look:'Midnight-blue teddy with star-pattern fur and a moon patch',idle:'Floats a little, stars drift off its fur',perk:'+3% luck',anim:'float',build:B=>{
+   const h=bear(B,C.Cos,0x3A4A8A);B.box(2.95,2,-1,0.25,2,2,0xF2E6A0,{e:0xC8B860,ei:.6});
+   const st={e:0xFFD84A,ei:1.3};[[-3.1,4,-1],[-3.1,1.5,1.2],[0,6.05,1.6],[1.2,3,-2.6],[-1.5,5,2.55],[0.8,1,2.55]].forEach(([x,y,z])=>B.box(x,y,z,0.45,0.45,0.45,C.Star,st));
+   [[-2.6,9,-1],[-1,10.55,0.8],[0.5,7,-2.6],[-1.8,7.5,2.55]].forEach(([x,y,z])=>h.box(x,y,z,0.45,0.45,0.45,C.Star,st))}},
+ {id:'kingduck',name:'King Rubber Duck',rarity:'Legendary',room:'Kitchen',money:5000,look:'A golden rubber duck with a crown and a velvet cape',idle:'Waddles regally; other ducks bow when it passes',perk:'All Rubber Ducks earn x3',anim:'waddle',build:B=>duck(B,C.Gd,C.O,true)}
+];
+
+/* ---------- three.js stage ---------- */
+let renderer,scene,camera,controls,floor,beamLight,key,fill,current=null,blanket=null,view='awake',mut='none',spin=true,clock;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function themeColors(){scene.background=new THREE.Color(view==='flash'?css('--beam'):css('--stage'));floor.material.color.set(css('--stage-floor'))}
+function init(){
+  const cv=document.getElementById('stage');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(32,4/3,0.1,500);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x8090a8,.75));
+  key=new THREE.DirectionalLight(0xffffff,.95);key.position.set(18,30,22);key.castShadow=true;key.shadow.mapSize.set(1024,1024);
+  Object.assign(key.shadow.camera,{left:-20,right:20,top:20,bottom:-20,near:1,far:90});scene.add(key);
+  fill=new THREE.DirectionalLight(0xbfd4ff,.35);fill.position.set(-20,12,-14);scene.add(fill);
+  floor=new THREE.Mesh(new THREE.CylinderGeometry(24,24,0.6,72),new THREE.MeshStandardMaterial({color:0xcccccc,roughness:.9}));floor.position.y=-0.3;floor.receiveShadow=true;scene.add(floor);
+  controls=new THREE.OrbitControls(camera,cv);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=12;controls.maxDistance=90;
+  controls.addEventListener('start',()=>setSpin(false));
+  clock=new THREE.Clock();
+  themeColors();
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',themeColors);
+  new MutationObserver(themeColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  new ResizeObserver(resize).observe(document.getElementById('stagebox'));resize();
+}
+function resize(){const b=document.getElementById('stagebox').getBoundingClientRect();renderer.setSize(b.width,b.height,false);camera.aspect=b.width/b.height;camera.updateProjectionMatrix()}
+function buildToy(t){
+  const inner=new THREE.Group();inner.userData.parts={};t.build(builder(inner));inner.updateMatrixWorld(true);
+  const bb=new THREE.Box3().setFromObject(inner),c=bb.getCenter(new THREE.Vector3());
+  inner.position.set(-c.x,-bb.min.y,-c.z);
+  const outer=new THREE.Group();outer.add(inner);outer.userData={inner,parts:inner.userData.parts,size:bb.getSize(new THREE.Vector3()),toy:t};
+  return outer}
+function frame(obj,thumb){
+  const s=obj.userData.size,r=Math.max(s.x,s.y,s.z)*0.62+1;const d=r/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*(thumb?0.92:1.05);
+  camera.position.set(d*0.62,s.y*0.55+d*0.32,d*0.72);controls.target.set(0,s.y*0.45,0);camera.lookAt(controls.target);controls.update()}
+/* Blankets (option 2 · hand-sculpted cartoon): a soft rounded lump with gentle folds toward the hem,
+   a wavy hem that follows the folds, a thick rolled lip, a dark outline and toon shading, so it sits next to the blocky toys.
+   With a trail direction the fabric also drags out behind. Every blanket rolls its own colour pair and pattern. */
+const PALS=[[0x4DA8FF,0xFFFFFF],[0xFF7AA8,0xFFFFFF],[0x3DDC97,0xFFF6D5],[0x9B7BFF,0xFFE07A],[0xFF8A3D,0xFFF1D6],[0x2F6FB9,0xFFD95A],[0xE04848,0xFFFFFF],[0x7FD6E8,0x2B5F8C],[0xF2C6E0,0x9B4D7A],[0xFFD95A,0xE04848]];
+const PATS=['plain','dots','stars','checks'];
+const TOON_GRAD=(()=>{const d=new Uint8Array([95,165,220,255]);const t=new THREE.DataTexture(d,4,1,THREE.LuminanceFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.needsUpdate=true;return t})();
+function fabricTex(main,trim,kind){
+  const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d'),hex=n=>'#'+n.toString(16).padStart(6,'0');
+  g.fillStyle=hex(main);g.fillRect(0,0,256,256);g.fillStyle=hex(trim);
+  if(kind==='dots')for(let y=16;y<256;y+=32)for(let x=(y/32)%2?32:16;x<256;x+=32){g.beginPath();g.arc(x,y,6,0,7);g.fill()}
+  if(kind==='stars'){g.font='bold 24px sans-serif';g.textAlign='center';g.textBaseline='middle';for(let y=20;y<256;y+=42)for(let x=(Math.round(y/42)%2)?42:21;x<256;x+=42)g.fillText('★',x,y)}
+  if(kind==='checks'){g.globalAlpha=.35;for(let y=0;y<256;y+=32)for(let x=(y/32)%2?32:0;x<256;x+=64)g.fillRect(x,y,32,32);g.globalAlpha=1}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
+function blanketMesh(boxes,{pal=PALS[0],pattern='plain',trail=null,trailLen=9}={}){
+  const b=boxes.reduce((a,x)=>a.union(x),new THREE.Box3()),cx=(b.min.x+b.max.x)/2,cz=(b.min.z+b.max.z)/2,TOP=b.max.y;
+  let ext=0;boxes.forEach(bx=>[[bx.min.x,bx.min.z],[bx.max.x,bx.min.z],[bx.min.x,bx.max.z],[bx.max.x,bx.max.z]].forEach(([x,z])=>{ext=Math.max(ext,Math.hypot(x-cx,z-cz))}));
+  const R=ext+3.2,L=2*(R+1),G=48,gs=L/G,ss=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+  const topAt=(x,z)=>{let h=0;for(const bx of boxes)if(x>bx.min.x-.6&&x<bx.max.x+.6&&z>bx.min.z-.6&&z<bx.max.z+.6)h=Math.max(h,bx.max.y);return h};
+  const hf=new Float32Array(G*G);for(let i=0;i<G;i++)for(let k=0;k<G;k++)hf[i*G+k]=topAt(cx-L/2+i*gs,cz-L/2+k*gs);
+  let H=hf;for(let p=0;p<10;p++){const S=new Float32Array(G*G);for(let i=0;i<G;i++)for(let k=0;k<G;k++){let s=0,w=0;for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){const ii=i+a,kk=k+c;if(ii>=0&&ii<G&&kk>=0&&kk<G){s+=Math.max(H[ii*G+kk],hf[ii*G+kk]*.92);w++}}S[i*G+k]=s/w}H=S}
+  const hAt=(x,z)=>{const u=(x-cx+L/2)/gs,v=(z-cz+L/2)/gs,i=Math.max(0,Math.min(G-2,Math.floor(u))),k=Math.max(0,Math.min(G-2,Math.floor(v))),fu=Math.min(1,Math.max(0,u-i)),fv=Math.min(1,Math.max(0,v-k));
+    return H[i*G+k]*(1-fu)*(1-fv)+H[(i+1)*G+k]*fu*(1-fv)+H[i*G+k+1]*(1-fu)*fv+H[(i+1)*G+k+1]*fu*fv};
+  const NF=6,ph=Math.random()*6.283,ph2=Math.random()*6.283;
+  const ridge=t=>Math.pow(Math.max(0,Math.cos(NF*t+ph)),2)-.3;
+  const tAng=trail?Math.atan2(trail[1],trail[0]):0,trailExt=t=>trail?trailLen*Math.pow(Math.max(0,Math.cos(t-tAng)),5):0;
+  const baseEdge=t=>R*(.82+.06*Math.sin(t*5+ph2)+.03*Math.sin(t*11+1));
+  const NT=200,NR=72,pos=[],col=[],uv=[],idx=[];
+  for(let a=0;a<=NT;a++){const t=a/NT*Math.PI*2,rd=ridge(t),be=baseEdge(t),fe=be+trailExt(t);let sa=0,px=0,py=0,pz=0;
+    for(let r=0;r<=NR;r++){const f=r/NR,rr=f*fe,fb=rr/be,x=cx+Math.cos(t)*rr,z=cz+Math.sin(t)*rr;let y,sh;
+      if(fb<=1){const dome=TOP*.92*(1-fb*fb*.85);y=(hAt(x,z)*.95+.5)*.55+dome*.45;
+        const k=Math.pow(fb,1.2);y+=rd*k*1.9;const drop=Math.max(0,(fb-.62)/.38);y=y*(1-drop*drop)+(.4+.35*Math.max(0,rd))*drop*drop;
+        sh=1+.1*rd*k}
+      else{const q=fb-1;y=.32+.2*Math.max(0,Math.sin(q*5.5+t*3))+.15*Math.max(0,rd);sh=1+.1*Math.sin(q*5.5+t*3)}
+      if(r===NR)y=.18;
+      const yy=Math.max(.18,y);if(r>0)sa+=Math.hypot(x-px,yy-py,z-pz);px=x;py=yy;pz=z;
+      pos.push(x,yy,z);const s=Math.min(1.08,Math.max(.6,sh));col.push(s,s,s);uv.push(t*rr/6.5,sa/6.5)}}
+  for(let a=0;a<NT;a++)for(let r=0;r<NR;r++){const i0=a*(NR+1)+r,i1=(a+1)*(NR+1)+r;idx.push(i0,i1,i0+1,i0+1,i1,i1+1)}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+  const [main,trim]=pal,mat=new THREE.MeshToonMaterial({color:0xffffff,vertexColors:true,map:fabricTex(main,trim,pattern),gradientMap:TOON_GRAD,transparent:true});
+  const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;
+  const og=geo.clone(),op=og.attributes.position,on=og.attributes.normal;for(let i=0;i<op.count;i++)op.setXYZ(i,op.getX(i)+on.getX(i)*.15,op.getY(i)+on.getY(i)*.15,op.getZ(i)+on.getZ(i)*.15);
+  const outline=new THREE.Mesh(og,new THREE.MeshBasicMaterial({color:0x1A1430,side:THREE.BackSide}));
+  const pts=[];for(let a=0;a<NT;a++){const t=a/NT*Math.PI*2,e=baseEdge(t)+trailExt(t)+.05;pts.push(new THREE.Vector3(cx+Math.cos(t)*e,.26,cz+Math.sin(t)*e))}
+  const lip=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),260,.28,10,true),new THREE.MeshToonMaterial({color:trim,gradientMap:TOON_GRAD}));lip.castShadow=true;
+  const g=new THREE.Group();g.add(outline,mesh,lip);g.userData={mat,extras:[outline,lip]};return g}
+function makeBlanket(obj){
+  obj.updateMatrixWorld(true);const boxes=[];obj.traverse(m=>{if(m.isMesh)boxes.push(new THREE.Box3().setFromObject(m))});
+  const pal=PALS[Math.floor(Math.random()*PALS.length)],pattern=PATS[Math.floor(Math.random()*PATS.length)];
+  const n=blanketMesh(boxes,{pal,pattern}),d=blanketMesh(boxes,{pal,pattern,trail:[-1,0]});
+  const g=new THREE.Group();g.add(n,d);g.userData={mat:n.userData.mat,dmat:d.userData.mat,n,d};return g}
+function sizeClass(s){return s.y<9?'Small':s.y<13?'Medium':'Large'}
+function select(t){
+  if(current)scene.remove(current);if(blanket)scene.remove(blanket);
+  current=buildToy(t);scene.add(current);
+  const s=current.userData.size;
+  blanket=makeBlanket(current);scene.add(blanket);
+  frame(current);applyView();renderInfo(t);
+  document.querySelectorAll('.toy').forEach(b=>b.setAttribute('aria-current',b.dataset.id===t.id));
+}
+function eachMesh(fn){current&&current.traverse(o=>{if(o.isMesh)fn(o)})}
+function applyMaterials(){
+  eachMesh(o=>{const b=o.material.userData.base;const m=o.material;
+    if(view==='flash'){m.color.set(0x0b0b0f);m.emissive.set(0);m.metalness=0;m.roughness=1;return}
+    m.color.set(b.color);m.emissive.set(b.e);m.roughness=b.r;m.metalness=b.m;
+    if(mut==='gold'){m.color.lerp(new THREE.Color(0xE8B83A),.78);m.metalness=.85;m.roughness=.22}
+    if(mut==='shadow'){m.color.lerp(new THREE.Color(0x1a1024),.85);m.emissive.set(0x3b1a5a);m.emissiveIntensity=.35}
+    if(mut==='cosmic'){m.color.lerp(new THREE.Color(0x2a1a5e),.7);m.emissive.set(0x4a2aa0);m.emissiveIntensity=.25}
+    if(mut==='glitter'){m.roughness=.15;m.metalness=.45}
+  })}
+function applyView(){
+  const t=current.userData.toy,tag=document.getElementById('tag');
+  current.visible=view==='awake'||view==='flash';blanket.visible=view!=='awake';
+  blanket.userData.n.visible=view!=='drag';blanket.userData.d.visible=view==='drag';
+  if(view==='awake')frame(current);else{const bb=new THREE.Box3().setFromObject(view==='drag'?blanket.userData.d:blanket.userData.n),sz=bb.getSize(new THREE.Vector3()),c=bb.getCenter(new THREE.Vector3());
+    const r=Math.max(sz.x,sz.y*1.5,sz.z)*.6+1,d=r/Math.sin(THREE.MathUtils.degToRad(camera.fov/2));camera.position.set(c.x+d*.6,sz.y*.5+d*.42,c.z+d*.7);controls.target.set(c.x,sz.y*.35,c.z);controls.update()}
+  blanket.userData.mat.opacity=view==='flash'?0.22:1;blanket.userData.mat.color.set(view==='flash'?0xfff3c4:0xffffff);
+  [blanket.userData.n,blanket.userData.d].forEach(x=>x.userData.extras.forEach(e=>e.visible=view!=='flash'));
+  if(view==='drag')tag.textContent=`Being dragged · ${sizeClass(current.userData.size)}`;
+  applyMaterials();themeColors();
+  tag.hidden=view==='awake';
+  if(view==='blanket')tag.textContent=`Zzz · ${sizeClass(current.userData.size)}`;
+  if(view==='flash')tag.textContent=`Flashlight: it's a ${t.name}`;
+}
+function renderInfo(t){
+  const x=MUT_X[mut],col=`var(${RARITY[t.rarity]})`;
+  document.getElementById('info').innerHTML=`<span class="pill" style="background:${col}">${t.rarity}</span><h2>${t.name}</h2>
+   <div class="money">$${(t.money*x).toLocaleString()}<small> per second${x>1?` (base $${t.money.toLocaleString()} × ${x})`:''}</small></div>
+   <dl><dt>Room set</dt><dd>${t.room}</dd><dt>Look</dt><dd>${t.look}</dd><dt>Idle</dt><dd>${t.idle}</dd><dt>On the floor</dt><dd>Grey blanket${['Epic','Legendary','Mythic'].includes(t.rarity)?', sometimes leaks a '+t.rarity.toLowerCase()+' glow':''}</dd></dl>
+   ${t.perk?`<div class="perk"><strong>Perk:</strong> ${t.perk}</div>`:'<div class="lede" style="font-size:14px">No perk. Only Epic and above have one.</div>'}`}
+const ANIM={
+  waddle:(o,p,t)=>{o.rotation.z=Math.sin(t*6)*.07;o.position.y=Math.abs(Math.sin(t*6))*.25;p.head&&(p.head.rotation.z=Math.sin(t*3)*.08)},
+  talk:(o,p,t)=>{p.upper.rotation.z=(Math.sin(t*7)+1)*.14;o.rotation.z=Math.sin(t*1.5)*.05},
+  zoom:(o,p,t)=>{p.key.rotation.y=t*3;o.position.x=Math.sin(t*1.2)*1.5},
+  flop:(o,p,t)=>{p.neck.rotation.z=Math.sin(t*2)*.35-.15},
+  hop:(o,p,t)=>{o.position.y=Math.abs(Math.sin(t*3))*1.4;p.head.rotation.z=Math.sin(t*3)*.05},
+  march:(o,p,t)=>{o.position.y=Math.max(0,Math.sin(t*5))*.35;o.rotation.x=Math.sin(t*5)*.05},
+  pogo:(o,p,t)=>{o.position.y=Math.abs(Math.sin(t*3.5))*3},
+  swing:(o,p,t)=>{p.sword.rotation.z=Math.sin(t*2.5)*.5;p.head.rotation.y=Math.sin(t*1.2)*.15},
+  rev:(o,p,t)=>{o.position.y=Math.sin(t*40)*.05;p.flame.scale.x=1+Math.sin(t*22)*.35;o.rotation.y=Math.sin(t*.7)*.25},
+  pop:(o,p,t)=>{p.crank.rotation.z=t*4;const u=Math.max(0,Math.sin(t*1.4));p.clown.position.y=p.clown.userData.base.y-4+u*4},
+  swim:(o,p,t)=>{p.tail.rotation.y=Math.sin(t*4)*.45;o.rotation.y=Math.sin(t*2)*.12;o.position.y=Math.sin(t*2)*.2},
+  twirl:(o,p,t)=>{p.dancer.rotation.y=t*2.2},
+  stomp:(o,p,t)=>{p.tail.rotation.y=Math.sin(t*2)*.25;p.head.rotation.z=Math.sin(t*2)*.08;p.jaw.rotation.z=-Math.max(0,Math.sin(t*3))*.35;p.key.rotation.z=t*3},
+  float:(o,p,t)=>{o.position.y=.8+Math.sin(t*1.5)*.6;p.head.rotation.z=Math.sin(t*1.5)*.06}
+};
+function loop(){
+  requestAnimationFrame(loop);const t=clock.getElapsedTime();
+  if(current){const tt=current.userData.toy;
+    if(view!=='blanket'){const f=ANIM[tt.anim];f&&f(current,current.userData.parts,t)}
+    if(spin)current.rotation.y+=0.006;
+    if(blanket&&view!=='awake'){blanket.rotation.y=current.rotation.y;blanket.scale.y=1+Math.sin(t*1.6)*.02;
+      const glow=['Epic','Legendary','Mythic'].includes(tt.rarity)&&view==='blanket'&&(t%8)<1;
+      blanket.userData.mat.emissive.set(glow?css(RARITY[tt.rarity]):'#000000');blanket.userData.mat.emissiveIntensity=glow?.55:0}
+    if(view==='awake'&&mut==='rainbow'){eachMesh((o,i)=>{o.material.color.setHSL(((t*.25)+o.position.y*.04+o.position.x*.02)%1,.75,.55)})}
+    if(view==='awake'&&mut==='glitter'){eachMesh(o=>{o.material.emissive.setHSL(.13,1,.5);o.material.emissiveIntensity=Math.max(0,Math.sin(t*9+o.position.x*3+o.position.y*5))*.35})}
+  }
+  controls.update();renderer.render(scene,camera);
+}
+function setSpin(on){spin=on;const b=document.getElementById('spin');b.setAttribute('aria-pressed',on);b.textContent=on?'Auto-spin on':'Auto-spin off'}
+
+function buildShelf(thumbs){
+  const order=['Common','Uncommon','Rare','Epic','Legendary'];
+  document.getElementById('shelf').innerHTML=`<h3>The shelf</h3>`+order.map(r=>{const list=TOYS.filter(t=>t.rarity===r);
+    return `<div class="row"><div class="rowhead"><i style="background:var(${RARITY[r]})"></i>${r} · ${list.length}</div><div class="toys">${
+      list.map(t=>`<button class="toy" data-id="${t.id}" aria-current="false"><img alt="${t.name}" src="${thumbs[t.id]||''}"><b>${t.name}</b><span>$${t.money.toLocaleString()}/s · ${t.room.replace("Kid's ","")}</span></button>`).join('')}</div></div>`}).join('');
+  document.getElementById('shelf').addEventListener('click',e=>{const b=e.target.closest('.toy');if(b)select(TOYS.find(t=>t.id===b.dataset.id))});
+}
+function makeThumbs(){
+  const thumbs={},w0=renderer.domElement.width,h0=renderer.domElement.height,a0=camera.aspect;
+  renderer.setSize(240,240,false);camera.aspect=1;camera.updateProjectionMatrix();
+  TOYS.forEach(t=>{const o=buildToy(t);o.rotation.y=-0.35;scene.add(o);frame(o,true);renderer.render(scene,camera);thumbs[t.id]=renderer.domElement.toDataURL('image/png');scene.remove(o)});
+  camera.aspect=a0;resize();return thumbs}
+
+try{
+  init();
+  const thumbs=makeThumbs();buildShelf(thumbs);select(TOYS[0]);loop();
+}catch(err){document.getElementById('stagebox').innerHTML='<div class="err">3D view needs WebGL, which this browser has turned off. The shelf details still work.</div>';
+  buildShelf({});document.getElementById('shelf').addEventListener('click',e=>{const b=e.target.closest('.toy');if(b)renderInfo(TOYS.find(t=>t.id===b.dataset.id))});renderInfo(TOYS[0])}
+
+document.querySelector('.seg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;view=b.dataset.view;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(current)applyView()});
+document.getElementById('mutation').addEventListener('change',e=>{mut=e.target.value;if(current){applyMaterials();renderInfo(current.userData.toy)}});
+document.getElementById('spin').addEventListener('click',()=>setSpin(!spin));
+document.getElementById('reroll').addEventListener('click',()=>{if(!current)return;scene.remove(blanket);blanket=makeBlanket(current);scene.add(blanket);if(view==='awake'){view='blanket';document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.view==='blanket'))}applyView()});
+</script>

@@ -1,0 +1,37 @@
+{
+  "v": 3,
+  "attachments": {},
+  "createdOnFiles": {"at": "2026-10-18T21:50:35.098Z", "v": 1},
+  "designSystems": [],
+  "launch": {"view": "canvas", "page": "ui"},
+  "pages": [{"id": "ui", "name": "In-game UI"}, {"id": "blankets", "name": "Blanket concepts"}],
+  "title": "Design",
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1280, "h": 720, "title": "HUD: sneaking with a toy", "page": "ui"},
+    "Reveal.dc.html": {"x": 1360, "y": 0, "w": 1280, "h": 720, "title": "Wake-up reveal", "page": "ui"},
+    "Shop.dc.html": {"x": 2720, "y": 0, "w": 1280, "h": 720, "title": "Shop", "page": "ui"},
+    "Upgrades.dc.html": {"x": 0, "y": 840, "w": 1280, "h": 720, "title": "Upgrades", "page": "ui"},
+    "Index.dc.html": {"x": 1360, "y": 840, "w": 1280, "h": 720, "title": "Toy Index", "page": "ui"},
+    "ThumbHaul.dc.html": {"x": 0, "y": 1980, "w": 1280, "h": 720, "title": "Thumbnail A · The haul (sketch)", "page": "ui"},
+    "ThumbRaid.dc.html": {"x": 1360, "y": 1980, "w": 1280, "h": 720, "title": "Thumbnail B · The raid (sketch)", "page": "ui"},
+    "ThumbReveal.dc.html": {"x": 2720, "y": 1980, "w": 1280, "h": 720, "title": "Thumbnail C · The reveal (sketch)", "page": "ui"},
+    "Icon.dc.html": {"x": 4080, "y": 1980, "w": 512, "h": 512, "title": "Game icon (sketch)", "page": "ui"},
+    "AiHaul.dc.html": {"x": 0, "y": 3060, "w": 1280, "h": 720, "title": "AI · A · The haul (main)", "page": "ui"},
+    "AiRaid.dc.html": {"x": 1360, "y": 3060, "w": 1280, "h": 720, "title": "AI · B · The raid", "page": "ui"},
+    "AiReveal.dc.html": {"x": 2720, "y": 3060, "w": 1280, "h": 720, "title": "AI · C · The reveal", "page": "ui"},
+    "AiIcon.dc.html": {"x": 4080, "y": 3060, "w": 512, "h": 512, "title": "AI · Game icon", "page": "ui"},
+    "AiHaulLogo.dc.html": {"x": 0, "y": 3860, "w": 1280, "h": 720, "title": "AI · A · first try (has a logo on the cap, don't use)", "page": "ui"},
+    "BlanketA.dc.html": {"x": 0, "y": 0, "w": 1200, "h": 660, "title": "A · See-through fitted sheet (not chosen)", "page": "blankets"},
+    "BlanketB.dc.html": {"x": 1280, "y": 0, "w": 1200, "h": 660, "title": "B · Half-tucked (not chosen)", "page": "blankets"},
+    "BlanketD.dc.html": {"x": 2560, "y": 0, "w": 1200, "h": 660, "title": "D · Draped sheet, red hem (not chosen)", "page": "blankets"},
+    "BlanketE.dc.html": {"x": 0, "y": 780, "w": 1200, "h": 660, "title": "E · Smooth procedural sheet (not chosen)", "page": "blankets"}
+  },
+  "order": ["Main.dc.html", "Reveal.dc.html", "Shop.dc.html", "Upgrades.dc.html", "Index.dc.html", "ThumbHaul.dc.html", "ThumbRaid.dc.html", "ThumbReveal.dc.html", "Icon.dc.html", "AiHaul.dc.html", "AiRaid.dc.html", "AiReveal.dc.html", "AiIcon.dc.html", "AiHaulLogo.dc.html", "BlanketA.dc.html", "BlanketB.dc.html", "BlanketD.dc.html", "BlanketE.dc.html"],
+  "notes": {
+    "ui": {"x": 0, "y": -300, "text": "In-game UI", "kind": "title1", "maxW": 4000, "page": "ui"},
+    "thumbs": {"x": 0, "y": 1680, "text": "Thumbnails and game icon", "kind": "title1", "maxW": 4600, "page": "ui"},
+    "aithumbs": {"x": 0, "y": 2800, "text": "AI thumbnails and icon (Figma AI)", "kind": "title1", "maxW": 4600, "page": "ui"},
+    "blk": {"x": 0, "y": -300, "text": "Blankets that follow the toy's shape", "kind": "title1", "maxW": 3760, "page": "blankets"},
+    "chosen": {"x": 1280, "y": 780, "text": "Chosen: the hand-sculpted cartoon blanket (rounded bell, gentle folds, thick hem lip, outline, random colours). See it in 3D on the toy shelf and in the bedroom render.", "w": 520, "fill": "yellow", "size": "l", "page": "blankets"}
+  }
+}

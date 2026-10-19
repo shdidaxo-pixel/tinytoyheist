@@ -105,6 +105,7 @@ do
 			size = UDim2.fromOffset(width - 50, 44),
 			position = position + UDim2.fromOffset(50, 0),
 			textSize = 26,
+			iconSize = 26,
 		})
 	end
 
@@ -160,11 +161,12 @@ do
 			edgeWidth = if big then 4 else 3,
 		})
 		if big then
-			UIKit.burst(clip(t, 4), center, 190, 0.3)
+			UIKit.burst(clip(t, 4), center, 190, 0.16)
 		else
 			UIKit.backing(t, UDim2.fromScale(0.5, 0.48), px * 1.1)
 		end
 		local pic = UIKit.icon(t, toy(o[3]), math.floor(px * 0.74), UDim2.fromScale(0.5, 0.48), mid)
+		UIKit.hoverWiggle(t, pic)
 		if big then
 			UIKit.pulse(pic, 0.06, 0.9)
 		end
@@ -216,6 +218,7 @@ do
 		})
 		UIKit.burst(clip(c, 4), UDim2.fromOffset(70, 70), 260, 0.18)
 		local badge = UIKit.icon(c, img(ps[3]), 120, UDim2.fromOffset(70, 74), mid)
+		UIKit.hoverWiggle(c, badge)
 		UIKit.pulse(badge, 0.05, 1.1 + i * 0.1)
 		UIKit.text(c, ps[1], 30, { position = UDim2.fromOffset(222, 10), anchor = Vector2.new(0.5, 0), stroke = 3.5 })
 		local d = UIKit.text(c, ps[2], 18, {
@@ -260,7 +263,7 @@ do
 				layoutOrder = i,
 			})
 			UIKit.burst(clip(c, 4), UDim2.fromOffset(114, 64), 280, 0.3)
-			UIKit.icon(c, img(pk[2]), 140, UDim2.fromOffset(114, 58), mid)
+			UIKit.hoverWiggle(c, UIKit.icon(c, img(pk[2]), 140, UDim2.fromOffset(114, 58), mid))
 			UIKit.text(
 				c,
 				pk[1],
@@ -416,7 +419,7 @@ do
 			if i ~= 1 then
 				UIKit.backing(t, UDim2.fromOffset(80, 92), 110, 0.35)
 			end
-			UIKit.icon(t, d[3], 64, UDim2.fromOffset(80, 92), mid)
+			UIKit.hoverWiggle(t, UIKit.icon(t, d[3], 64, UDim2.fromOffset(80, 92), mid))
 		end
 		local claimed = d[6] == "CLAIMED"
 		local _, status = UIKit.block(t, {
@@ -485,7 +488,7 @@ do
 		else
 			UIKit.backing(t, UDim2.fromOffset(68, 46), 100, 0.35)
 		end
-		UIKit.icon(t, g[3], 62, UDim2.fromOffset(68, 46), mid)
+		UIKit.hoverWiggle(t, UIKit.icon(t, g[3], 62, UDim2.fromOffset(68, 46), mid))
 		UIKit.text(t, g[1], 16, {
 			color = if ready then UIKit.White else hex("FF4D5E"),
 			stroke = 2.5,
@@ -615,7 +618,7 @@ do
 		})
 		if item then
 			UIKit.backing(s, center, 80, 0.3)
-			UIKit.icon(s, toy(item[1]), 66, center, mid)
+			UIKit.hoverWiggle(s, UIKit.icon(s, toy(item[1]), 66, center, mid))
 			UIKit.clickable(holder)
 		end
 		if i == 1 then
@@ -630,7 +633,7 @@ do
 		bottom = hex("15121C"),
 	})
 	UIKit.burst(clip(det, 6), UDim2.fromOffset(142, 76), 230, 0.22)
-	UIKit.icon(det, toy("cosmicteddy"), 150, UDim2.fromOffset(142, 76), mid)
+	UIKit.hoverWiggle(det, UIKit.icon(det, toy("cosmicteddy"), 150, UDim2.fromOffset(142, 76), mid))
 	UIKit.sparkle(det, UDim2.fromOffset(52, 40), 18)
 	UIKit.sparkle(det, UDim2.fromOffset(232, 30), 14)
 	UIKit.text(det, "Cosmic Teddy", 28, { position = UDim2.fromOffset(142, 150), anchor = Vector2.new(0.5, 0) })

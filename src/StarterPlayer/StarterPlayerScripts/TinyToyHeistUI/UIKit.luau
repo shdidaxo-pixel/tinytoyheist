@@ -295,6 +295,7 @@ end
 export type ButtonOptions = {
 	palette: Palette,
 	icon: string?,
+	iconSize: number?,
 	size: UDim2?,
 	position: UDim2?,
 	anchor: Vector2?,
@@ -302,44 +303,121 @@ export type ButtonOptions = {
 	layoutOrder: number?,
 	onClick: (() -> ())?,
 }
--- Studded rectangle button: picture on the left, outlined label on the right.
+-- Outlined text with a hard dark shadow 3 px below it (the "depth" on button labels). The text box is exactly the
+-- text's height, so it sits dead centre in a list row.
+function UIKit.shadowText(parent: Instance, text: string, textSize: number, layoutOrder: number?): Frame
+	local box = new("Frame", {
+		Name = "Label",
+		BackgroundTransparency = 1,
+		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, textSize),
+		LayoutOrder = layoutOrder or 0,
+		ZIndex = 5,
+	}, parent)
+	for _, layer in { { "Shadow", UIKit.Ink, 3, 5 }, { "Text", UIKit.White, 0, 6 } } do
+		local l = new("TextLabel", {
+			Name = layer[1],
+			BackgroundTransparency = 1,
+			Text = text,
+			TextSize = textSize,
+			FontFace = UIKit.Fonts.label,
+			TextColor3 = layer[2],
+			AutomaticSize = Enum.AutomaticSize.X,
+			Size = UDim2.fromScale(0, 1),
+			Position = UDim2.fromOffset(0, layer[3]),
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = layer[4],
+		}, box)
+		UIKit.stroke(l, UIKit.Ink, 4)
+	end
+	return box
+end
+
+-- Rectangle button: picture on the left, outlined label on the right, with a darker lip underneath and a shine on
+-- top so it looks raised, like the Break and Steal an Egg buttons.
 function UIKit.button(parent: Instance, label: string, o: ButtonOptions): Frame
+	local size = o.size or UDim2.fromOffset(156, 50)
 	local holder, face = UIKit.block(parent, {
 		name = label,
-		size = o.size or UDim2.fromOffset(156, 50),
+		size = size,
 		position = o.position,
 		anchor = o.anchor,
 		palette = o.palette,
 		layoutOrder = o.layoutOrder,
+		lip = 5,
+		gloss = true,
 	})
 	local row = new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
+		Size = UDim2.new(1, 0, 1, -3), -- leave room for the text shadow so the label looks centred
 		ZIndex = 4,
 	}, face)
 	new("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
-		Padding = UDim.new(0, 6),
+		Padding = UDim.new(0, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, row)
 	if o.icon then
-		-- a big picture that almost fills the button height, like the reference
-		local ic = UIKit.icon(row, o.icon, 46)
+		-- a big picture, but never taller than the button
+		local px = o.iconSize or math.min(46, size.Y.Offset - 8)
+		local ic = UIKit.icon(row, o.icon, px)
 		ic.LayoutOrder = 1
 	end
-	local t = UIKit.text(row, label, o.textSize or 28, { stroke = 4 })
-	t.LayoutOrder = 2
+	UIKit.shadowText(row, label, o.textSize or 28, 2)
 	UIKit.clickable(holder, o.onClick)
 	return holder
 end
 
+-- Hovering the target makes the picture bob and wiggle; it settles back when the mouse leaves.
+function UIKit.hoverWiggle(target: GuiObject, pic: GuiObject)
+	local basePos, baseRot = pic.Position, pic.Rotation
+	local playing: { Tween } = {}
+	local function stop()
+		for _, t in playing do
+			t:Cancel()
+		end
+		table.clear(playing)
+	end
+	target.MouseEnter:Connect(function()
+		stop()
+		pic.Rotation = baseRot - 8
+		local bob = TweenService:Create(
+			pic,
+			TweenInfo.new(0.35, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Position = basePos + UDim2.fromOffset(0, -6) }
+		)
+		local rock = TweenService:Create(
+			pic,
+			TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Rotation = baseRot + 8 }
+		)
+		bob:Play()
+		rock:Play()
+		table.insert(playing, bob)
+		table.insert(playing, rock)
+	end)
+	target.MouseLeave:Connect(function()
+		stop()
+		TweenService:Create(pic, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+			Position = basePos,
+			Rotation = baseRot,
+		}):Play()
+	end)
+end
+
 -- Small studded square with a picture and no word (the right-edge shortcuts).
 function UIKit.square(parent: Instance, image: string, palette: Palette, px: number, onClick: (() -> ())?): Frame
-	local holder, face = UIKit.block(parent, { name = "Square", size = UDim2.fromOffset(px, px), palette = palette })
-	UIKit.icon(face, image, math.floor(px * 0.86), UDim2.fromScale(0.5, 0.5), Vector2.new(0.5, 0.5))
+	local holder, face = UIKit.block(
+		parent,
+		{ name = "Square", size = UDim2.fromOffset(px, px), palette = palette, lip = 5, gloss = true }
+	)
+	UIKit.hoverWiggle(
+		face,
+		UIKit.icon(face, image, math.floor(px * 0.86), UDim2.fromScale(0.5, 0.5), Vector2.new(0.5, 0.5))
+	)
 	UIKit.clickable(holder, onClick)
 	return holder
 end
@@ -372,7 +450,7 @@ function UIKit.burst(parent: Instance, center: UDim2, px: number, raysOpacity: n
 		Name = "Glow",
 		BackgroundTransparency = 1,
 		Image = UIKit.image("Glow"),
-		ImageTransparency = 0.15,
+		ImageTransparency = 0.62, -- soft: a strong glow washes out the picture in front of it
 		Size = UDim2.fromOffset(px * 0.9, px * 0.9),
 		Position = center,
 		AnchorPoint = Vector2.new(0.5, 0.5),

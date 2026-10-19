@@ -290,7 +290,7 @@ function animateToy(o, t) {
   });
   if (u.lift) u.body.position.y += u.lift(t);
   u.fadeNames.forEach(n => { const g = u.nodes[n]; if (!g) return; const f = clamp01(fades[n] || 0);
-    g.traverse(o2 => { if (o2.isMesh && o2.userData.box) o2.material.opacity = o2.material.userData.base.opacity * (1 - f) * (u.alpha ?? 1); }); });
+    g.traverse(o2 => { if (o2.isMesh && o2.userData.box) { o2.material.opacity = o2.material.userData.base.opacity * (1 - f) * (u.alpha ?? 1); o2.castShadow = f < .5; } }); });
 }
 
 /* ================================================================ particles ================================================================ */

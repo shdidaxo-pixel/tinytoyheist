@@ -25,7 +25,7 @@ the cat is faster and there's an RC car driving around bumping everyone and the 
 
 The safe ring and the homes are always safe: the eyes, cat and car never target or enter them.
 
-## Numbers (proposed, Dylan to OK)
+## Numbers (Dylan locked them in, 19 Oct)
 
 | What | Number | Where |
 | --- | --- | --- |

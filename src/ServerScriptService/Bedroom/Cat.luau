@@ -24,7 +24,7 @@ local Cat = {}
 local S = MapConfig.SCALE -- the room (and the cat) are shrunk; distances that come from its size shrink too
 Cat.CALM = { sight = 70, stalk = 9, patrol = 8, pounceFrom = 26 * S }
 -- lights on: it hunts everyone in the run, anywhere, and runs faster than all but a late-game mouse (lights-on
--- session: was 26; Dylan to OK). It also cuts you off: it runs at where you're going, not where you are.
+-- session: was 26; Dylan locked it in, 19 Oct). It also cuts you off: it runs at where you're going, not where you are.
 Cat.ANGRY = { sight = 3000, stalk = 60, patrol = 30, pounceFrom = 48 * S }
 Cat.LEAD = 0.8 -- lights on: aims up to this many seconds ahead of the mouse
 Cat.CARRY_SIGHT = 1.6 -- a mouse dragging a toy is noticed from further away

@@ -29,6 +29,67 @@ local function seedOf(toy: Instance): number
 	return h
 end
 
+-- Toys keep out of each other's way: each one walks its PenRoam path, plus a small sideways nudge (on this screen
+-- only) when it would bump into another toy. The nudge stays within NUDGE studs, well inside the server's steal reach.
+HomeView.NUDGE = 7
+local nudges: { [Model]: Vector3 } = setmetatable({}, { __mode = "k" }) :: any
+type Roamer = { toy: Model, p: Vector3, dir: Vector3, r: number, reach: number?, push: Vector3 }
+
+local function roamPen(frame: CFrame, pen: BasePart, toys: Instance, t: number, dt: number)
+	local penMin = pen:GetAttribute("PenMin") :: Vector3
+	local penMax = pen:GetAttribute("PenMax") :: Vector3
+	local top = (pen:GetAttribute("PenTop") :: number?) or 0.8
+	local list: { Roamer } = {}
+	for _, toy in toys:GetChildren() do
+		if toy:IsA("Model") then
+			local size = toy:GetAttribute("Size")
+			local reach = toy:GetAttribute("Reach")
+			local r = if typeof(reach) == "number" then reach else nil
+			local p, dir =
+				PenRoam.pose(seedOf(toy), t, penMin, penMax, if typeof(size) == "string" then size else "M", r)
+			table.insert(list, { toy = toy, p = p, dir = dir, r = math.max(r or 3, 2), reach = r, push = Vector3.zero })
+		end
+	end
+	-- pairs that are too close push apart, sideways to the way they walk so they step round each other
+	for i = 1, #list do
+		local a = list[i]
+		local pa = a.p + (nudges[a.toy] or Vector3.zero)
+		for j = i + 1, #list do
+			local b = list[j]
+			local d = pa - (b.p + (nudges[b.toy] or Vector3.zero))
+			d = Vector3.new(d.X, 0, d.Z)
+			local gap = (a.r + b.r) * 0.85
+			local dist = d.Magnitude
+			if dist < gap then
+				local n = if dist > 1e-3 then d / dist else Vector3.new(1, 0, 0)
+				local side = Vector3.new(-a.dir.Z, 0, a.dir.X)
+				if side:Dot(n) < 0 then
+					side = -side
+				end
+				local push = (n + side * 0.7).Unit * (gap - dist) * 0.5
+				a.push += push
+				b.push -= push
+			end
+		end
+	end
+	local ease = math.min(1, dt * 5)
+	for _, e in list do
+		local nudge = nudges[e.toy] or Vector3.zero
+		-- lean into the push, drift back onto the path when clear
+		nudge += e.push * ease * 1.6 - nudge * math.min(1, dt * 0.7)
+		if nudge.Magnitude > HomeView.NUDGE then
+			nudge = nudge.Unit * HomeView.NUDGE
+		end
+		nudges[e.toy] = nudge
+		local box = PenRoam.box(penMin, penMax, e.reach)
+		local x = math.clamp(e.p.X + nudge.X, box.x0, box.x1)
+		local z = math.clamp(e.p.Z + nudge.Z, box.z0, box.z1)
+		local at = (frame * CFrame.new(x, top + e.p.Y, z)).Position
+		local facing = frame:VectorToWorldSpace(e.dir)
+		e.toy:PivotTo(CFrame.lookAt(at, at + facing))
+	end
+end
+
 function HomeView.start(bedroom: Model)
 	local holes = bedroom:WaitForChild("Holes")
 	local me = Players.LocalPlayer
@@ -111,26 +172,7 @@ function HomeView.start(bedroom: Model)
 			local pen = hole:FindFirstChild("Pen") :: BasePart?
 			local toys = hole:FindFirstChild("PenToys")
 			if pen and toys then
-				local penMin = pen:GetAttribute("PenMin") :: Vector3
-				local penMax = pen:GetAttribute("PenMax") :: Vector3
-				local top = (pen:GetAttribute("PenTop") :: number?) or 0.8
-				for _, toy in toys:GetChildren() do
-					if toy:IsA("Model") then
-						local size = toy:GetAttribute("Size")
-						local reach = toy:GetAttribute("Reach")
-						local p, dir = PenRoam.pose(
-							seedOf(toy),
-							t,
-							penMin,
-							penMax,
-							if typeof(size) == "string" then size else "M",
-							if typeof(reach) == "number" then reach else nil
-						)
-						local at = (h.frame * CFrame.new(p.X, top + p.Y, p.Z)).Position
-						local facing = h.frame:VectorToWorldSpace(dir)
-						toy:PivotTo(CFrame.lookAt(at, at + facing))
-					end
-				end
+				roamPen(h.frame, pen, toys, t, dt)
 			end
 			-- the Speed wheel (rebuilt on level up, so look it up each time)
 			local holder = hole:FindFirstChild("TrainingWheel")

@@ -86,5 +86,6 @@ overview with his eyes, the car and the timer).
   Fixed (8eb160c): it now plans a route round the furniture corners, slides free if pinned, and parks. Checked with
   a maths run in Studio (it reaches every test spot in 2–9 s); a live re-check is queued.
 - Dylan's screenshot: the cat's head looked twisted into its body during the bite/throw. That's the bite and throw
-  poses in CatView (animations session), reported to them.
+  poses in CatView. Fixed by the animations session (ce4a102, 8b96cbb): the head turns about its own middle, the
+  collar stays put; to see live on the next Play.
 - Not tested yet: an endgame-speed player escaping his eyes, two players at once.

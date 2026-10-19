@@ -52,8 +52,8 @@ where it disagrees with this section, this section wins.
 | Builder | `tools/build-bedroom.luau` + `tools/bedroom/` (Kit, Room, Homes, Furniture, Landmarks, Hazards) | Rojo: `ServerStorage.TinyToyHeistTools.BuildBedroom` and `.Bedroom`. ~3,300 parts, 22 lights, builds in a few seconds. Command bar: `local m = game.ServerStorage.TinyToyHeistTools.BuildBedroom:Clone(); print(require(m)); m:Destroy()` |
 | Lighting | `src/ReplicatedStorage/Shared/BedroomLighting.luau` | `Night` and `LightsOn`, `apply(preset, seconds)`. Room lights are found by the `LightRole` attribute. |
 | Pen roaming | `src/ReplicatedStorage/Shared/PenRoam.luau` | Toy position from a seed and the server clock (no history), so server and clients agree. |
-| Server systems | `src/ServerScriptService/Bedroom/` | Homes (claim, spawn on your bed, signs, push-pin lock, level rebuilds, Studio demo toys), Giant (wake meter, sleep cycle, flashlight), Train, Cat, Hazards, Knock, Events. |
-| Client views | `src/StarterPlayer/StarterPlayerScripts/Bedroom/` | Lights, KidView, TrainView, CatView (walk cycle, tail, head, crouch), HomeView (roaming toys, wheels, fairy lights, bobbing signs, YOUR HOME), Effects (knock-downs, noise ripples, trap/board/duck/brick animations). |
+| Server systems | `src/ServerScriptService/Bedroom/` | Homes (claim, spawn on your bed, signs, push-pin lock, level rebuilds, Studio demo toys), Carry (sleeping toys, grab, drag, bank, drop), Giant (wake meter, sleep cycle, flashlight, walking and grabbing), Train, Cat, Hazards, Knock, Events. |
+| Client views | `src/StarterPlayer/StarterPlayerScripts/Bedroom/` | Lights, KidView, TrainView, CatView (walk cycle, tail, head, crouch), HomeView (roaming toys, wheels, fairy lights, bobbing signs, YOUR HOME), Effects (knock-downs, noise ripples, notices, trap/board/duck/brick animations), Sounds. |
 | Captures | `design/studio-v6/` | Studio shots at the Appendix B cameras and `compare-*.jpg` beside the renders. |
 
 ### Play-tested (all working)
@@ -90,19 +90,34 @@ zone); toys roam their pens; Speed wheels spin by level; no script errors.
 - **Hallway**: open door, sign, and an invisible wall 150 studs in (past the door's swing).
 - The shop arrow in the HUD now fades out after 12 s (Dylan asked).
 
+### Done after the first build (19 Oct, overnight)
+- **Rojo reconnected** (the old `rojo serve` had died); `ServerScriptService.Bedroom` now syncs from the repo.
+- **Carry system** (`Carry.luau`): every `ToySpawns` spot gets a sleeping toy (a blanket lump S/M/L) hiding a Bedroom
+  toy, its rarity rolled with the plan's odds for that size (Epic and up leak a glow via `ToyVFX.addGlowTell`). Hold
+  E to grab; you drag the bundle behind you at 95/80/60% speed, making 0.5/1/2 noise a second (times the floor, x2 in
+  the monitor zone). Walk into your own home and the toy (the prebuilt model from `TinyToyHeistAssets.Toys`) wakes
+  up in your pen, up to the level's capacity. Hazards and the Drop Toy button drop it where you stand; empty spots
+  refill after 25 s. Player attributes `Carrying` / `CarrySize`; remotes `DropRequest`, `Notice`.
+- **HUD**: the wake meter and timer read the real `GiantKid` attributes ("wakes in 3m 43s", "HE'S WAKING UP!",
+  "awake · sleeps in 24s"); RUN! and the Drop Toy button show only while you carry, and the button drops your toy.
+  The quest/cash demo loop is still there (economy isn't built).
+- **The awake Kid walks**: a standing voxel Kid (`GiantKid.Walker`, ~230 tall) gets out of bed, walks toward the
+  loudest noise of the last 5 s (or the nearest mouse in the run) at 13 studs/s, and grabs anyone within 34: drop,
+  3 s stun, sent home. He never enters the safe zone or homes, and walks back to bed after (`BackToBed` state).
+- **Sounds** (`Sounds.luau`, free Creator Store audio, mostly Pro Sound Effects): train wind-up loop and whistle,
+  board creak, duck squeak, trap snap, cat hiss on pounce, light switch, giant footsteps, grab rustle, bank chime,
+  knock thud.
+- **Brighter homes at night**: lighter pine/OSB, a stronger fairy light and a cool fill light in each home.
+
 ### Still to do / open
-1. **Reconnect Rojo** in Studio once: the running Rojo can't add the new ServerScriptService node live, so
-   `ServerScriptService.Bedroom` in the place is a manual copy of `src/ServerScriptService/Bedroom`. After a reconnect
-   Rojo manages it.
-2. **The HUD's wake meter and timer are still the demo loop** (`Hud.client.luau`): wire them to the `GiantKid`
-   attributes.
-3. **No carry system yet**, so no real drag noise; the cat's calm mode reacts to fast movers and carriers only.
-4. **The awake Giant** doesn't walk or grab yet; he sits up, sweeps the flashlight and the lights come on.
-5. **Sleeping toys (blankets) on the spawns**: `ToySpawns` markers exist; the toy system should put blankets there.
-6. **Sounds**: none yet (train rattle, cat bell, creaks, squeaks, trap snap).
-7. Home interiors read a bit dark at night next to the render; the pine sides come out brown.
-8. Walk speed 16 makes home → door about 100 s; fine with Speed upgrades, but worth a feel test.
-9. Open questions in section 11 still stand (scale, keyhole, spawn count, what the safe zone protects from).
+1. **Economy**: money per second, the cash pile, level-up costs, the Index; the HUD's quest/cash is still a demo.
+2. **Raids**: grabbing toys from other players' pens (the toys roam, `PenRoam` gives their position on the server).
+3. **Wake-up reveal and mutations** when a toy is banked (`ToyVFX.revealBurst`, `Mutations.apply`), and saving
+   players' toys (DataStore).
+4. Toys banked by a player who leaves stay in the pen until someone else claims that home (then they're cleared only
+   if they're demo toys): clear a home's toys on leave once saving exists.
+5. Walk speed 16 makes home → door about 100 s; fine with Speed upgrades, but worth a feel test.
+6. Open questions in section 11 still stand (scale, keyhole, spawn count, what the safe zone protects from).
 
 ---
 

@@ -126,13 +126,14 @@ do
 		})
 		local face = priceHolder:FindFirstChild("Face") :: Frame
 		if x.label then
-			-- price in the top part, the label sitting on the bottom edge, both inside the button
+			-- price in the top part, the label straddling the bottom edge (half on the button, half below it)
 			local row = face:FindFirstChild("Row") :: Frame
-			row.Size = UDim2.new(1, 0, 1, -14)
-			UIKit.text(face, x.label, 15, {
-				position = UDim2.new(0.5, 0, 1, -3),
-				anchor = Vector2.new(0.5, 1),
-				stroke = 2.5,
+			row.Size = UDim2.new(1, 0, 1, -8)
+			UIKit.text(face, x.label, 18, {
+				font = UIKit.Fonts.body,
+				position = UDim2.new(0.5, 0, 1, 3),
+				anchor = Vector2.new(0.5, 0.5),
+				stroke = 3,
 				z = 6,
 			})
 		end
@@ -290,7 +291,7 @@ do
 		})
 	end
 	-- price row: gift + price with its label inside the button's bottom edge; the 50 pack is the rainbow best deal
-	for i, buy in { { "3,499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
+	for i, buy in { { "3499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
 		local gx = 24 + (i - 1) * 168 -- 4 groups of 160 + 8 gaps = 664, inside the gold frame
 		local row = buyRow(
 			card,
@@ -298,7 +299,7 @@ do
 			UDim2.fromOffset(gx, 252),
 			160,
 			nil,
-			{ height = 56, label = buy[2], rainbow = i == 1, textSize = 24 }
+			{ height = 56, label = buy[2], rainbow = i == 1, textSize = 27 }
 		)
 		for _, h in row do
 			h.ZIndex = 10

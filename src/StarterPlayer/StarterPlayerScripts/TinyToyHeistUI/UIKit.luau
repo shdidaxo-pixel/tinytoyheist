@@ -63,11 +63,12 @@ UIKit.Rarity = (
 ) :: { [string]: Color3 }
 
 UIKit.Fonts = {
-	-- Montserrat Black, the thick Gotham-style face Break and Steal an Egg uses on "Shop" and "Index"; italic for
-	-- cash and speed numbers. (Luckiest Guy, Fredoka One, Builder Sans and Nunito were tried and dropped.)
-	label = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy),
-	number = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
-	body = Font.new("rbxasset://fonts/families/Montserrat.json", Enum.FontWeight.Heavy),
+	-- Gotham, the face Break and Steal an Egg actually uses: Heavy on titles, buttons and prices, italic Heavy for
+	-- cash and speed numbers, Bold for small labels ("50 Toys", notes). (Montserrat was the stand-in before;
+	-- Luckiest Guy, Fredoka One, Builder Sans and Nunito were tried and dropped.)
+	label = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy),
+	number = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Heavy, Enum.FontStyle.Italic),
+	body = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
 }
 
 local function lighten(c: Color3, k: number): Color3

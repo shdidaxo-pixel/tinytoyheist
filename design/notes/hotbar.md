@@ -47,15 +47,9 @@ stolen, held or not, so raids don't change.
   (`VFX.burst("Sparkle")`), and a client moment `HoldToy` `{ toy, mine }` fires for the sounds session.
 - An empty inventory = no bar at all.
 
-## Not done / to ask Dylan
+## Blankets on the bar (Dylan, 19 Oct: "blankets that arent being opened should be in the hotbar")
 
-- Waiting blankets on the bar (his first message said "blankets/toys"). Left out for now: a blanket waiting in your
-  home is already in the world, so holding one would show it twice. Could hide the home one while it's held.
-- A gamepad button for the bar.
-
-## Next: waiting blankets on the bar (Dylan, 19 Oct: "blankets that arent being opened should be in the hotbar")
-
-Not built yet (usage limit). Plan:
+Built and play-tested (captures `design/hotbar/studio-blanket-pc.jpg`, `studio-blanket-touch.jpg`):
 - Client (`Hotbar.update`): add `profile.Blankets` entries (kind "blanket") to the same order list, after the toys
   the first time, new ones appended with the pop-in card. Slot: a ViewportFrame with a clone of your own home
   blanket (`Hole#.Waking` child with attribute `Uid`, cached per uid; fall back to the S/M/L colour chip from
@@ -67,3 +61,11 @@ Not built yet (usage limit). Plan:
   wide, pivot = bottom centre). Tag: "Medium Blanket" + timer, refreshed every second by the server loop.
   `putAway`: destroy the clone, put the home model back in `Hole#.Waking` only if `state.blankets[uid]` is still
   that model (Pens.reload rebuilds them). Loop: put away if the blanket left `profile.Blankets` (hatched).
+- Player attribute `HoldKind` = "Toy" or "Blanket". The held blanket is about 3.6 studs across, 3 tall.
+- Tested: both on the bar with their 3D picture and timer ("READY" in yellow), hold one (home spot empties, tag
+  "Medium Blanket / wakes in 1:43"), put it away (it comes back with its Hatch prompt as it was), start carrying
+  while holding (back home), phone layout. The test blankets were taken out of Dylan's save again.
+
+## Not done
+
+- A gamepad button for the bar.

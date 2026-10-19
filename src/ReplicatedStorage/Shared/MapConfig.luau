@@ -43,11 +43,14 @@ local function build(S: number): any
 	-- Homes --------------------------------------------------------------------------------------------------------------
 	MapConfig.HOLE_COUNT = 8
 	MapConfig.HOME_STEP = 22.5 -- degrees between homes: home 1 at 191.25, home 8 at 348.75
-	MapConfig.BURROW_WIDTH = 130 * S -- the open front; the side studs sit just outside it
-	MapConfig.BURROW_DEPTH = 170 * S
+	-- Each home's plot is its whole wedge of the curve (HOME_STEP wide), from the open front back to the wall, so
+	-- neighbours share an edge: no walls between homes, just a toy fence down each side (Dylan, 19 Oct). The props and
+	-- the pen still sit in the middle BURROW_WIDTH; the plot widens toward the back (homeHalfWidth).
+	MapConfig.BURROW_WIDTH = 130 * S -- the middle of the plot, where the door props and the pen go
+	MapConfig.BURROW_DEPTH = 170 * S -- the back wall's sheathing
 	MapConfig.BURROW_FLOOR_LIFT = 0.2 * S -- home floors sit just above the room floor that reaches under their fronts
-	MapConfig.HOME_STUD = 5 * S -- the side studs, which are each home's side walls
-	MapConfig.HOME_WALL_DEPTH = 178 * S -- the walls between homes reach this deep, past the back sheathing
+	MapConfig.FENCE_INSET = 4 * S -- each fence runs this far inside its home's edge: neighbours' fences stand back to back
+	MapConfig.FENCE_WALL_HEIGHT = 48 * S -- an invisible wall along each fence, too tall to jump
 	MapConfig.MAX_SLOTS = 20 -- capacity at Level 7 (the VIP Hole adds 3)
 	MapConfig.PEN_FRONT = 40 * S -- the toy pen runs from 40 deep...
 	MapConfig.PEN_BACK = 158 * S -- ...to 158 deep
@@ -66,14 +69,15 @@ local function build(S: number): any
 	} :: { [string]: BurrowProp }
 
 	-- Home levels: capacity and look. Costs live with the economy.
+	-- Each level has its own toy fence (fenceHeight: its pickets; the corner post at the front stands a bit taller).
 	MapConfig.HOLE_LEVELS = {
-		{ slots = 6, theme = "Cardboard" },
-		{ slots = 8, theme = "SockLined" },
-		{ slots = 10, theme = "ToyBricks" },
-		{ slots = 12, theme = "CosyCabin" },
-		{ slots = 15, theme = "CandyLand" },
-		{ slots = 18, theme = "ArcadeNeon" },
-		{ slots = 20, theme = "GoldenVault" },
+		{ slots = 6, theme = "Cardboard", fence = "Popsicle sticks", fenceHeight = 22 * S },
+		{ slots = 8, theme = "SockLined", fence = "Clothes pegs", fenceHeight = 25 * S },
+		{ slots = 10, theme = "ToyBricks", fence = "Toy bricks", fenceHeight = 27 * S },
+		{ slots = 12, theme = "CosyCabin", fence = "Pencil palisade", fenceHeight = 32 * S },
+		{ slots = 15, theme = "CandyLand", fence = "Candy canes", fenceHeight = 35 * S },
+		{ slots = 18, theme = "ArcadeNeon", fence = "Glow sticks", fenceHeight = 38 * S },
+		{ slots = 20, theme = "GoldenVault", fence = "Gold vault", fenceHeight = 43 * S },
 	}
 	-- The levels the builder dresses the homes at, so every theme shows in Studio (game code sets the real ones)
 	MapConfig.SHOWCASE_LEVELS = { 3, 1, 5, 2, 7, 4, 1, 6 }
@@ -216,14 +220,20 @@ local function build(S: number): any
 	-- Old name, so game code written for burrows still works.
 	MapConfig.burrowFrame = MapConfig.homeFrame
 
-	-- A home's front corner (side = -1 or 1, the outer face of that side stud), at depth z, in world space. The walls
-	-- between homes run between these.
+	-- Half the width of a home's plot at depth z (in home space): the plot's edges run straight out from the curve's
+	-- centre, halfway to the next home, so the plot widens toward the back.
+	function MapConfig.homeHalfWidth(depth: number): number
+		return (MapConfig.HOME_CURVE_RADIUS + depth) * math.tan(toRadians(MapConfig.HOME_STEP / 2))
+	end
+
+	-- A point on the edge of home i's plot (side = -1 or 1) at depth z, in world space. Home i's -1 edge is home i + 1's
+	-- +1 edge; the end homes' outer edges meet the shoulders.
 	function MapConfig.homeCorner(index: number, side: number, depth: number): Vector3
-		local x = side * (MapConfig.BURROW_WIDTH / 2 + MapConfig.HOME_STUD)
+		local x = side * MapConfig.homeHalfWidth(depth)
 		return (MapConfig.homeFrame(index) * CFrame.new(x, 0, depth)).Position
 	end
 
-	-- The home a position is inside (between its side studs, from its open front to its back), or nil.
+	-- The home a position is inside (in its plot, from its open front to its back wall), or nil.
 	function MapConfig.homeAt(position: Vector3): number?
 		local cz = MapConfig.HOME_CURVE_CENTER_Z
 		if position.Z > cz then
@@ -231,7 +241,7 @@ local function build(S: number): any
 		end
 		for i = 1, MapConfig.HOLE_COUNT do
 			local p = MapConfig.homeFrame(i):PointToObjectSpace(Vector3.new(position.X, 0, position.Z))
-			if math.abs(p.X) <= MapConfig.BURROW_WIDTH / 2 and p.Z >= 0 and p.Z <= MapConfig.BURROW_DEPTH then
+			if p.Z >= 0 and p.Z <= MapConfig.BURROW_DEPTH and math.abs(p.X) <= MapConfig.homeHalfWidth(p.Z) then
 				return i
 			end
 		end

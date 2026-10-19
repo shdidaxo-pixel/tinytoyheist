@@ -18,7 +18,7 @@ return function(shared: Folder)
 	local cz, r = MapConfig.HOME_CURVE_CENTER_Z, MapConfig.HOME_CURVE_RADIUS
 	local centre = Vector3.new(0, 0, cz)
 
-	-- Homes: angles, distance from the curve's centre, facing it, and no two touching at the front.
+	-- Homes: angles, distance from the curve's centre, facing it, and each plot sharing its edge with the next.
 	check(near(MapConfig.homeAngle(1), 191.25), "home 1 angle")
 	check(near(MapConfig.homeAngle(MapConfig.HOLE_COUNT), 348.75), "home 8 angle")
 	for i = 1, MapConfig.HOLE_COUNT do
@@ -31,12 +31,23 @@ return function(shared: Folder)
 		check(frame.LookVector:Dot((centre - front).Unit) > 0.999, "home " .. i .. " faces the centre")
 		check(MapConfig.homeAt((frame * CFrame.new(0, 0, 80)).Position) == i, "homeAt " .. i)
 		check(MapConfig.inRoom((frame * CFrame.new(0, 0, -30)).Position), "in front of home " .. i .. " is the room")
+		-- the plot widens toward the back, and a point just inside each edge is still this home
+		check(MapConfig.homeHalfWidth(MapConfig.BURROW_DEPTH) > MapConfig.homeHalfWidth(0), "plot widens " .. i)
+		for _, side in { -1, 1 } do
+			for _, depth in { 2, 80, MapConfig.BURROW_DEPTH - 2 } do
+				local x = side * (MapConfig.homeHalfWidth(depth) - 1)
+				check(MapConfig.homeAt((frame * CFrame.new(x, 0, depth)).Position) == i, "edge of home " .. i)
+			end
+		end
 		if i < MapConfig.HOLE_COUNT then
-			-- home i + 1 sits on home i's -X side
-			local gap = (MapConfig.homeCorner(i, -1, 0) - MapConfig.homeCorner(i + 1, 1, 0)).Magnitude
-			check(gap >= 6, "homes " .. i .. " and " .. i + 1 .. " touch at the front (" .. gap .. ")")
-			local inside = (MapConfig.homeCorner(i, -1, 0) - MapConfig.homeCorner(i + 1, -1, 0)).Magnitude
-			check(inside > gap, "home " .. i + 1 .. " is on home " .. i .. "'s -X side")
+			-- home i + 1 sits on home i's -X side, and the two plots share that edge front to back
+			check(frame:PointToObjectSpace(MapConfig.homeFront(i + 1)).X < 0, "home " .. i + 1 .. " on the -X side")
+			for _, depth in { 0, MapConfig.BURROW_DEPTH } do
+				local a, b = MapConfig.homeCorner(i, -1, depth), MapConfig.homeCorner(i + 1, 1, depth)
+				check((a - b).Magnitude < 1e-3, "homes " .. i .. " and " .. i + 1 .. " share an edge")
+			end
+			local over = frame * CFrame.new(-(MapConfig.homeHalfWidth(80) + 1), 0, 80)
+			check(MapConfig.homeAt(over.Position) == i + 1, "past home " .. i .. "'s edge is home " .. i + 1)
 		end
 	end
 	-- the end homes meet the shoulders: their outer corners are within a few studs of (+-390, 380)
@@ -64,6 +75,28 @@ return function(shared: Folder)
 		end
 	end
 	check(MapConfig.PEN_WIDTH <= BW and MapConfig.PEN_BACK <= MapConfig.BURROW_DEPTH, "the pen fits the home")
+
+	-- Fences: inside the plot's edges with room for the pen and the props; a fence per level, taller each level, all
+	-- under the invisible wall that stops players climbing over.
+	local inset = MapConfig.FENCE_INSET
+	check(inset > 0 and inset < 10, "fence inset " .. inset)
+	local function clear(z: number): number -- how far from the middle a prop can reach at depth z
+		return MapConfig.homeHalfWidth(z) - inset - 4 -- a fence is at most 8 thick
+	end
+	check(MapConfig.PEN_WIDTH / 2 <= clear(MapConfig.PEN_FRONT), "the pen clears the fences")
+	for name, prop in MapConfig.BURROW_LAYOUT do
+		check(
+			math.abs(prop.position.X) + prop.half.X <= clear(prop.position.Z - prop.half.Z),
+			name .. " clears the fence"
+		)
+	end
+	for level, info in MapConfig.HOLE_LEVELS do
+		check(typeof(info.fence) == "string" and info.fenceHeight > 0, "fence for level " .. level)
+		check(info.fenceHeight <= MapConfig.FENCE_WALL_HEIGHT, "level " .. level .. " fence under the wall")
+		if level > 1 then
+			check(info.fenceHeight > MapConfig.HOLE_LEVELS[level - 1].fenceHeight, "fence grows at level " .. level)
+		end
+	end
 	check(MapConfig.PEN_FRONT < MapConfig.PEN_BACK, "the pen has depth")
 	local wheel = MapConfig.BURROW_LAYOUT.TrainingWheel
 	for level = 1, #MapConfig.HOLE_LEVELS do

@@ -305,50 +305,12 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 	})
 
 	---------------------------------------------------------------------------------------------------------------
-	-- The curved wall: a solid wall between each pair of homes, from one home's front corner to the next, as deep as
-	-- the homes; and an end wall from each end home to its shoulder.
+	-- The curved wall: the homes fill it edge to edge now (no walls between them, just each home's toy fence; Dylan,
+	-- 19 Oct), with each home's back wall as its sheathing (Homes.luau). At each end of the row a solid wall runs out
+	-- along the shoulder line, from the end home's outer edge back past the homes, wallpapered on the home side.
 	local curved = Kit.folder(walls, "CurvedWall")
-	local D = MapConfig.HOME_WALL_DEPTH
-	local function dressFront(a: Vector3, b: Vector3)
-		-- the front edge of a wall between homes: wallpaper and a baseboard across its narrow face
-		local along = (b - a).Unit
-		local inward = Vector3.new(-along.Z, 0, along.X)
-		if inward:Dot(Vector3.new(0, 0, CZ) - (a + b) / 2) < 0 then
-			inward = -inward
-		end
-		dress(a, b, inward, { stripes = false })
-	end
-	for i = 1, MapConfig.HOLE_COUNT - 1 do
-		local a, b = MapConfig.homeCorner(i, -1, 0), MapConfig.homeCorner(i + 1, 1, 0)
-		local c, d = MapConfig.homeCorner(i + 1, 1, D), MapConfig.homeCorner(i, -1, D)
-		Kit.quadWall(curved, "WallBetween" .. i, a, b, c, d, 0, H, SAGE)
-		dressFront(a, b)
-	end
-	local first, last = 1, MapConfig.HOLE_COUNT
+	local D = MapConfig.BURROW_DEPTH + 8
 	local farOut = CR + D + 20
-	Kit.quadWall(
-		curved,
-		"EndWallRight",
-		Vector3.new(-SX, 0, CZ),
-		MapConfig.homeCorner(first, 1, 0),
-		MapConfig.homeCorner(first, 1, D),
-		Vector3.new(-farOut, 0, CZ),
-		0,
-		H,
-		SAGE
-	)
-	Kit.quadWall(
-		curved,
-		"EndWallLeft",
-		MapConfig.homeCorner(last, -1, 0),
-		Vector3.new(SX, 0, CZ),
-		Vector3.new(farOut, 0, CZ),
-		MapConfig.homeCorner(last, -1, D),
-		0,
-		H,
-		SAGE
-	)
-	-- behind the end walls, fill down to the shoulders so there's no gap at the outer corners
 	for _, side in { -1, 1 } do
 		part(
 			curved,
@@ -357,6 +319,9 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 			CFrame.new(side * (SX + farOut) / 2, H / 2, CZ + 10),
 			SAGE
 		)
+		-- wallpaper and a baseboard on the face the end home sees (it faces -z, toward the homes)
+		local a, b = Vector3.new(side * SX, 0, CZ), Vector3.new(side * farOut, 0, CZ)
+		dress(a, b, Vector3.new(0, 0, -1), { stripes = false })
 	end
 
 	---------------------------------------------------------------------------------------------------------------

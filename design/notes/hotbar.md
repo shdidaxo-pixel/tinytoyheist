@@ -52,3 +52,18 @@ stolen, held or not, so raids don't change.
 - Waiting blankets on the bar (his first message said "blankets/toys"). Left out for now: a blanket waiting in your
   home is already in the world, so holding one would show it twice. Could hide the home one while it's held.
 - A gamepad button for the bar.
+
+## Next: waiting blankets on the bar (Dylan, 19 Oct: "blankets that arent being opened should be in the hotbar")
+
+Not built yet (usage limit). Plan:
+- Client (`Hotbar.update`): add `profile.Blankets` entries (kind "blanket") to the same order list, after the toys
+  the first time, new ones appended with the pop-in card. Slot: a ViewportFrame with a clone of your own home
+  blanket (`Hole#.Waking` child with attribute `Uid`, cached per uid; fall back to the S/M/L colour chip from
+  GameUI's `BLANKET_COLOUR`), name "Small"/"Medium"/"Large", and the timer (`b.w - GetServerTimeNow()`, "READY!"
+  when 0) ticking once a second. Never show the toy inside.
+- Server (`Hold.hold`): if the uid is in `profile.Blankets`, take the home model (`Pens.state(player).blankets[uid]`),
+  park it in a ServerStorage folder while held (so it can't show twice or be hatched mid-hold), hold a clone
+  (prompts removed, every part welded to `Lump`, unanchored, no collide/touch/query, scaled to <= 3 tall / 3.4
+  wide, pivot = bottom centre). Tag: "Medium Blanket" + timer, refreshed every second by the server loop.
+  `putAway`: destroy the clone, put the home model back in `Hole#.Waking` only if `state.blankets[uid]` is still
+  that model (Pens.reload rebuilds them). Loop: put away if the blanket left `profile.Blankets` (hatched).

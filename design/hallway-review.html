@@ -1,0 +1,128 @@
+<title>Hallway v1 Renders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+/* Layout: a short header, then two boxes (what's in it, questions for Dylan), then the photos in walking order, two
+   across (one on a phone). One deliberate night look to match the bedroom review: navy ground, the hallway's plum walls
+   and the runner's burgundy as accents. */
+:root{
+  --bg:#0E1226; --panel:#181B3A; --line:#2E3263; --ink:#ECEFFA; --soft:#A9AED0; --plum:#C2A9E0; --runner:#E0687A; --lamp:#FFB36B;
+  --display:'Lilita One','Trebuchet MS',sans-serif; --body:'Nunito',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:28px}
+header{display:grid;gap:10px;max-width:72ch}
+.eyebrow{font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--plum)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,5vw,54px);line-height:1.02;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;color:var(--lamp)}
+p{margin:0}
+.lede{color:var(--soft);font-size:17px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:10px;align-content:start;min-width:0}
+.note ul,.note ol{margin:0;padding-left:22px;display:grid;gap:7px}
+.note li::marker{color:var(--lamp);font-weight:900}
+.note b{color:var(--ink)}
+.note .q{color:var(--soft)}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:800;font-size:14px;color:var(--soft);font-variant-numeric:tabular-nums}
+.fact b{color:var(--runner)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr));gap:22px}
+figure{margin:0;display:grid;gap:10px;min-width:0}
+.shot{position:relative;display:block;border:0;padding:0;background:none;cursor:zoom-in;border-radius:12px;overflow:hidden;max-width:100%}
+.shot img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#05071A}
+.shot:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.num{position:absolute;left:10px;top:10px;min-width:36px;height:36px;padding:0 10px;border-radius:999px;display:grid;place-items:center;
+  background:var(--lamp);color:#22140A;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+figcaption{display:grid;gap:3px}
+figcaption b{font-weight:900;font-size:17px}
+figcaption span{color:var(--soft);font-size:15px}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1600px)}
+dialog::backdrop{background:rgba(5,7,20,.88)}
+dialog img{display:block;max-width:100%;max-height:86vh;border-radius:10px}
+dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
+.close{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));border:0;border-radius:999px;
+  background:var(--panel);color:var(--ink);font:800 15px var(--body);padding:8px 14px;cursor:pointer}
+.close:focus-visible{outline:3px solid var(--lamp)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tiny Toy Heist · Room 2 · Hallway concept v1</div>
+    <h1>The Hallway</h1>
+    <p class="lede">Concept renders, not the game. Nothing is built in Studio yet. You go through the bedroom's far-wall door and keep running straight: a longer, narrower room on loud wood, with a quiet red runner down the middle that the cat patrols. Comment on any photo by its number.</p>
+    <div class="facts" aria-label="Key numbers">
+      <span class="fact">280 × 800, walls 320</span>
+      <span class="fact">Unlocks at <b>Strength 3</b></span>
+      <span class="fact">Wood <b>x2</b> · runner <b>x1</b></span>
+      <span class="fact">8 toys: 4 Small, 4 Medium</span>
+      <span class="fact">~33 s end to end in game</span>
+    </div>
+  </header>
+
+  <section class="notes" aria-label="What's in it and questions">
+    <div class="note">
+      <h2>What's in it</h2>
+      <ul>
+        <li>Same house, new room: the bedroom wallpaper pattern recoloured plum, the same voxel wood tiles in a warmer honey oak.</li>
+        <li>A burgundy runner down the middle is quiet (x1) but it's the cat's route, so the quiet way is the dangerous way. The wood either side is x2.</li>
+        <li>Small toys in the first half, Medium after the yellow line, always off the runner, so grabbing one means stepping onto the loud wood.</li>
+        <li>Landmarks stay against the walls: shoe rack you can hide under, umbrella stand with a raincoat and scarf, key table with a toy underneath, the cat's bed and bowls. The middle stays clear.</li>
+        <li>Next rooms are teased: the Kitchen door straight ahead (Strength 6) and the Living Room door on the right (Strength 10) are ajar behind baby gates, lit from inside, with a glowing toy you can see. The attic hatch cord dangles overhead (Rebirth 1).</li>
+        <li>A baby gate in the bedroom doorway is the Strength 3 lock (photo 4). You can see in, and it swings open once you're strong enough.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>Questions for you</h2>
+      <ol>
+        <li><b>Length.</b> <span class="q">800 long is about 33 s end to end in game, on top of the bedroom's ~45 s. Keep it, or shorten to about 600?</span></li>
+        <li><b>The runner twist.</b> <span class="q">Quiet runner that the cat walks, or wood x2 everywhere like the plan?</span></li>
+        <li><b>One cat or two?</b> <span class="q">Does the bedroom cat walk out into the hallway (its main route), or does the hallway get its own cat?</span></li>
+        <li><b>Baby gates as locks.</b> <span class="q">See-through gate in each locked doorway with a Strength sign. OK for every room?</span></li>
+        <li><b>The side door.</b> <span class="q">The run stays straight to the Kitchen. Is a Living Room door on the side wall OK as a teaser, or no side doors at all?</span></li>
+        <li><b>The bedroom door.</b> <span class="q">Today it's open at 72°, which would poke into the hallway. Swing it back against the right-hand wall (photo 1) so it makes a hiding nook?</span></li>
+        <li><b>The Giant Kid.</b> <span class="q">When he wakes, does he walk out into the hallway after noise, or stay in the bedroom?</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="photos" aria-label="Renders" id="photos"></section>
+</div>
+
+<dialog id="zoom" aria-label="Enlarged render">
+  <button class="close" id="zoomClose" type="button">Close</button>
+  <img id="zoomImg" alt="">
+  <p id="zoomCap"></p>
+</dialog>
+
+<script>
+const PHOTOS=[
+  ['enter','From the bedroom','At the end of the bedroom, looking through the open door: the hallway runs straight on, so you just keep running. The Kitchen door is straight ahead at the far end.'],
+  ['hero','The hallway','From above the bedroom door: honey-oak wood, the red runner, Small toys then Medium after the yellow line, landmarks against the walls.'],
+  ['map','Top-down','Ceilings off, bedroom on the left, Kitchen on the right: 8 toys either side of the runner, the cat route down the middle, the Living Room off the right-hand wall.'],
+  ['gate','The Strength 3 gate','Before Strength 3: a baby gate in the bedroom doorway. You see the toys through it but can\'t get in. At Strength 3 it opens for you.'],
+  ['small','The Small half','Mouse height: shoe rack on the left, umbrella stand and raincoat on the right. You drag a toy home down the quiet runner.'],
+  ['shoes','The shoe rack','The bottom shelf is 18 up, so you can crawl under and hide. Rain boots at the end, a kicked-off sneaker with its lace trailing.'],
+  ['coats','Coats and umbrellas','Right-hand wall: umbrella stand, a yellow raincoat on the hooks, a long striped scarf to the floor. Seen from the far end.'],
+  ['cat','The cat','Its main route is the runner, end to end. Stay on the runner and you meet the cat; step off and you\'re louder.'],
+  ['medium','The Medium half','Past the yellow line: the key table with a toy hiding underneath, the cat\'s bed and bowls, both locked doors.'],
+  ['living','The Living Room door','On the right-hand wall, ajar behind a Strength 10 gate. A TV left on lights it purple; a glowing toy sits inside.'],
+  ['kitchen','The Kitchen door','Straight ahead, ajar behind a Strength 6 gate. Cool fridge light, tile floor, a glowing toy just inside.'],
+  ['lookup','The attic hatch','Looking up: the hatch and its red pull ring, out of reach. Rebirth 1.'],
+  ['back','The way home','Turning round at the far end: the long run back down the runner to the bedroom door, "BACK TO HOMES" over it.'],
+  ['lightson','Lights on','When the Kid wakes the hallway lights come on too (your photo 1 lighting) and the cat pounces at the nearest mouse.']
+];
+const grid=document.getElementById('photos'),dlg=document.getElementById('zoom');
+PHOTOS.forEach(([k,title,cap],i)=>{
+  const f=document.createElement('figure');
+  f.innerHTML=`<button class="shot" type="button" aria-label="Enlarge photo ${i+1}: ${title}"><img src="renders-hallway/${k}.jpg" alt="Render ${i+1}: ${title}" loading="lazy"><span class="num">${i+1}</span></button><figcaption><b>${i+1}. ${title}</b><span>${cap}</span></figcaption>`;
+  f.querySelector('button').addEventListener('click',()=>{const im=document.getElementById('zoomImg');im.src=`renders-hallway/${k}.jpg`;im.alt=`Render ${i+1}: ${title}`;
+    document.getElementById('zoomCap').textContent=`${i+1}. ${title}: ${cap}`;dlg.showModal()});
+  grid.appendChild(f)});
+document.getElementById('zoomClose').addEventListener('click',()=>dlg.close());
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+</script>

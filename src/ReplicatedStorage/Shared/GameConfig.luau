@@ -18,9 +18,27 @@ GameConfig.INVENTORY_MAX = 100 -- toys and blankets you can own at once
 GameConfig.MAX_BLANKETS = 6 -- blankets waiting in your home to be hatched
 GameConfig.SHOW_REBIRTH = false
 
--- Wake-up timer after banking, by blanket size
-GameConfig.WAKE_SECONDS = { S = 5, M = 20, L = 60, G = 180 } :: { [string]: number }
+-- Wake-up timer after banking, in seconds, by blanket size and the toy's rarity: bigger blankets and better toys take
+-- longer (Dylan, 19 Oct: "make it longer for better/bigger blankets"). Your very first toy takes FIRST_WAKE.
+GameConfig.WAKE_SECONDS = {
+	S = { Common = 10, Uncommon = 15, Rare = 30, Epic = 45, Legendary = 60, Mythic = 60, Secret = 60 },
+	M = { Common = 60, Uncommon = 75, Rare = 120, Epic = 180, Legendary = 240, Mythic = 300, Secret = 300 },
+	L = { Common = 180, Uncommon = 240, Rare = 300, Epic = 420, Legendary = 540, Mythic = 600, Secret = 600 },
+	G = { Common = 600, Uncommon = 600, Rare = 600, Epic = 600, Legendary = 600, Mythic = 600, Secret = 600 },
+} :: { [string]: { [string]: number } }
+GameConfig.FIRST_WAKE = 5
 GameConfig.FIRST_TOY = "PlushBunny" -- your very first toy is always an Uncommon Plush Bunny (the plan's first minute)
+
+-- Toy size: rolled when a toy hatches, on top of its mutation (a toy can be Huge and Gold). Bigger toys earn and sell
+-- for more (Dylan, 19 Oct: "variable sizes as a mutation and get bigger and give more money"). chance is per hatch;
+-- scale multiplies the model; money multiplies its income and sell price; carry multiplies a thief's walk speed.
+GameConfig.SIZE = {
+	Order = { "Normal", "Big", "Huge", "Giant" },
+	Normal = { chance = 0.85, scale = 1, money = 1, carry = 1, color = "#FFFFFF" },
+	Big = { chance = 0.11, scale = 1.5, money = 2, carry = 1, color = "#7FE3FF" },
+	Huge = { chance = 0.035, scale = 2, money = 4, carry = 0.9, color = "#FFB547" },
+	Giant = { chance = 0.005, scale = 3, money = 10, carry = 0.8, color = "#FF5FA8" },
+}
 
 -- Speed --------------------------------------------------------------------------------------------------------------
 -- The one stat (Dylan, 19 Oct: "you really just need speed"; Strength, Sneak and Grip are gone). Your walk speed is

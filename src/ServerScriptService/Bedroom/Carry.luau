@@ -18,6 +18,7 @@ local ServerStorage = game:GetService("ServerStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
+local ToySize = require(Shared:WaitForChild("Toys"):WaitForChild("ToySize")) :: any
 local Kit = require(ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom"):WaitForChild("Kit")) :: any
 local BlanketLook =
 	require(ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom"):WaitForChild("Blanket")) :: any
@@ -133,6 +134,10 @@ function Carry.refreshSpeed(player: Player)
 	local c = carrying[player]
 	if c then
 		speed *= Carry.SPEED[c.size] or 1
+		-- a stolen Huge or Giant toy is heavier to drag
+		if c.kind == "Stolen" then
+			speed *= ToySize.carry(c.model:GetAttribute("SizeTier") :: string?)
+		end
 	end
 	if player:GetAttribute("SlowMode") then
 		speed *= GameConfig.SLOW_MODE

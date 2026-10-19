@@ -40,7 +40,8 @@ local function toyPosition(owner: Player, model: Model): Vector3?
 		Workspace:GetServerTimeNow(),
 		pen:GetAttribute("PenMin") :: Vector3,
 		pen:GetAttribute("PenMax") :: Vector3,
-		size or "M"
+		size or "M",
+		model:GetAttribute("Reach") :: number?
 	)
 	local frame = MapConfig.homeFrame(s.hole:GetAttribute("HoleIndex") :: number)
 	return (frame * CFrame.new(p.X, (pen:GetAttribute("PenTop") :: number?) or 0, p.Z)).Position
@@ -94,7 +95,9 @@ function Raids.start(_bedroom: Model)
 		end
 		local root = Knock.root(thief)
 		local at = toyPosition(owner, model)
-		if not root or not at or (root.Position - at).Magnitude > 30 then
+		-- a Huge or Giant toy is wide, so it can be grabbed from further off
+		local reach = (model:GetAttribute("Reach") :: number?) or 0
+		if not root or not at or (root.Position - at).Magnitude > 30 + reach then
 			return
 		end
 		if Carry.carryStolen(thief, owner, uid) then

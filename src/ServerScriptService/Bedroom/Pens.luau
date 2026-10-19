@@ -4,14 +4,16 @@
 --   stolen; the pen holds as many as the home level's slots. New toys equip themselves when there's a free slot
 --   (Dylan, 19 Oct: "auto equip it so the players don't have to"); otherwise they wait in the inventory. Locked
 --   toys (l = true) are skipped by Sell.
---   Blankets: a sleeping toy you carry home lies in your home with a wake-up timer (Small 5 s, Medium 20 s, Large
---   60 s, saved in profile.Blankets so it keeps counting while you're away). When it's ready you have to be there
---   and hold E to hatch it: then the toy, its rarity and its mutation (rolled at banking, so rejoining can't re-roll
---   them) pop out and go into your inventory.
+--   Blankets: a sleeping toy you carry home lies in your home with a wake-up timer (by blanket size and rarity,
+--   10 s to 10 min: GameConfig.WAKE_SECONDS; saved in profile.Blankets so it keeps counting while you're away).
+--   When it's ready you have to be there and hold E to hatch it: then the toy, its rarity and its mutation (rolled
+--   at banking, so rejoining can't re-roll them) pop out and go into your inventory, with a size tier (Normal, Big,
+--   Huge, Giant: ToySize) rolled right then.
 --   The Index (toy x mutation found) and the room-set rewards are kept here too.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -21,6 +23,7 @@ local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local Toys = Shared:WaitForChild("Toys")
 local ToyCatalog = require(Toys:WaitForChild("ToyCatalog")) :: any
 local Mutations = require(Toys:WaitForChild("Mutations")) :: any
+local ToySize = require(Toys:WaitForChild("ToySize")) :: any
 local SIZE_TARGET = (require(Toys:WaitForChild("ToyBuilder")) :: any).SIZE_TARGET :: { [string]: number }
 local PlayerData = require(script.Parent.PlayerData)
 local Homes = require(script.Parent.Homes)
@@ -95,10 +98,10 @@ local function findBlanket(player: Player, uid: string): (Blanket?, number?)
 	return nil, nil
 end
 
--- Money a toy earns a second (before rebirth and boosts)
+-- Money a toy earns a second (before rebirth and boosts): its base money x mutation x size tier
 function Pens.perSecond(entry: Toy): number
 	local data = ToyCatalog.get(entry.id)
-	return (if data then data.Money else 0) * Mutations.multiplier(entry.m)
+	return (if data then data.Money else 0) * Mutations.multiplier(entry.m) * ToySize.money(entry.z)
 end
 
 -- How many toys the pen holds (the home level's slots)
@@ -223,10 +226,36 @@ function Pens.buildToy(entry: Toy): Model?
 			toy:SetAttribute("Height", height * k)
 		end
 	end
+	-- then its size tier on top (Big x1.5, Huge x2, Giant x3); sets Reach so it roams inside the pen
+	ToySize.apply(toy, entry.z)
 	toy:SetAttribute("Uid", entry.u)
 	toy:SetAttribute("RoamSeed", hash(entry.u))
 	toy:SetAttribute("PerSecond", Pens.perSecond(entry))
 	return toy
+end
+
+-- A small "HUGE" tag floating over a Big, Huge or Giant toy in a pen, in the tier's colour
+local function sizeTag(toy: Model, root: BasePart, tier: string)
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "SizeTag"
+	gui.Size = UDim2.fromOffset(110, 30)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, ((toy:GetAttribute("Height") :: number?) or 8) * 0.55 + 2, 0)
+	gui.LightInfluence = 0
+	gui.MaxDistance = 120
+	gui.Adornee = root
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = Enum.Font.GothamBlack
+	label.TextScaled = true
+	label.Text = string.upper(tier)
+	label.TextColor3 = ToySize.color(tier)
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2.5
+	stroke.Color = Color3.fromRGB(26, 20, 48)
+	stroke.Parent = label
+	label.Parent = gui
+	gui.Parent = root
 end
 
 -- Put an equipped toy in its owner's pen
@@ -248,13 +277,17 @@ local function show(player: Player, entry: Toy, at: CFrame?): Model?
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.Name = "StealPrompt"
 		prompt.ActionText = "Steal"
-		prompt.ObjectText = if data then data.Name else "Toy"
+		prompt.ObjectText = (if ToySize.isBig(entry.z) then ToySize.name(entry.z) .. " " else "")
+			.. (if data then data.Name else "Toy")
 		prompt.HoldDuration = GameConfig.RAID.hold
 		prompt.MaxActivationDistance = 10 + (toy:GetAttribute("Height") :: number? or 8) * 0.3
 		prompt.RequiresLineOfSight = false
 		-- the toy roams only on the clients, so the server would refuse this prompt on distance: the client sends
 		-- GameRemotes.Steal instead and Raids checks the distance against PenRoam
 		prompt.Parent = root
+		if ToySize.isBig(entry.z) then
+			sizeTag(toy, root, entry.z :: string)
+		end
 	end
 	s.models[entry.u] = toy
 	toy.Parent = s.hole:FindFirstChild("PenToys")
@@ -354,8 +387,9 @@ local function placeBlanket(player: Player, b: Blanket, model: Model?)
 	local k = #waking:GetChildren()
 	local u = 0.5 + (if k % 2 == 0 then 1 else -1) * (k + 1) // 2 * 0.16
 	m:PivotTo(penPoint(s.hole, math.clamp(u, 0.08, 0.92), 0.08) * CFrame.Angles(0, rng:NextNumber() * 0.6 - 0.3, 0))
-	local wake = GameConfig.WAKE_SECONDS[b.s] or 5
 	local left = math.max(0, b.w - os.time())
+	local data = ToyCatalog.get(b.id)
+	local wake = math.max(b.t or ToySize.wakeSeconds(b.s, data and data.Rarity), left, 1)
 	m:SetAttribute("Uid", b.u)
 	m:SetAttribute("Owner", player.UserId)
 	m:SetAttribute("Size", b.s)
@@ -403,18 +437,32 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?): Bl
 	local mutation = if p.Banked == 0
 		then nil
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
+	-- bigger blankets and rarer toys take longer to wake; the first toy ever is quick (the tutorial)
+	local wake = ToySize.wakeSeconds(size, data.Rarity, p.Banked == 0)
 	local b: Blanket = {
 		u = PlayerData.newUid(),
 		id = data.Id,
 		m = mutation,
 		s = size,
-		w = os.time() + (GameConfig.WAKE_SECONDS[size] or 5),
+		w = os.time() + wake,
+		t = wake,
 	}
 	table.insert(p.Blankets, b)
 	p.Banked += 1
 	placeBlanket(player, b, blanket)
 	sync(player)
 	return b
+end
+
+-- Studio tests: set the Player attribute DebugSizeTier ("Big", "Huge", "Giant" or "Normal") on the server and the
+-- next hatch comes out that size instead of rolling
+local function debugSize(player: Player): string?
+	local want = player:GetAttribute("DebugSizeTier")
+	if not RunService:IsStudio() or typeof(want) ~= "string" then
+		return nil
+	end
+	player:SetAttribute("DebugSizeTier", nil)
+	return if ToySize.name(want) == want then want else nil
 end
 
 -- Hold E on a ready blanket: the toy pops out into your inventory (and your pen, if there's room)
@@ -435,7 +483,9 @@ function Pens.hatch(player: Player, uid: string): boolean
 	if model then
 		model:Destroy()
 	end
-	local entry: Toy = { u = b.u, id = b.id, m = b.m, s = b.s }
+	-- the size roll happens now, at hatch (Big / Huge / Giant, or nil for Normal), on top of the mutation
+	local z = debugSize(player) or ToySize.roll(rng)
+	local entry: Toy = { u = b.u, id = b.id, m = b.m, s = b.s, z = if ToySize.isBig(z) then z else nil }
 	local equipped = addToy(player, entry, at)
 	local data = ToyCatalog.get(entry.id)
 	revealRemote:FireClient(player, {
@@ -444,6 +494,8 @@ function Pens.hatch(player: Player, uid: string): boolean
 		rarity = if data then data.Rarity else "Common",
 		mutation = entry.m,
 		size = entry.s,
+		sizeTier = entry.z, -- nil = Normal
+		sizeMult = ToySize.scale(entry.z), -- the VFX hatch burst grows with it
 		perSecond = Pens.perSecond(entry),
 		equipped = equipped,
 	})
@@ -608,7 +660,7 @@ function Pens.give(player: Player, entry: Toy): boolean
 	if not PlayerData.get(player) or not states[player] then
 		return false
 	end
-	addToy(player, { u = PlayerData.newUid(), id = entry.id, m = entry.m, s = entry.s })
+	addToy(player, { u = PlayerData.newUid(), id = entry.id, m = entry.m, s = entry.s, z = entry.z })
 	sync(player)
 	return true
 end

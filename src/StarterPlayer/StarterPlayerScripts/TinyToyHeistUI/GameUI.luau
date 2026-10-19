@@ -15,6 +15,7 @@ local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
 local Toys = Shared:WaitForChild("Toys")
 local ToyCatalog = require(Toys:WaitForChild("ToyCatalog")) :: any
 local MutationData = require(Toys:WaitForChild("MutationData")) :: any
+local ToySize = require(Toys:WaitForChild("ToySize")) :: any
 local VFX = require(Shared:WaitForChild("VFX")) :: any
 
 local P = UIKit.Palettes
@@ -65,7 +66,7 @@ end
 local function perSecond(entry: any): number
 	local data = ToyCatalog.get(entry.id)
 	local m = entry.m and MutationData.List[entry.m]
-	return (if data then data.Money else 0) * (if m then m.Multiplier else 1)
+	return (if data then data.Money else 0) * (if m then m.Multiplier else 1) * ToySize.money(entry.z)
 end
 
 -- Your home
@@ -439,6 +440,15 @@ local function buildToys(ctx: Ctx)
 			})
 			if on then
 				UIKit.icon(s, img("Check"), 22, UDim2.new(1, -3, 0, 3), Vector2.new(1, 0), 8)
+			if ToySize.isBig(entry.z) then
+				UIKit.text(s, string.upper(entry.z), 11, {
+					color = ToySize.color(entry.z),
+					position = UDim2.new(0.5, 0, 0, 2),
+					anchor = Vector2.new(0.5, 0),
+					stroke = 2,
+					z = 8,
+				})
+			end
 			end
 			if entry.l then
 				UIKit.icon(s, img("Lock"), 20, UDim2.fromOffset(3, 3), nil, 8)
@@ -544,10 +554,18 @@ local function buildToys(ctx: Ctx)
 		UIKit.corner(tag, 6)
 		UIKit.stroke(tag, UIKit.Ink, 2.5, true)
 		UIKit.text(tag, rarity, 17, { stroke = 2, position = center, anchor = mid, z = 6 })
-		if chosen.m then
-			local m = MutationData.List[chosen.m]
-			UIKit.text(det, `{chosen.m} x{m and m.Multiplier or 1}`, 18, {
-				color = mutationColor(chosen.m),
+		if chosen.m or ToySize.isBig(chosen.z) then
+			-- "Huge x4 · Gold x2"
+			local parts = {}
+			if ToySize.isBig(chosen.z) then
+				table.insert(parts, `{chosen.z} x{ToySize.money(chosen.z)}`)
+			end
+			if chosen.m then
+				local m = MutationData.List[chosen.m]
+				table.insert(parts, `{chosen.m} x{m and m.Multiplier or 1}`)
+			end
+			UIKit.text(det, table.concat(parts, " · "), 18, {
+				color = if chosen.m then mutationColor(chosen.m) else ToySize.color(chosen.z),
 				position = UDim2.fromOffset(142, 210),
 				anchor = Vector2.new(0.5, 0),
 			})
@@ -1109,9 +1127,33 @@ local function showReveal(ctx: Ctx, info: any)
 	local color = rarityColor(info.rarity)
 	UIKit.burst(pop, UDim2.fromOffset(210, 120), 360, 0.45)
 	UIKit.text(pop, "NEW TOY!", 34, { position = UDim2.fromOffset(210, 0), anchor = Vector2.new(0.5, 0), stroke = 4 })
-	local pic = UIKit.icon(pop, toyImage(info.id), 150, UDim2.fromOffset(210, 120), mid, 6)
+	-- a bigger toy shows bigger on the card
+	local picSize = 150 * (1 + (ToySize.scale(info.sizeTier) - 1) * 0.15)
+	local pic = UIKit.icon(pop, toyImage(info.id), picSize, UDim2.fromOffset(210, 120), mid, 6)
 	UIKit.bob(pic, 6, 0.8)
 	UIKit.sparkle(pop, UDim2.fromOffset(110, 70), 22)
+	-- the size roll: a tilted BIG / HUGE / GIANT stamp that punches in just after the card
+	if ToySize.isBig(info.sizeTier) then
+		local stamp = UIKit.text(
+			pop,
+			`{string.upper(info.sizeTier)}!  x{ToySize.money(info.sizeTier)}`,
+			26 + ToySize.scale(info.sizeTier) * 2,
+			{
+				color = ToySize.color(info.sizeTier),
+				position = UDim2.fromOffset(318, 64),
+				anchor = mid,
+				stroke = 4,
+				z = 9,
+			}
+		)
+		stamp.Rotation = 12
+		local punch = UIKit.animScale(stamp)
+		punch.Scale = 0
+		task.delay(0.4, function()
+			punch.Scale = 2.6
+			UIKit.tween(punch, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
+		end)
+	end
 	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	UIKit.text(pop, info.name, 30, { position = UDim2.fromOffset(210, 196), anchor = Vector2.new(0.5, 0), stroke = 4 })
 	local line = info.rarity .. (if info.mutation then "  ·  " .. string.upper(info.mutation) .. "!" else "")

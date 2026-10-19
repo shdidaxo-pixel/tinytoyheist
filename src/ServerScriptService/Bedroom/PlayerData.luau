@@ -20,10 +20,12 @@ PlayerData.STORE = "TinyToyHeist_v1"
 PlayerData.AUTOSAVE = 60
 PlayerData.LOCK_STALE = 150 -- a lock older than this (seconds) belongs to a server that died
 
--- A toy you own. s: the blanket size it woke up at; e: equipped (in the pen; nil counts as yes); l: locked (Sell skips it)
-export type Toy = { u: string, id: string, m: string?, s: string?, e: boolean?, l: boolean? }
--- A blanket waiting in your home: the toy inside is already rolled; w = os.time() when it can be hatched
-export type Blanket = { u: string, id: string, m: string?, s: string, w: number }
+-- A toy you own. s: the blanket size it woke up at; z: its size tier (Big / Huge / Giant, rolled at hatch; nil =
+-- Normal); e: equipped (in the pen; nil counts as yes); l: locked (Sell skips it)
+export type Toy = { u: string, id: string, m: string?, s: string?, z: string?, e: boolean?, l: boolean? }
+-- A blanket waiting in your home: the toy inside is already rolled; w = os.time() when it can be hatched; t = the
+-- whole wake-up time in seconds (older saves don't have it)
+export type Blanket = { u: string, id: string, m: string?, s: string, w: number, t: number? }
 export type Profile = {
 	Version: number,
 	Cash: number,

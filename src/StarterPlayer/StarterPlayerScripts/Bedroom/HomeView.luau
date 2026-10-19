@@ -117,8 +117,15 @@ function HomeView.start(bedroom: Model)
 				for _, toy in toys:GetChildren() do
 					if toy:IsA("Model") then
 						local size = toy:GetAttribute("Size")
-						local p, dir =
-							PenRoam.pose(seedOf(toy), t, penMin, penMax, if typeof(size) == "string" then size else "M")
+						local reach = toy:GetAttribute("Reach")
+						local p, dir = PenRoam.pose(
+							seedOf(toy),
+							t,
+							penMin,
+							penMax,
+							if typeof(size) == "string" then size else "M",
+							if typeof(reach) == "number" then reach else nil
+						)
 						local at = (h.frame * CFrame.new(p.X, top + p.Y, p.Z)).Position
 						local facing = h.frame:VectorToWorldSpace(dir)
 						toy:PivotTo(CFrame.lookAt(at, at + facing))

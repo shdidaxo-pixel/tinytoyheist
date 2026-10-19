@@ -50,16 +50,16 @@ local function watchWaking(blanket: Instance)
 	end
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "WakeTimer"
-	gui.Size = UDim2.fromOffset(150, 56)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, 9, 0)
+	gui.Size = UDim2.fromOffset(190, 74)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 10, 0)
 	gui.LightInfluence = 0
 	gui.MaxDistance = 160
 	gui.Adornee = main
-	local label = textLabel(gui, "Waking up...", Color3.new(1, 1, 1), UDim2.new(1, 0, 0, 30), UDim2.new())
+	local label = textLabel(gui, "", Color3.new(1, 1, 1), UDim2.new(1, 0, 0, 46), UDim2.new())
 	local back = Instance.new("Frame")
 	back.BackgroundColor3 = INK
-	back.Size = UDim2.new(1, -20, 0, 14)
-	back.Position = UDim2.fromOffset(10, 36)
+	back.Size = UDim2.new(1, -30, 0, 16)
+	back.Position = UDim2.fromOffset(15, 52)
 	back.Parent = gui
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 7)
@@ -232,8 +232,10 @@ function GameView.start(bedroom: Model)
 			end
 			local left = math.max(0, wakeAt - now)
 			local mine = blanket:GetAttribute("Owner") == me.UserId
+			-- a big clock: "2:45" for a minute or more, "12s" under a minute
+			local secs = math.ceil(left)
 			w.label.Text = if left > 0
-				then string.format("Waking up... %d", math.ceil(left))
+				then (if secs >= 60 then string.format("%d:%02d", secs // 60, secs % 60) else `{secs}s`)
 				elseif mine then "READY! Hold E"
 				else "READY!"
 			w.fill.Size = UDim2.fromScale(math.clamp(1 - left / total, 0, 1), 1)

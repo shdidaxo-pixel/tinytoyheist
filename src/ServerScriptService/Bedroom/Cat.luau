@@ -4,7 +4,7 @@
 -- it hunts every mouse in the run wherever they are, runs nearly as fast as one, pounces from further and rests
 -- less. It never comes into the safe zone or the homes.
 -- The server works out where it is and writes it to the Cat's "Pose" attribute; clients move the model smoothly.
--- Attributes on Hazards.Cat: State (Patrol, Stalk, Pounce, Rest), Aggressive, Pose (CFrame of its Root).
+-- Attributes on Hazards.Cat: State (Patrol, Stalk, Pounce, Rest, Groom), Aggressive, Pose (CFrame of its Root).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +23,8 @@ Cat.LEAP_SPEED = 75 * S
 Cat.LEAP_TIME = 0.45
 Cat.HIT_RADIUS = 16 * S + 2
 Cat.REST = 2.5 -- seconds it sits after a pounce
+Cat.GROOM = 5 -- calm, on patrol, now and then it stops to lick a paw for this long
+Cat.GROOM_EVERY = { 25, 45 } -- seconds between
 Cat.HEARS_GRAB = 700 -- it hears a toy being grabbed this far away (full-size studs: the whole start area)
 Cat.ALERT_TIME = 12 -- and comes for that mouse for this long
 Cat.RUN = 15 -- how fast it comes: just slower than a mouse with a Small toy, faster than with a bigger one
@@ -86,6 +88,7 @@ function Cat.start(bedroom: Model)
 	end)
 	local leapFrom, leapDir, leapAt = position, facing, 0
 	local restUntil = 0
+	local groomUntil, nextGroom = 0, os.clock() + 15
 
 	local function setPose(hop: number, tilt: number)
 		local yaw = math.atan2(-facing.Z, facing.X)
@@ -120,7 +123,7 @@ function Cat.start(bedroom: Model)
 			local tune = if aggressive then Cat.ANGRY else Cat.CALM
 			local hop, tilt = 0, 0
 
-			if state == "Patrol" or state == "Stalk" then
+			if state == "Patrol" or state == "Stalk" or state == "Groom" then
 				-- pick (or keep) a target
 				local best, bestDistance = nil, math.huge
 				for _, player in Players:GetPlayers() do
@@ -163,7 +166,14 @@ function Cat.start(bedroom: Model)
 						local running = (alerted[target :: Player] or 0) > os.clock()
 						moveToward(goal, if running then math.max(tune.stalk, Cat.RUN) else tune.stalk, dt)
 					end
-				else
+				elseif state == "Patrol" and not aggressive and os.clock() >= nextGroom then
+					-- now and then it sits and licks a paw (CatView); anyone interesting still gets stalked (above)
+					state = "Groom"
+					groomUntil = os.clock() + Cat.GROOM
+					nextGroom = groomUntil
+						+ Cat.GROOM_EVERY[1]
+						+ math.random() * (Cat.GROOM_EVERY[2] - Cat.GROOM_EVERY[1])
+				elseif not (state == "Groom" and os.clock() < groomUntil and not aggressive) then
 					state = "Patrol"
 					-- walk the ellipse at an even pace
 					local tangent = Vector3.new(-half.X * math.sin(angle), 0, half.Z * math.cos(angle))

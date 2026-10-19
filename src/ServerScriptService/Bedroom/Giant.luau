@@ -9,7 +9,8 @@
 --   BackToBed up to 12 s: he walks back to bed and lies down; then Asleep again.
 -- Anyone caught in the beam while carrying a toy drops it. Everything is on GiantKid's attributes, so clients (the
 -- lights, the HUD) follow along: State, WakeMeter (0..100), Flashlight (bool), WakesAt (server time of the next
--- natural wake-up), StateEndsAt, Walking (bool) and WalkerPose (the walking Kid's Root CFrame).
+-- natural wake-up), StateEndsAt, Walking (bool), WalkerPose (the walking Kid's Root CFrame) and GrabAt (server time of
+-- his last grab).
 -- To test from the command bar while playing (Server): workspace.Bedroom.GiantKid:SetAttribute("WakeMeter", 100)
 
 local Players = game:GetService("Players")
@@ -212,12 +213,15 @@ function Giant.start(bedroom: Model)
 							goal = flat
 						end
 						if d <= Giant.REACH and root.Position.Y < 80 * MapConfig.SCALE + 6 then
-							Knock.hit(player, position, {
+							local caught = Knock.hit(player, position, {
 								message = "The Giant caught you!",
 								push = 90,
 								stun = 3,
 								home = true,
 							})
+							if caught then
+								kid:SetAttribute("GrabAt", now()) -- clients play his scoop (KidView)
+							end
 						end
 					end
 				end

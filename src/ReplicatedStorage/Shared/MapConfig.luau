@@ -60,7 +60,8 @@ local function build(S: number): any
 	MapConfig.BURROW_LAYOUT = {
 		LockButton = { position = Vector3.new(-30, 0, 12) * S, half = Vector3.new(4.5, 0, 4.5) * S },
 		CashPile = { position = Vector3.new(28, 0, 14) * S, half = Vector3.new(5.5, 0, 5.5) * S },
-		Spawn = { position = Vector3.new(0, 0, 24) * S, half = Vector3.new(8, 0, 5.2) * S },
+		-- right behind the cash pile, so you wake up facing your cash and walk over it on the way out (Dylan, 19 Oct)
+		Spawn = { position = Vector3.new(28, 0, 30) * S, half = Vector3.new(8, 0, 5.2) * S },
 		ToyIndex = { position = Vector3.new(-52, 0, 30) * S, half = Vector3.new(4.5, 0, 3.5) * S },
 		TrainingWheel = { position = Vector3.new(50, 0, 22) * S, half = Vector3.new(7, 0, 10.5) * S },
 	} :: { [string]: BurrowProp }

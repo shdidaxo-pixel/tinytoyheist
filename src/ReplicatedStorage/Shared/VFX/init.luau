@@ -1315,7 +1315,7 @@ function VFX.hatchCharge(blanket: Model, rarity: string?, done: (at: Vector3, he
 	glow.Enabled = true
 	glow.Rate = 0
 	local light = Instance.new("PointLight")
-	light.Range = math.min(60, h * 6)
+	light.Range = math.min(40, h * 3.5)
 	light.Shadows = false
 	light.Brightness = 0
 	light.Parent = suck
@@ -1369,7 +1369,7 @@ function VFX.hatchCharge(blanket: Model, rarity: string?, done: (at: Vector3, he
 		glow.Color = ColorSequence.new(c)
 		glow.Rate = 4 + 30 * k
 		light.Color = c
-		light.Brightness = 1 + 6 * k
+		light.Brightness = 0.5 + 3 * k -- enough to light the floor around it, not wash it out
 		for _, b in beams do
 			local on = math.clamp((p - b.at * 0.6) / 0.25, 0, 1)
 			b.b.Width0 = h * 0.15 * on

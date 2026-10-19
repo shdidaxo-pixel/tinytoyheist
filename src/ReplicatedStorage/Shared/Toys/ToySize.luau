@@ -76,18 +76,31 @@ function ToySize.reach(model: Model): number
 	return math.max(span.X, span.Z) / 2
 end
 
+-- The widest a grown toy may get (half its footprint, studs): the pen is about 68 x 70 inside, so a very wide toy
+-- (a Giant paper plane from a Large blanket) is held back to fit and still roam a little
+ToySize.MAX_REACH = 26
+
+local function grow(model: Model, k: number)
+	model:ScaleTo(model:GetScale() * k)
+	local height = model:GetAttribute("Height") :: number?
+	if height then
+		model:SetAttribute("Height", height * k)
+	end
+end
+
 -- Grow a toy model to its size tier (call once, after any other scaling)
 function ToySize.apply(model: Model, id: string?)
 	local k = ToySize.scale(id)
 	if k ~= 1 then
-		model:ScaleTo(model:GetScale() * k)
-		local height = model:GetAttribute("Height") :: number?
-		if height then
-			model:SetAttribute("Height", height * k)
-		end
+		grow(model, k)
+	end
+	local reach = ToySize.reach(model)
+	if k > 1 and reach > ToySize.MAX_REACH then
+		grow(model, ToySize.MAX_REACH / reach)
+		reach = ToySize.MAX_REACH
 	end
 	model:SetAttribute("SizeTier", ToySize.name(id))
-	model:SetAttribute("Reach", ToySize.reach(model))
+	model:SetAttribute("Reach", reach)
 end
 
 -- How long a blanket takes to wake up: by blanket size and the toy's rarity; the very first toy is quick

@@ -280,7 +280,10 @@ local function show(player: Player, entry: Toy, at: CFrame?): Model?
 		prompt.ObjectText = (if ToySize.isBig(entry.z) then ToySize.name(entry.z) .. " " else "")
 			.. (if data then data.Name else "Toy")
 		prompt.HoldDuration = GameConfig.RAID.hold
-		prompt.MaxActivationDistance = 10 + (toy:GetAttribute("Height") :: number? or 8) * 0.3
+		-- reach: a Huge or Giant toy is wide, so you can grab it from its side
+		prompt.MaxActivationDistance = 10
+			+ (toy:GetAttribute("Height") :: number? or 8) * 0.3
+			+ (toy:GetAttribute("Reach") :: number? or 4) * 0.6
 		prompt.RequiresLineOfSight = false
 		-- the toy roams only on the clients, so the server would refuse this prompt on distance: the client sends
 		-- GameRemotes.Steal instead and Raids checks the distance against PenRoam

@@ -522,13 +522,18 @@ local function buildToys(ctx: Ctx)
 			position = UDim2.fromOffset(142, 244),
 			anchor = Vector2.new(0.5, 0),
 		})
-		UIKit.text(det, (data and data.SetName or "") .. " set", 15, {
-			font = UIKit.Fonts.body,
-			color = GREY_TEXT,
-			stroke = 0,
-			position = UDim2.fromOffset(142, 288),
-			anchor = Vector2.new(0.5, 0),
-		})
+		UIKit.text(
+			det,
+			`{SIZE_NAME[chosen.s or (data and data.Size) or ""] or ""} · {data and data.SetName or ""} set`,
+			15,
+			{
+				font = UIKit.Fonts.body,
+				color = GREY_TEXT,
+				stroke = 0,
+				position = UDim2.fromOffset(142, 288),
+				anchor = Vector2.new(0.5, 0),
+			}
+		)
 		local price = math.floor(perSecond(chosen) * GameConfig.SELL_SECONDS)
 		UIKit.button(det, "Sell · " .. GameConfig.money(price), {
 			palette = P.gold,

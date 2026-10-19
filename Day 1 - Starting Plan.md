@@ -228,21 +228,26 @@ The catalog also has 14 shelf combos (toys that boost each other) and the rules 
 
 ### Mutations
 
-Rolled once at wake-up, one mutation per toy. They multiply money per second and change the toy's look.
+Rolled once at wake-up, one mutation per toy. They multiply money per second and change the toy's look. Candy, Bubble and Frozen were added on 19 Oct 2026; the chances and multipliers live in `src/ReplicatedStorage/Shared/Toys/MutationData.luau`.
 
 | Mutation | Chance | Money | Look |
 | --- | --- | --- | --- |
-| Gold | 5% | x2 | Gold sheen |
-| Glitter | 2% | x3 | Sparkle particles |
-| Glow | 10% during Nightmare Night only | x2.5 | Glow-in-the-dark |
-| Shadow | 1% | x5 | Dark smoke outline |
-| Rainbow | 0.2% | x10 | Cycling colours |
-| Cosmic | 0.02% | x25 | Starfield texture, orbiting sparkles |
-| Haunted (Halloween event) | 3% during the event | x4 | Ghostly trail; event-only, never returns |
+| Gold | 5% | x2 | Shiny gold all over, little glints |
+| Candy (new) | 3% | x2.5 | Pink and white candy stripes, sprinkles falling off it |
+| Glitter | 2% | x3 | Its own colours, covered in twinkling sparkles |
+| Bubble (new) | 1.5% | x4 | Floats inside a shimmering soap bubble, little bubbles rising |
+| Shadow | 1% | x5 | Almost black, purple outline, dark smoke |
+| Frozen (new) | 0.5% | x7 | Solid ice, frosty sparkles, cold mist at its feet |
+| Rainbow | 0.2% | x10 | Colours cycle through the rainbow, rainbow sparkles |
+| Cosmic | 0.02% | x25 | Deep-space colours with stars in them, sparkles orbiting it |
+| Glow | 10% during Nightmare Night only | x2.5 | Glow-in-the-dark green, lights up the dark |
+| Haunted (Halloween event) | 3% during the event | x4 | See-through ghostly blue, wispy trail; event-only, never returns |
+
+Outside events about 1 toy in 8 wakes up mutated (13.2%). Each step down in chance pays more, so a rarer mutation always beats a commoner one.
 
 ### Toy Index
 
-A book in your hole tracks every toy × mutation found: 84 room-set toys, 18 event toys, 3 specials and 7 mutations.
+A book in your hole tracks every toy × mutation found: 84 room-set toys, 18 event toys, 3 specials and 10 mutations.
 
 - **Each room's set completed:** +2% luck, a cash reward and a title ("Kitchen Raider").
 - **Every base toy found:** an exclusive Index Teddy (Epic, gold mutation).
@@ -542,7 +547,8 @@ If a week's numbers show a problem (for example people quitting after being raid
 
 **Cheap voxel art, but generous effects.** The pet games you shared use blocky voxel models; what sells them is the glow, the shake and the big numbers.
 
-- **Toys:** voxel models about 40–120 blocks each, bright solid colours, one idle animation each (bounce, spin, waddle). Mythics get particle auras.
+- **Toys:** voxel models about 40–120 blocks each, bright solid colours, one idle animation each (bounce, spin, waddle). Mythics get particle auras. In the data a "block" is a merged box, so a toy is 15 to 65 parts (`src/ReplicatedStorage/Shared/Toys/Sets/`, review page `design/toy-turntables.html`).
+- **Rarity effects on awake toys:** none for Common; a faint green floor ring for Uncommon; a blue ring and a few sparkles for Rare; a clear purple ring and sparkles for Epic; gold, red and rainbow toys add a soft aura, a light and (Mythic, Secret) sparks rising from their feet. Epic and up also leak their glow from under the blanket (the glow tell), and every reveal bursts confetti, sparkles and a shockwave ring in the rarity colour.
 - **House:** smooth giant furniture at real scale, warm night lighting with moonlight through the window, darker toward the Garage and Attic.
 - **The Giant Kid:** large, soft and cartoony, never gory. Snoring makes his chest rise. Waking is a slow eye-open close-up.
 - **Reveal:** blanket shake, a drum roll that rises with rarity, a camera zoom, a colour burst, the rarity name in huge letters, and "$X/s" counting up. Mythic and above: brief slow motion and a server-wide banner.

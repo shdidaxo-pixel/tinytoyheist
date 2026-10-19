@@ -25,15 +25,16 @@ and the reason behind it, every piece of Dylan's feedback in order, and a step-b
 12. [Known rough edges in the renders](#12-known-rough-edges-in-the-renders)
 13. [Environment notes and gotchas](#13-environment-notes-and-gotchas)
 14. [References](#14-references)
-15. [Appendix A: draft MapConfig for v6](#appendix-a-draft-mapconfig-for-v6)
-16. [Appendix B: every camera in the render page](#appendix-b-every-camera-in-the-render-page)
-17. [Appendix C: what is out of date](#appendix-c-what-is-out-of-date)
-18. [Appendix D: checklists](#appendix-d-checklists)
-19. [Appendix E: Dylan's messages, word for word](#appendix-e-dylans-messages-word-for-word)
-20. [Appendix F: the bed and the Kid, in final Studio sizes](#appendix-f-the-bed-and-the-kid-in-final-studio-sizes)
-21. [Appendix G: draft Luau for one home](#appendix-g-draft-luau-for-one-home)
-22. [Appendix H: names and attributes](#appendix-h-names-and-attributes)
-23. [Appendix I: glossary](#appendix-i-glossary)
+15. [Toys: how to use them](#15-toys-how-to-use-them)
+16. [Appendix A: draft MapConfig for v6](#appendix-a-draft-mapconfig-for-v6)
+17. [Appendix B: every camera in the render page](#appendix-b-every-camera-in-the-render-page)
+18. [Appendix C: what is out of date](#appendix-c-what-is-out-of-date)
+19. [Appendix D: checklists](#appendix-d-checklists)
+20. [Appendix E: Dylan's messages, word for word](#appendix-e-dylans-messages-word-for-word)
+21. [Appendix F: the bed and the Kid, in final Studio sizes](#appendix-f-the-bed-and-the-kid-in-final-studio-sizes)
+22. [Appendix G: draft Luau for one home](#appendix-g-draft-luau-for-one-home)
+23. [Appendix H: names and attributes](#appendix-h-names-and-attributes)
+24. [Appendix I: glossary](#appendix-i-glossary)
 
 ---
 
@@ -1204,6 +1205,78 @@ These are render artefacts, not design decisions. Don't copy them into Studio.
 - **Figma file of AI references:** https://www.figma.com/design/3ZlBNM6Qd9WM7yyJpXaS17 (unreviewed).
 - **Concept pages:** `design/new-map-render.html` (v4, other chat), `design/game-render.html` (round room).
 - **Plan:** `Day 1 - Starting Plan.md` (holes and raids, Giant behaviour, noise numbers, MVP). **Catalog:** `Toy Catalog.md`.
+
+---
+
+## 15. Toys: how to use them
+
+Added 19 Oct 2026 by the toys session. Every toy in `Toy Catalog.md` is a voxel model built from data, with its idle
+animation, rarity effects and the 10 mutations. This section is the API for game code and the map (roaming pens,
+blankets, the reveal). How to make or edit a toy: `tools/toys/README.md`.
+
+### Where things are
+
+| Thing | Where |
+| --- | --- |
+| Built toy models | `ServerStorage.TinyToyHeistAssets.Toys.<Id>` (e.g. `RubberDuck`), rarity effects baked in. Saved in the place. |
+| Toy data (one file per set) | `src/ReplicatedStorage/Shared/Toys/Sets/*.luau` → `ReplicatedStorage.Shared.Toys.Sets` |
+| Lookup | `ReplicatedStorage.Shared.Toys.ToyCatalog` (`get(id)`, `list()`, `inSet(set, rarity?)`, `pick(set, rarity, rng)`) |
+| Builder | `ReplicatedStorage.Shared.Toys.ToyBuilder` (`build(toy)` → Model; `SIZE_TARGET`) |
+| Rebuild in Studio | `require(game.ServerStorage.TinyToyHeistTools.BuildToys).run()` (Edit mode); `.showcase()` lines them up at z −3000, `.clearShowcase()` removes it |
+| Idle animations | `ReplicatedStorage.Shared.Toys.ToyAnimator`, started for you by `StarterPlayerScripts.TinyToyHeistToys.ToyClient` |
+| Effects | `ReplicatedStorage.Shared.Toys.ToyVFX` (rarity, glow tell, reveal) |
+| Mutations | `ReplicatedStorage.Shared.Toys.Mutations` (+ `MutationData` for chances and multipliers) |
+| Review page | `design/toy-turntables.html` (every toy, mutation and view; stills in `design/toy-renders/`) |
+
+### A toy model
+
+- `Model <Id>`, `PrimaryPart = Root`. **The pivot is the centre of its feet, on the floor, and it faces −Z**
+  (LookVector), so `toy:PivotTo(CFrame.lookAt(pos, pos + dir))` stands it on the floor facing `dir`.
+- `Root`: an invisible, anchored box the size of the toy, `CanQuery = true` (raycast or put a ProximityPrompt on it
+  for grabbing), `CanCollide = false`. Nothing else in a toy collides or is queryable.
+- `Rig`: one invisible part per moving group (`Body`, `Head`, ...), each with a Motor6D `Joint`. `Blocks`: the visible
+  boxes, welded to their group. `Fx`: the toy's own particles. `RarityFx` / `MutationFx`: effect folders.
+- Attributes: `ToyId`, `ToyName`, `Set`, `Rarity`, `Money` (base $/s), `Size` (`S`/`M`/`L`/`G`), `VoxelScale`,
+  `Height` (studs), and `Mutation` once mutated. Tagged `TinyToy`. `ModelStreamingMode = Atomic`.
+- Sizes (height, or 0.75 of length if longer): Small 8, Medium 12, Large 17, Giant 25 studs; a player is 5.
+  `Size` is the toy's natural size. The plan rolls the blanket size first, so if a toy comes out of a different size
+  of blanket, scale it: `toy:ScaleTo(ToyBuilder.SIZE_TARGET[blanketSize] / ToyBuilder.SIZE_TARGET[toy:GetAttribute("Size")])`
+  (effects and joints scale with it).
+- About 28 blocks per toy on average; blocks under 0.3 studs don't cast shadows.
+
+### Recipes
+
+```lua
+local ServerStorage = game:GetService("ServerStorage")
+local Toys = game:GetService("ReplicatedStorage").Shared.Toys
+local Mutations = require(Toys.Mutations)
+local ToyVFX = require(Toys.ToyVFX)
+
+-- Wake-up (server): clone, roll the mutation, put it in the home's pen.
+local toy = ServerStorage.TinyToyHeistAssets.Toys[toyId]:Clone()
+local mutation = Mutations.roll(rng, { NightmareNight = nightOn, Halloween = halloweenOn }, luck) -- nil = none
+Mutations.apply(toy, mutation)                      -- recolours + effect; sets the "Mutation" attribute
+local perSecond = toy:GetAttribute("Money") * roomMultiplier * Mutations.multiplier(mutation)
+toy:PivotTo(CFrame.new(spot) * CFrame.Angles(0, math.random() * 2 * math.pi, 0))
+toy.Parent = home.Pen                               -- anywhere under Workspace; it starts animating on every client
+
+-- Reveal (client, when the wake-up timer ends): burst + pop.
+ToyVFX.revealBurst(toy)
+ToyVFX.popIn(toy)
+
+-- Sleeping toy (server, when a blanket spawns): Epic and up leak their colour about 1 s in every 8.
+ToyVFX.addGlowTell(blanketPartOrModel, rarity)      -- does nothing for Common to Rare; removeGlowTell(blanket) to undo
+```
+
+- **Idle animations play by themselves** on every client for any `TinyToy` model in Workspace, within 220 studs of the
+  camera (every third frame past 90 studs). Mutation movement (Rainbow colours, Cosmic orbit, Bubble and Haunted
+  floating) and the Secret rainbow ring run in the same loop.
+- **Roaming (handoff 10.1):** move the whole toy with `toy:PivotTo(...)` (client-side from a shared seed is cheapest).
+  Don't touch the `Rig` joints; the idle plays on top of wherever the toy is. To turn it, rotate the pivot about Y.
+- **While carried:** `ToyVFX.removeRarity(toy)` hides the rarity glow; `ToyVFX.applyRarity(toy)` puts it back.
+- **Index Teddy** is "always Gold": `Mutations.apply(toy, "Gold")` when it's awarded.
+- **Mutations replicate** (colours, materials, effect parts are made on the server). Shadow uses a Highlight; Roblox
+  draws at most 31 at once, which only matters if a server has dozens of Shadow toys in view.
 
 ---
 

@@ -111,10 +111,9 @@ If you add a moment, add a row here.
 5. The pen toy pops in (held tiny until now) and plays the animations session's hatch jump; the card shows with
    spinning rays, a shine, the rarity line bouncing in and the $/s counting up.
 
-## Before launch
-- Upload the 18 PNGs in `design/vfx/out/` (not `_preview.png`) and paste the ids into `Assets.luau`. Until then they
-  only show in Studio (local copies in Studio's `content/textures/TTHVFX1/`; copy `design/vfx/out/*.png` there on a
-  new PC or Studio version).
+## Textures
+- All 18 PNGs in `design/vfx/out/` were uploaded to Roblox on 19 Oct (Dylan said yes); the ids are in `Assets.luau`.
+  To change one: edit and re-run `make_sprites.py` / `render_coin.py`, upload the PNG, paste the new id.
 
 ## Tested (19 Oct, Studio Play)
 - Captures in `design/studio-vfx/` (hatch frames + gif, Mythic Giant reveal card, mutation auras, home level-up,

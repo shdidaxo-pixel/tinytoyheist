@@ -1361,8 +1361,14 @@ do
 	end).LayoutOrder = 4
 
 	-- Pointer arrow that bobs over the Shop button (Break and Steal an Egg points at what to do next). It lives in
-	-- the button, so it always moves with it.
-	UIKit.bob(UIKit.icon(shopButton, img("Arrow"), 52, UDim2.fromOffset(64, -48), Vector2.new(0.5, 0), 30), 12, 0.45)
+	-- the button, so it always moves with it, and fades away after a little while.
+	local shopArrow = UIKit.icon(shopButton, img("Arrow"), 52, UDim2.fromOffset(64, -48), Vector2.new(0.5, 0), 30)
+	UIKit.bob(shopArrow, 12, 0.45)
+	task.delay(12, function()
+		UIKit.tween(shopArrow, 0.6, { ImageTransparency = 1 })
+		task.wait(0.6)
+		shopArrow.Visible = false
+	end)
 
 	-- Bottom-left stats: speed and cash, with "+$" pops floating off the cash.
 	local statsGroup = group("Stats", Vector2.new(0, 1), UDim2.new(0, 14, 1, -14), Vector2.new(280, 110))

@@ -19,19 +19,13 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 	local CREAM = rgb(0xF1EBDD)
 	local BASEBOARD = rgb(0xE6E1D6)
 
-	local MaterialService = game:GetService("MaterialService")
-	local function variant(name: string): string?
-		return if MaterialService:FindFirstChild(name, true) then name else nil
-	end
-
 	---------------------------------------------------------------------------------------------------------------
 	-- Floor. The run's bands sit with their tops at y = 0. The start area is three flat discs stacked a little lower
 	-- (teal ring under the white line under the carpet), so the run's carpet covers their front halves cleanly.
 	local floor = Kit.folder(bedroom, "Floor")
 	part(floor, "Subfloor", Vector3.new(1200, 2, 1960), CFrame.new(0, -1.6, 780), 0x3A2A1C, { shadow = false })
 	local carpetVariant = nil -- the AI carpets came out garish; the built-in Carpet reads better
-	-- a studded toy-brick material for the safe ring, when the place has one that reads well (BedroomStudMat)
-	local studs = variant("BedroomStudMat")
+	local studs = nil -- a studded material for the safe ring; the AI ones came out as grids and bricks, so plain teal
 	local bands = {
 		Carpet = { color = 0x6A5BA0, material = Enum.Material.Carpet, variant = carpetVariant },
 		Wood = { color = 0x9A7853, material = Enum.Material.WoodPlanks },

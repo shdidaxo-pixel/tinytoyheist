@@ -32,13 +32,13 @@ BedroomLighting.Night = {
 	clockTime = 14,
 	lighting = {
 		Brightness = 0.9,
-		Ambient = Color3.fromRGB(96, 106, 156),
-		OutdoorAmbient = Color3.fromRGB(92, 104, 160),
+		Ambient = Color3.fromRGB(104, 112, 162),
+		OutdoorAmbient = Color3.fromRGB(100, 110, 166),
 		ColorShift_Top = Color3.fromRGB(150, 170, 255),
 		ColorShift_Bottom = Color3.fromRGB(30, 35, 80),
 		EnvironmentDiffuseScale = 0.2,
 		EnvironmentSpecularScale = 0.2,
-		ExposureCompensation = 0.3,
+		ExposureCompensation = 0.35,
 	},
 	atmosphere = {
 		Density = 0.06,

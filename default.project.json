@@ -14,7 +14,15 @@
 				},
 				"TinyToyHeistToys": {
 					"$path": "src/StarterPlayer/StarterPlayerScripts/TinyToyHeistToys"
+				},
+				"Bedroom": {
+					"$path": "src/StarterPlayer/StarterPlayerScripts/Bedroom"
 				}
+			}
+		},
+		"ServerScriptService": {
+			"Bedroom": {
+				"$path": "src/ServerScriptService/Bedroom"
 			}
 		},
 		"ServerStorage": {

@@ -12,7 +12,7 @@
 local Homes = {}
 
 -- A studded toy-brick material in MaterialService, when the place has one
-Homes.STUDS = "BedroomStudMat"
+Homes.STUDS = "" -- none yet (the AI stud materials came out as grids and bricks)
 
 -- How each level looks: fairy light, pen floor, wheel (sides, rungs, frame), and the dressing in the bays
 Homes.LEVEL_LOOK = {
@@ -372,7 +372,8 @@ function Homes.setSign(sign: BasePart, title: string, line2: string, titleColor:
 	second.TextColor3 = hex(line2Color or 0xFFE58A)
 end
 
--- Show or hide the lock bars, turn the barrier on, and darken the push pin.
+-- Show or hide the lock bars and darken the push pin. The barrier stays walk-through: game code puts strangers who
+-- walk into a locked home back outside, so the owner can still come and go.
 function Homes.setLocked(home: Model, locked: boolean)
 	local bars = home:FindFirstChild("LockBars")
 	if bars then
@@ -381,10 +382,6 @@ function Homes.setLocked(home: Model, locked: boolean)
 				bar.Transparency = if locked then 0 else 1
 			end
 		end
-	end
-	local barrier = home:FindFirstChild("DoorBarrier") :: BasePart?
-	if barrier then
-		barrier.CanCollide = locked
 	end
 	local pin = home:FindFirstChild("LockButton")
 	if pin and pin:IsA("BasePart") then
@@ -558,7 +555,7 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 		collide = false,
 		transparency = 1,
 	})
-	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 1.6 else 1.1, 60, { Shadows = true })
+	Kit.light(glow, "PointLight", look.fairy, if level == 6 then 1.9 else 1.4, 60, { Shadows = true })
 
 	-- The pen floor, dressed for the level (a layer on the pen part)
 	local pen = home:FindFirstChild("Pen") :: BasePart

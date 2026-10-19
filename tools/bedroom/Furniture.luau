@@ -125,7 +125,7 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 		Kit.text(sticker, "★", { face = Enum.NormalId.Back, color = rgb(0xDFFFB0), pixelsPerStud = 8, glow = true })
 	end
 	for _, leg in { { -74, 22 }, { 74, 22 }, { -74, 258 }, { 74, 258 } } do
-		big(bed, "Leg", 16, 12, 16, leg[1], 0, leg[2], WOOD_DARK, wood)
+		big(bed, "Leg", 16, 10, 16, leg[1], 0, leg[2], WOOD_DARK, wood)
 		big(bed, "LegCap", 18, 2, 18, leg[1], 10, leg[2], WOOD, wood)
 	end
 	big(bed, "Frame", 158, 24, 250, 0, 12, 140, WOOD, wood)
@@ -168,11 +168,11 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 		)
 	end
 	for _, s in { -1, 1 } do
-		big(bed, "Drape", 4, 22, 175, s * 80 + (if s > 0 then -1 else 0), 42, 172, DUVET, fabric)
+		big(bed, "Drape", 4, 22.2, 175, s * 80 + (if s > 0 then -1 else 0), 42, 172, DUVET, fabric)
 		big(bed, "DrapeLow", 4, 22, 171, s * 82 + (if s > 0 then -2.5 else 0), 22, 172, DUVET_DARK, fabric)
 	end
-	big(bed, "DrapeFoot", 158, 22, 4, 0, 42, 261, DUVET, fabric)
-	big(bed, "DrapeFootLow", 154, 20, 4, 0, 22, 263, DUVET_DARK, fabric)
+	big(bed, "DrapeFoot", 158, 22.2, 4, 0, 42, 261, DUVET, fabric)
+	big(bed, "DrapeFootLow", 154, 20, 4, 0, 22, 264.5, DUVET_DARK, fabric)
 	block(
 		bed,
 		"FoldedCorner",

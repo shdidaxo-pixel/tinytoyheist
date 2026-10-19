@@ -65,7 +65,9 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
   `design/toy-icons/` copied into Studio's `content/textures/TTH2/toys/` (local only, like the other UI pictures:
   upload before publishing). In-world bits are in `Bedroom/GameView.luau`.
 - **Studio test hook**: `ServerStorage.GameDebug` (BindableFunction, Studio only): `("cash", player, n)`,
-  `("give", player, "S"|"M"|"L")`, `("set", player, {field = value})`, `("profile", player)`.
+  `("give", player, "S"|"M"|"L")`, `("set", player, {field = value})`, `("profile", player)`, `("wipe", player)` (starts
+  that player's real save again from nothing, live). In Play mode, Server command bar:
+  `game.ServerStorage.GameDebug:Invoke("wipe", game.Players:GetPlayers()[1])`.
 - Gotcha: BillboardGuis with `AlwaysOnTop` don't show up in Studio screen captures.
 
 ### Still to do

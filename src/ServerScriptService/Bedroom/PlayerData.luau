@@ -288,6 +288,25 @@ local function save(player: Player, release: boolean)
 end
 PlayerData.save = save
 
+-- Studio test tool: start this player's save again from nothing (in place, so every system keeps its reference)
+function PlayerData.wipe(player: Player)
+	local s = sessions[player]
+	if not s then
+		return
+	end
+	local profile = s.profile :: any
+	for k in profile do
+		profile[k] = nil
+	end
+	for k, v in defaults() :: any do
+		profile[k] = v
+	end
+	s.playtimeClaimed = {}
+	s.joinedAt, s.countedAt = os.clock(), os.clock()
+	save(player, false)
+	PlayerData.changed(player)
+end
+
 local function join(player: Player)
 	local profile, fromStore = load(player)
 	if not player.Parent then

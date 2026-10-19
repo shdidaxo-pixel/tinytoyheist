@@ -405,6 +405,25 @@ local function fill(player: Player)
 	end
 end
 
+-- Throw away the pen and build it again from the profile (after a save wipe)
+function Pens.reload(player: Player)
+	local p = PlayerData.get(player)
+	local s = states[player]
+	if not p or not s then
+		return
+	end
+	for _, m in s.models do
+		m:Destroy()
+	end
+	for _, b in s.waking do
+		b:Destroy()
+	end
+	s.models, s.waking, s.out = {}, {}, {}
+	s.hole:SetAttribute("Level", p.HomeLevel)
+	fill(player)
+	sync(player)
+end
+
 function Pens.setLevel(player: Player, level: number)
 	local s = states[player]
 	if s then

@@ -29,7 +29,7 @@ local PlayerData = require(script.Parent:WaitForChild("PlayerData")) :: any
 PlayerData.start()
 
 -- Studio only: ServerStorage.GameDebug (BindableFunction) lets the command bar and test tools poke the game,
--- e.g. GameDebug:Invoke("cash", player, 1e6), ("give", player, "M"), ("profile", player).
+-- e.g. GameDebug:Invoke("cash", player, 1e6), ("give", player, "M"), ("profile", player), ("wipe", player).
 if game:GetService("RunService"):IsStudio() then
 	local debug = Instance.new("BindableFunction")
 	debug.Name = "GameDebug"
@@ -43,6 +43,17 @@ if game:GetService("RunService"):IsStudio() then
 			return Carry.giveSleeping(player, arg or "S")
 		elseif command == "profile" then
 			return game:GetService("HttpService"):JSONEncode(profile)
+		elseif command == "wipe" and profile then
+			-- start this player's (real) save again from nothing: cash, toys, levels, stats, Index, streak
+			if Carry.isCarrying(player) then
+				Carry.drop(player)
+			end
+			local Upgrades = require(script.Parent.Upgrades) :: any
+			Upgrades.stopTraining(player)
+			PlayerData.wipe(player)
+			local Pens = require(script.Parent.Pens) :: any
+			Pens.reload(player)
+			Carry.refreshSpeed(player)
 		elseif command == "set" and profile then
 			for k, v in arg do
 				(profile :: any)[k] = v

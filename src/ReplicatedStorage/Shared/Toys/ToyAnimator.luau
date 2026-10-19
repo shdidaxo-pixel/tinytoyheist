@@ -640,12 +640,14 @@ local function personality(st: State, now: number, dt: number): Layer
 			st.move = nil
 		end
 	else
-		-- walking: lean in, waddle, a little bob each step (legs and arms swing in pose())
+		-- walking: lean in, waddle side to side with a little twist, bob and bounce the head each step (most toys
+		-- have no legs of their own, so the body sells the walk; legs and arms, where there are any, swing in pose())
 		rx = -0.16 * walkAmount
-		rz = 0.07 * swing
-		y = 0.03 * math.abs(swing)
-		-- breathing (the head rises and falls a little)
-		sq = 0.025 * math.sin(t * 2.2 + st.seed)
+		rz = 0.1 * swing
+		ry = 0.06 * swing
+		y = 0.045 * (walkAmount - math.abs(swing)) -- highest as the feet pass, lowest as one lands
+		-- breathing (the head rises and falls a little), and the head bounces down as each foot lands
+		sq = 0.025 * math.sin(t * 2.2 + st.seed) + 0.06 * (math.abs(swing) - 0.5 * walkAmount)
 		-- standing still: look around
 		if st.still > 0.4 and now >= st.nextLook then
 			if math.random() < 0.35 then

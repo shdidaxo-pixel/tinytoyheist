@@ -19,6 +19,53 @@ Mutations.Data = MutationData
 local TEX = ToyBuilder.TEXTURES
 local seq = ToyBuilder.seq
 
+-- The VFX sprites (Shared/VFX/Assets: flipbooks drawn for the game) when they're there, else a built-in texture
+local VfxAssets: any = nil
+do
+	local shared = script.Parent.Parent
+	local vfx = shared and shared:FindFirstChild("VFX")
+	local assets = vfx and vfx:FindFirstChild("Assets")
+	if assets and assets:IsA("ModuleScript") then
+		local ok, mod = pcall(require, assets)
+		if ok then
+			VfxAssets = mod
+		end
+	end
+end
+local FALLBACK = {
+	Twinkle = TEX.Sparkle,
+	Coin = TEX.Sparkle,
+	Heart = TEX.Sparkle,
+	Bubble = TEX.Ring,
+	Snowflake = TEX.Snow,
+	Star = TEX.Sparkle,
+	Swirl = TEX.Ring,
+	Electric = TEX.Sparkle,
+	Flame = TEX.Fire,
+	Ring = TEX.Ring,
+}
+-- props for a sprite: Texture, and the flipbook settings if it's a 4x4 sheet
+local function sprite(name: string, fps: number?, mode: Enum.ParticleFlipbookMode?): { [string]: any }
+	if VfxAssets then
+		local props: { [string]: any } = { Texture = VfxAssets.get(name) }
+		if VfxAssets.isSheet(name) then
+			props.FlipbookLayout = Enum.ParticleFlipbookLayout.Grid4x4
+			props.FlipbookMode = mode or Enum.ParticleFlipbookMode.Loop
+			props.FlipbookFramerate = NumberRange.new(fps or 20)
+			props.FlipbookStartRandom = mode == nil
+		end
+		return props
+	end
+	return { Texture = FALLBACK[name] or TEX.Sparkle }
+end
+local function with(a: { [string]: any }, b: { [string]: any }): { [string]: any }
+	local out = table.clone(a)
+	for k, v in b do
+		out[k] = v
+	end
+	return out
+end
+
 -- rarest first, so a roll lands on the rare ones before the common ones
 local BY_RARITY = table.clone(MutationData.Order)
 table.sort(BY_RARITY, function(a, b)
@@ -125,6 +172,24 @@ local function rootEmitter(ctx: Ctx, name: string, props: { [string]: any }): Pa
 	return e
 end
 
+-- A flat emitter lying on the floor under the toy (swirls, rings): VelocityPerpendicular faces the way it moves (up)
+local function floorEmitter(ctx: Ctx, name: string, props: { [string]: any }): ParticleEmitter
+	local part = ToyVFX.floorPart(ctx.model, name, math.max(ctx.root.Size.X, ctx.root.Size.Z), ctx.folder)
+	local e = Instance.new("ParticleEmitter")
+	e.Name = name
+	e.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
+	e.EmissionDirection = Enum.NormalId.Top
+	e.Speed = NumberRange.new(0.01)
+	e.LockedToPart = true
+	e.LightInfluence = 0
+	e.Shape = Enum.ParticleEmitterShape.Box
+	for k, v in props do
+		(e :: any)[k] = v
+	end
+	e.Parent = part
+	return e
+end
+
 local function twinkle(size: number): NumberSequence
 	return seq({ { 0, 0 }, { 0.5, size, size * 0.3 }, { 1, 0 } })
 end
@@ -183,6 +248,34 @@ LOOKS.Gold = function(ctx)
 			p.Transparency = 0
 		end
 	end
+	rootEmitter(
+		ctx,
+		"GoldCoins",
+		with(sprite("Coin", 28), {
+			Color = ColorSequence.new(Color3.new(1, 1, 1)),
+			Rate = 0.7,
+			Lifetime = NumberRange.new(1.4, 1.8),
+			Speed = NumberRange.new(0.6 * ctx.unit, 1 * ctx.unit),
+			EmissionDirection = Enum.NormalId.Top,
+			Size = NumberSequence.new(0.9 * ctx.unit),
+			Transparency = seq({ { 0, 1 }, { 0.15, 0 }, { 0.75, 0 }, { 1, 1 } }),
+			LightEmission = 0.15,
+			LightInfluence = 0.3,
+			Rotation = NumberRange.new(0),
+		})
+	)
+	floorEmitter(
+		ctx,
+		"GoldRing",
+		with(sprite("Ring"), {
+			Color = ColorSequence.new(hex("#FFD54A")),
+			Rate = 0.8,
+			Lifetime = NumberRange.new(1.6),
+			Size = seq({ { 0, ctx.H * 0.4 }, { 1, ctx.H * 1.1 } }),
+			Transparency = seq({ { 0, 1 }, { 0.2, 0.55 }, { 1, 1 } }),
+			LightEmission = 1,
+		})
+	)
 	rootEmitter(ctx, "GoldGlints", {
 		Texture = TEX.Sparkle,
 		Color = ColorSequence.new(hex("#FFF6C8"), Color3.new(1, 1, 1)),
@@ -209,6 +302,22 @@ LOOKS.Candy = function(ctx)
 			p.Transparency = 0
 		end
 	end
+	rootEmitter(
+		ctx,
+		"CandyHearts",
+		with(sprite("Heart"), {
+			Color = ColorSequence.new(hex("#FF6FBF")),
+			Rate = 0.9,
+			Lifetime = NumberRange.new(1.6, 2.2),
+			Speed = NumberRange.new(0.5 * ctx.unit, 0.9 * ctx.unit),
+			EmissionDirection = Enum.NormalId.Top,
+			Size = seq({ { 0, 0 }, { 0.2, 0.7 * ctx.unit }, { 1, 0.5 * ctx.unit } }),
+			Transparency = seq({ { 0, 0 }, { 0.75, 0 }, { 1, 1 } }),
+			LightEmission = 0.4,
+			Rotation = NumberRange.new(-15, 15),
+			RotSpeed = NumberRange.new(-20, 20),
+		})
+	)
 	for i, c in { "#FF4D9A", "#FFD23F", "#4FD8F0", "#8BD43A" } do
 		rootEmitter(ctx, `Sprinkles{i}`, {
 			Texture = TEX.Square,
@@ -229,18 +338,20 @@ LOOKS.Glitter = function(ctx)
 	for _, p in ctx.blocks do
 		p.Reflectance = math.max(p.Reflectance, 0.08)
 	end
-	rootEmitter(ctx, "Glitter", {
-		Texture = TEX.Sparkle,
-		Color = ColorSequence.new(Color3.new(1, 1, 1)),
-		Rate = 9,
-		Lifetime = NumberRange.new(0.5, 0.9),
-		Speed = NumberRange.new(0),
-		Size = twinkle(1.5 * ctx.unit),
-		Transparency = TWINKLE_T,
-		LightEmission = 1,
-		LightInfluence = 0,
-		LockedToPart = true,
-	})
+	rootEmitter(
+		ctx,
+		"Glitter",
+		with(sprite("Twinkle", 24, Enum.ParticleFlipbookMode.OneShot), {
+			Color = ColorSequence.new(Color3.new(1, 1, 1)),
+			Rate = 10,
+			Lifetime = NumberRange.new(0.5, 0.9),
+			Speed = NumberRange.new(0),
+			Size = NumberSequence.new(1.5 * ctx.unit),
+			LightEmission = 1,
+			LightInfluence = 0,
+			LockedToPart = true,
+		})
+	)
 	rootEmitter(ctx, "GlitterColour", {
 		Texture = TEX.Sparkle,
 		Color = ColorSequence.new({
@@ -282,7 +393,7 @@ LOOKS.Bubble = function(ctx)
 	shine.Color = Color3.new(1, 1, 1)
 	shine.Transparency = 0.35
 	rootEmitter(ctx, "Bubbles", {
-		Texture = TEX.Ring,
+		Texture = sprite("Bubble").Texture,
 		Color = ColorSequence.new(hex("#E6FBFF")),
 		Rate = 3,
 		Lifetime = NumberRange.new(1.8, 2.6),
@@ -311,6 +422,33 @@ LOOKS.Shadow = function(ctx)
 	h.DepthMode = Enum.HighlightDepthMode.Occluded
 	h.Adornee = ctx.model
 	h.Parent = ctx.folder
+	rootEmitter(
+		ctx,
+		"ShadowSparks",
+		with(sprite("Electric", 30, Enum.ParticleFlipbookMode.Random), {
+			Color = ColorSequence.new(hex("#B07CFF")),
+			Rate = 1.2,
+			Lifetime = NumberRange.new(0.15, 0.25),
+			Speed = NumberRange.new(0),
+			Size = NumberSequence.new(0.9 * ctx.unit),
+			LightEmission = 1,
+			LightInfluence = 0,
+			LockedToPart = true,
+		})
+	)
+	floorEmitter(
+		ctx,
+		"ShadowSwirl",
+		with(sprite("Swirl", 12), {
+			Color = ColorSequence.new(hex("#6B2FC4")),
+			Rate = 0.6,
+			Lifetime = NumberRange.new(2.4),
+			Size = NumberSequence.new(ctx.H * 0.9),
+			Transparency = seq({ { 0, 1 }, { 0.3, 0.35 }, { 0.7, 0.35 }, { 1, 1 } }),
+			RotSpeed = NumberRange.new(-60),
+			LightEmission = 0.6,
+		})
+	)
 	rootEmitter(ctx, "ShadowSmoke", {
 		Texture = TEX.Smoke,
 		Color = ColorSequence.new(hex("#2B1745"), hex("#140B22")),
@@ -345,6 +483,24 @@ LOOKS.Frozen = function(ctx)
 		LightInfluence = 0,
 		LockedToPart = true,
 	})
+	rootEmitter(
+		ctx,
+		"Snowflakes",
+		with(sprite("Snowflake"), {
+			Color = ColorSequence.new(hex("#E6FAFF")),
+			Rate = 1.6,
+			Lifetime = NumberRange.new(2, 2.8),
+			Speed = NumberRange.new(0.1 * ctx.unit, 0.3 * ctx.unit),
+			Acceleration = Vector3.new(0, -0.5 * ctx.unit, 0),
+			EmissionDirection = Enum.NormalId.Top,
+			ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume,
+			Size = NumberSequence.new(0.45 * ctx.unit),
+			Transparency = seq({ { 0, 1 }, { 0.15, 0.1 }, { 0.8, 0.1 }, { 1, 1 } }),
+			RotSpeed = NumberRange.new(-60, 60),
+			LightEmission = 0.8,
+			LightInfluence = 0,
+		})
+	)
 	local mist = ToyVFX.floorPart(ctx.model, "FrozenMist", math.max(ctx.root.Size.X, ctx.root.Size.Z) * 1.2, ctx.folder)
 	local e = Instance.new("ParticleEmitter")
 	e.Name = "Mist"
@@ -369,8 +525,20 @@ LOOKS.Rainbow = function(ctx)
 			p.Transparency = 0
 		end
 	end
+	floorEmitter(
+		ctx,
+		"RainbowRing",
+		with(sprite("Ring"), {
+			Color = ToyVFX.RAINBOW,
+			Rate = 1,
+			Lifetime = NumberRange.new(1.8),
+			Size = seq({ { 0, ctx.H * 0.3 }, { 1, ctx.H * 1.1 } }),
+			Transparency = seq({ { 0, 1 }, { 0.2, 0.4 }, { 1, 1 } }),
+			LightEmission = 1,
+		})
+	)
 	rootEmitter(ctx, "RainbowSparkles", {
-		Texture = TEX.Sparkle,
+		Texture = sprite("Star").Texture,
 		Color = ToyVFX.RAINBOW,
 		Rate = 4,
 		Lifetime = NumberRange.new(1, 1.4),
@@ -406,6 +574,19 @@ LOOKS.Cosmic = function(ctx)
 		LightInfluence = 0,
 		LockedToPart = true,
 	})
+	floorEmitter(
+		ctx,
+		"Galaxy",
+		with(sprite("Swirl", 10), {
+			Color = ColorSequence.new(hex("#8A5CFF"), hex("#3DA5FF")),
+			Rate = 0.7,
+			Lifetime = NumberRange.new(2.4),
+			Size = NumberSequence.new(ctx.H * 1.1),
+			Transparency = seq({ { 0, 1 }, { 0.3, 0.3 }, { 0.7, 0.3 }, { 1, 1 } }),
+			RotSpeed = NumberRange.new(45),
+			LightEmission = 1,
+		})
+	)
 	-- three sparkles orbiting on a ring; ToyAnimator spins the "CosmicOrbit" joint
 	local root = ctx.root
 	local radius = math.max(root.Size.X, root.Size.Z) * 0.6 + ctx.H * 0.12
@@ -482,6 +663,22 @@ LOOKS.Haunted = function(ctx)
 		p.Transparency = math.max(p.Transparency, 0.45)
 		p.Reflectance = 0
 	end
+	rootEmitter(
+		ctx,
+		"GhostFire",
+		with(sprite("Flame", 18), {
+			Color = ColorSequence.new(hex("#9FFFEA"), hex("#7FD8FF")),
+			Rate = 2,
+			Lifetime = NumberRange.new(0.8, 1.2),
+			Speed = NumberRange.new(0.4 * ctx.unit, 0.8 * ctx.unit),
+			EmissionDirection = Enum.NormalId.Top,
+			Size = seq({ { 0, 0.6 * ctx.unit }, { 1, 0.2 * ctx.unit } }),
+			Transparency = seq({ { 0, 1 }, { 0.2, 0.35 }, { 1, 1 } }),
+			LightEmission = 1,
+			LightInfluence = 0,
+			Rotation = NumberRange.new(0),
+		})
+	)
 	rootEmitter(ctx, "Wisps", {
 		Texture = TEX.Smoke,
 		Color = ColorSequence.new(hex("#CFF6FF"), hex("#A8E8FF")),
@@ -568,6 +765,16 @@ function Mutations.animate(model: Model): (((t: number, dt: number) -> ())?, ((t
 		if joint then
 			return function(t)
 				joint.Transform = CFrame.Angles(0, t * 1.8, 0)
+			end, nil
+		end
+	elseif id == "Glow" then
+		-- a slow glow-stick pulse
+		local f = model:FindFirstChild("MutationFx")
+		local ref = f and f:FindFirstChild("MutationLight") :: ObjectValue?
+		local light = ref and ref.Value :: PointLight?
+		if light then
+			return function(t)
+				light.Brightness = 1.6 * (0.65 + 0.35 * math.sin(t * 2.4))
 			end, nil
 		end
 	elseif id == "Bubble" then

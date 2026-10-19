@@ -394,7 +394,7 @@ local function moneySounds()
 			Sounds.play("Register", nil, { delay = 0.05 })
 		elseif delta > math.max(25, (income :: number) * 4) then
 			Sounds.play("CashBig")
-		elseif delta > 0 and os.clock() - lastTick > 3 then
+		elseif delta > 0 and os.clock() - lastTick > 5 then
 			lastTick = os.clock()
 			Sounds.play("CashTick")
 		end

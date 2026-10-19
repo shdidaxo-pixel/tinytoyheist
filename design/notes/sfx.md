@@ -62,7 +62,7 @@ All are free Creator Store audio usable in any experience. **PSE** = Pro Sound E
 | Mutation | Mutation | 9125635649 | PSE Magical Exit Sparkling | Reveal `mutation` |
 | Big size (sizeMult ≥ 1.5) | BigSize | 1846544949 | APM Bass Gliss Up | Reveal `sizeMult` (toy-sizes session); lower pitch for bigger |
 | Toy idle squeak (pens, within 40 studs) | ToySqueak | 9125994570, 9125994387, 9125994553, 9114122864 | PSE Squeeze Toy, Doll Squeaks | `TinyToy` tag with `Owner`, every 2.5–5 s, pitch by `Size` |
-| Cash tick (at most every 3 s) | CashTick | 9113849492 | PSE Coins Jingle 6 | player attr `Cash` up |
+| Cash tick (at most every 5 s) | CashTick | 9113849492 | PSE Coins Jingle 6 | player attr `Cash` up |
 | Big cash (sell, rewards) | CashBig | 9113849445 | PSE Coins Jingle 5 | Cash up by > 4 s of income |
 | Purchase | Purchase + Register | 10066947742, 9113728625 | Roblox RBLX UI Purchase, PSE Cash Register 1 | Cash down |
 | Home level-up | HomeLevelUp | 1841172671 | APM In Agreement (bells) | player attr `HomeLevel` up |

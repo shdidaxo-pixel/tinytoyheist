@@ -42,3 +42,13 @@ Toys (pen roam, rarity moves, hatch jump), blankets (breathing, dragged copy str
 over, dizzy), Kid (sleep, sit up, sweep, stir, get up, walk, grab), cat (hunt, pounce, groom), train. Captures:
 `design/animations/01-toys.mp4`, `02-player-kid-cat-train.mp4`. Not seen yet: two players at once (other players'
 poses come from the same code), the Kid lying back down at the end of BackToBed, ducks.
+
+## Added after the first pass (19 Oct, later)
+- **Walk cycle** (ToyAnimator): legs and arms swing in step, a small bob each step, lean and waddle, all from the
+  toy's speed. Speed is measured from how the toy moves; a mover can set a client-side number attribute
+  `RoamSpeed` (studs/s, 0 standing) instead. pen-roam owns where pen toys go (PenRoam, HomeView); this file owns the
+  joints (Motor6D.Transform) and nobody else should write them.
+- **Held toy** (hotbar): a toy welded to a player's HumanoidRootPart without a CarryWeld gets a calm idle: sways,
+  looks about, no walking or tricks (a fresh Hatch still plays).
+- **Holding pose** (PlayerAnim): Player attribute `Holding` (a toy uid) = both arms forward hugging the toy from
+  below, bobbing with the walk; a cheer or a knock-down takes over the arms.

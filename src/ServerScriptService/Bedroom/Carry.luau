@@ -23,6 +23,7 @@ local BlanketLook =
 	require(ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom"):WaitForChild("Blanket")) :: any
 local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
+local Moments = require(script.Parent.Moments)
 local PlayerData = require(script.Parent.PlayerData)
 local Pens = require(script.Parent.Pens)
 
@@ -296,6 +297,7 @@ local function drop(player: Player)
 		local info = { owner = c.owner, uid = c.uid, droppedAt = os.clock() }
 		loose[model] = info
 		addGrabPrompt(model, (c.data and c.data.Name or "Toy") .. " (stolen)", 0.5, 14)
+		Moments.fire("all", "StolenDropped", { position = at.Position, owner = c.owner.UserId })
 		task.delay(GameConfig.RAID.returnAfter, function()
 			if loose[model] == info then
 				sendBack(model)
@@ -339,6 +341,7 @@ grab = function(player: Player, model: Model)
 		if info.owner == player then
 			sendBack(model)
 			notice:FireClient(player, "Got it back! It's home again.", "good")
+			Moments.fire(player, "Recovered", { toyName = model:GetAttribute("ToyName") })
 			return
 		end
 		loose[model] = nil
@@ -434,6 +437,9 @@ local function bank(player: Player)
 			end
 			notice:FireClient(player, `You stole {owner.DisplayName}'s {name}!`, "good")
 			notice:FireClient(owner, `{player.DisplayName} stole your {name}!`, "warn")
+			local rarity = if c.data then c.data.Rarity else nil
+			Moments.fire(player, "StealBanked", { toyName = name, rarity = rarity, owner = owner.UserId })
+			Moments.fire(owner, "StolenFrom", { toyName = name, rarity = rarity, thief = player.UserId })
 			if Carry.onStealBanked then
 				Carry.onStealBanked(player, owner)
 			end

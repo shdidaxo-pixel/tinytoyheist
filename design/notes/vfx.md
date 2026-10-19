@@ -56,6 +56,8 @@ Server code fires to clients with the server module `ServerScriptService.Bedroom
 | `HatchHold` | client: holding E on your HatchPrompt (fires once at hold start) | `{ blanket: Model, seconds }` |
 | `HatchCancel` | client: let go early | `{ blanket }` |
 | `Hatch` | client: `GameRemotes.Reveal` | the reveal info `{ id, name, rarity, mutation, perSecond, size, equipped, sizeMult? }` |
+| `HatchCharge` | client: the build-up starts (right after Reveal); the blanket shakes for `seconds` (0.6 Common … 3 Secret) | `{ rarity, seconds }` |
+| `HatchBurst` | client: the build-up ends, the toy bursts out, the card shows: **the reveal sting goes here** | `{ rarity, mutation?, sizeMult }` |
 | `ToyRevealed` | client: a toy pops into any pen with a fresh `RevealedAt` | `{ toy: Model, mine: boolean }` |
 | `Cash` | client: Cash attribute went up | `{ amount }` |
 | `ToyIncome` | client: the "+$" pop over one of your pen toys | `{ toy, amount }` |

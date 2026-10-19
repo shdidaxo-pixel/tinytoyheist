@@ -125,6 +125,7 @@ local function onReveal(info: any)
 	snapshot = nil
 	local sizeMult = tonumber(info.sizeMult) or 1
 	local function burst(at: Vector3)
+		Moments.fire("HatchBurst", { rarity = info.rarity, mutation = info.mutation, sizeMult = sizeMult })
 		local toys = VFX.hatchEnd()
 		local toy = toys[1]
 		VFX.burst("Hatch", at, {
@@ -159,7 +160,8 @@ local function onReveal(info: any)
 		end
 	end
 	if copy and copy.Parent then
-		VFX.hatchCharge(copy, info.rarity, burst)
+		local seconds = VFX.hatchCharge(copy, info.rarity, burst)
+		Moments.fire("HatchCharge", { rarity = info.rarity, seconds = seconds })
 	else
 		local root = myRoot()
 		burst(if root then root.Position else Vector3.zero)

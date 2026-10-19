@@ -16,6 +16,7 @@ local PlayerData = require(script.Parent.PlayerData)
 local Pens = require(script.Parent.Pens)
 local Carry = require(script.Parent.Carry)
 local Knock = require(script.Parent.Knock)
+local Moments = require(script.Parent.Moments)
 
 local Raids = {}
 
@@ -100,6 +101,10 @@ function Raids.start(_bedroom: Model)
 			local id = model:GetAttribute("ToyName") or "toy"
 			notice:FireClient(owner, `{thief.DisplayName} is stealing your {id}! Stop them!`, "warn")
 			notice:FireClient(thief, "Got it! Drag it to your home!", "good")
+			local m =
+				{ toyName = id, rarity = model:GetAttribute("Rarity"), thief = thief.UserId, owner = owner.UserId }
+			Moments.fire(thief, "StealStart", m)
+			Moments.fire(owner, "StealStart", m)
 		end
 	end)
 	Carry.onStealBanked = function(thief: Player, owner: Player)

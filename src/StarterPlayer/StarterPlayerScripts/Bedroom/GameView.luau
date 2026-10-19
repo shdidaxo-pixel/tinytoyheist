@@ -1,7 +1,7 @@
 --!strict
--- The game in the world, on each player's screen: the wake-up countdown over a banked blanket (it shakes just before
--- it pops), the reveal burst when a toy wakes up, a "$X/s" tag over every home's cash thimble, the Steal prompt
--- hidden on your own toys, and the run while you train Speed on your wheel (jump or move to stop).
+-- The game in the world, on each player's screen: the wake-up countdown over a blanket in a home (it shakes as it
+-- gets ready, then says READY! Hold E), the reveal burst when a toy hatches, which prompts you see (promptRule), the
+-- run while you train Speed on your wheel (jump or move to stop), and the Performance Mode and Hide Players settings.
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -11,7 +11,6 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local ToyVFX = require(Shared:WaitForChild("Toys"):WaitForChild("ToyVFX")) :: any
 
 local GameView = {}
@@ -19,7 +18,6 @@ local GameView = {}
 local me = Players.LocalPlayer
 local GOLD = Color3.fromRGB(255, 201, 60)
 local INK = Color3.fromRGB(26, 20, 48)
-local GREEN = Color3.fromRGB(91, 242, 90)
 
 local function textLabel(parent: Instance, text: string, color: Color3, size: UDim2, position: UDim2): TextLabel
 	local l = Instance.new("TextLabel")
@@ -94,31 +92,55 @@ local function watchPenToy(toy: Instance)
 	end)
 end
 
--- Only other people's toys can be stolen: hide the prompt on your own
-local function hidePrompt(d: Instance, hole: Instance)
-	if d:IsA("ProximityPrompt") and d.Name == "StealPrompt" then
-		d.Enabled = hole:GetAttribute("Owner") ~= me.UserId
+-- Prompts in homes, on your screen: Steal only on other people's toys; Hatch, Train, Lock and Index only in your own
+-- home; Train hidden while you're already training. Hidden by distance 0, which the server never changes.
+local function promptRule(d: Instance, hole: Instance)
+	if not d:IsA("ProximityPrompt") then
+		return
+	end
+	local mine = hole:GetAttribute("Owner") == me.UserId
+	local base = d:GetAttribute("BaseDistance")
+	if typeof(base) ~= "number" then
+		base = d.MaxActivationDistance
+		d:SetAttribute("BaseDistance", base)
+	end
+	local show = true
+	if d.Name == "StealPrompt" then
+		show = not mine
+	elseif d.Name == "TrainPrompt" then
+		show = mine and me:GetAttribute("Training") ~= true
+	elseif d.Name == "HatchPrompt" or d.Name == "LockPrompt" or d.Name == "IndexPrompt" then
+		show = mine
+	end
+	d.MaxActivationDistance = if show then base :: number else 0
+end
+
+local homes: { Instance } = {}
+local function refreshPrompts()
+	for _, hole in homes do
+		for _, d in hole:GetDescendants() do
+			promptRule(d, hole)
+		end
 	end
 end
 
 local function watchHome(hole: Instance)
+	table.insert(homes, hole)
+	hole.DescendantAdded:Connect(function(d)
+		promptRule(d, hole)
+	end)
+	hole:GetAttributeChangedSignal("Owner"):Connect(function()
+		for _, d in hole:GetDescendants() do
+			promptRule(d, hole)
+		end
+	end)
+	for _, d in hole:GetDescendants() do
+		promptRule(d, hole)
+	end
 	local penToys = hole:WaitForChild("PenToys", 10)
 	if penToys then
 		penToys.ChildAdded:Connect(watchPenToy)
-		penToys.DescendantAdded:Connect(function(d)
-			hidePrompt(d, hole)
-		end)
-		for _, d in penToys:GetDescendants() do
-			hidePrompt(d, hole)
-		end
 	end
-	hole:GetAttributeChangedSignal("Owner"):Connect(function()
-		if penToys then
-			for _, d in penToys:GetDescendants() do
-				hidePrompt(d, hole)
-			end
-		end
-	end)
 	local function watchFolder(folder: Instance)
 		if folder.Name == "Waking" then
 			folder.ChildAdded:Connect(watchWaking)
@@ -130,27 +152,6 @@ local function watchHome(hole: Instance)
 	hole.ChildAdded:Connect(watchFolder)
 	for _, c in hole:GetChildren() do
 		watchFolder(c)
-	end
-	-- the cash thimble's tag: what this home earns a second
-	local pile = hole:WaitForChild("CashPile", 10) :: BasePart?
-	if pile then
-		local gui = Instance.new("BillboardGui")
-		gui.Name = "IncomeTag"
-		gui.Size = UDim2.fromOffset(120, 34)
-		gui.StudsOffsetWorldSpace = Vector3.new(0, 8, 0)
-		gui.LightInfluence = 0
-		gui.MaxDistance = 140
-		gui.Adornee = pile
-		local label = textLabel(gui, "", GREEN, UDim2.fromScale(1, 1), UDim2.new())
-		gui.Parent = pile
-		local function refresh()
-			local income = hole:GetAttribute("Income")
-			local n = if typeof(income) == "number" then income else 0
-			gui.Enabled = n > 0
-			label.Text = "+" .. GameConfig.money(n) .. "/s"
-		end
-		hole:GetAttributeChangedSignal("Income"):Connect(refresh)
-		refresh()
 	end
 end
 
@@ -192,7 +193,10 @@ function GameView.start(bedroom: Model)
 	end)
 
 	local stop = ReplicatedStorage:WaitForChild("GameRemotes"):WaitForChild("StopTraining") :: RemoteEvent
-	me:GetAttributeChangedSignal("Training"):Connect(training)
+	me:GetAttributeChangedSignal("Training"):Connect(function()
+		training()
+		refreshPrompts()
+	end)
 	local function hopOff()
 		if me:GetAttribute("Training") then
 			stop:FireServer()
@@ -227,15 +231,69 @@ function GameView.start(bedroom: Model)
 				continue
 			end
 			local left = math.max(0, wakeAt - now)
-			w.label.Text = if left > 0 then string.format("Waking up... %d", math.ceil(left)) else "!!!"
+			local mine = blanket:GetAttribute("Owner") == me.UserId
+			w.label.Text = if left > 0
+				then string.format("Waking up... %d", math.ceil(left))
+				elseif mine then "READY! Hold E"
+				else "READY!"
 			w.fill.Size = UDim2.fromScale(math.clamp(1 - left / total, 0, 1), 1)
-			if left < 1.5 then
+			if left <= 0 then
+				-- ready: a slow, happy wiggle until it's hatched
+				blanket:PivotTo(
+					w.rest
+						* CFrame.new(0, math.abs(math.sin(now * 3)) * 0.5, 0)
+						* CFrame.Angles(0, 0, math.sin(now * 6) * 0.06)
+				)
+			elseif left < 1.5 then
 				local k = (1.5 - left) / 1.5
 				blanket:PivotTo(
 					w.rest
 						* CFrame.new(0, math.abs(math.sin(now * 30)) * 0.6 * k, 0)
 						* CFrame.Angles(0, 0, math.sin(now * 40) * 0.12 * k)
 				)
+			end
+		end
+	end)
+
+	-- Settings: Hide Players makes everyone else see-through on your screen; Performance Mode switches off particles
+	local hidden = false
+	local performance = false
+	local function setParticles(on: boolean)
+		for _, d in Workspace:GetDescendants() do
+			if d:IsA("ParticleEmitter") or d:IsA("Sparkles") or d:IsA("Trail") then
+				if not on then
+					d:SetAttribute("WasEnabled", d.Enabled)
+					d.Enabled = false
+				elseif d:GetAttribute("WasEnabled") ~= nil then
+					d.Enabled = d:GetAttribute("WasEnabled") == true
+					d:SetAttribute("WasEnabled", nil)
+				end
+			end
+		end
+	end
+	Workspace.DescendantAdded:Connect(function(d)
+		if performance and (d:IsA("ParticleEmitter") or d:IsA("Sparkles") or d:IsA("Trail")) then
+			d:SetAttribute("WasEnabled", d.Enabled)
+			d.Enabled = false
+		end
+	end)
+	me:GetAttributeChangedSignal("SettingPerformanceMode"):Connect(function()
+		performance = me:GetAttribute("SettingPerformanceMode") == true
+		setParticles(not performance)
+	end)
+	RunService.Heartbeat:Connect(function()
+		local hide = me:GetAttribute("SettingHidePlayers") == true
+		if not hide and not hidden then
+			return
+		end
+		hidden = hide
+		for _, other in Players:GetPlayers() do
+			if other ~= me and other.Character then
+				for _, d in other.Character:GetDescendants() do
+					if d:IsA("BasePart") or d:IsA("Decal") then
+						d.LocalTransparencyModifier = if hide then 1 else 0
+					end
+				end
 			end
 		end
 	end)

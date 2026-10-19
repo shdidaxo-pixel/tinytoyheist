@@ -19,6 +19,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local Kit = require(ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom"):WaitForChild("Kit")) :: any
+local BlanketLook =
+	require(ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom"):WaitForChild("Blanket")) :: any
 local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
 local PlayerData = require(script.Parent.PlayerData)
@@ -41,20 +43,6 @@ local RARITY_ORDER = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythi
 
 -- Called when a stolen toy reaches the thief's home: (thief, owner)
 Carry.onStealBanked = nil :: ((thief: Player, owner: Player) -> ())?
-
--- Blanket colour pairs from the concept render
-local PALETTE = {
-	{ 0x4DA8FF, 0xFFFFFF },
-	{ 0xFF7AA8, 0xFFFFFF },
-	{ 0x3DDC97, 0xFFF6D5 },
-	{ 0x9B7BFF, 0xFFE07A },
-	{ 0xFF8A3D, 0xFFF1D6 },
-	{ 0x2F6FB9, 0xFFD95A },
-	{ 0xE04848, 0xFFFFFF },
-	{ 0x7FD6E8, 0x2B5F8C },
-	{ 0xF2C6E0, 0x9B4D7A },
-	{ 0xFFD95A, 0xE04848 },
-}
 
 local rng = Random.new()
 local ToyCatalog: any, ToyVFX: any = nil, nil
@@ -105,48 +93,12 @@ function Carry.pickToy(size: string): any?
 	return nil
 end
 
--- A soft stepped lump of blanket, its bottom centre at `at`. Returns the model (PrimaryPart "Lump").
+-- A sleeping toy's blanket (the look is tools/bedroom/Blanket.luau, from the concept renders), its bottom centre at
+-- `at`. PrimaryPart "Lump" is an invisible box over it, for the prompt and the glow tell.
 function Carry.makeBlanket(parent: Instance, size: string, at: CFrame): Model
-	local scale = Carry.SCALE[size] or 1
-	local pal = PALETTE[rng:NextInteger(1, #PALETTE)]
-	local model = Kit.model(parent, "SleepingToy", { Size = size })
-	local w = 7 * scale
-	local soft = { material = Enum.Material.Fabric }
-	local lump = Kit.block(model, "Lump", w, 2.2 * scale, w * 0.95, at, 0, 0, 0, pal[1], soft)
-	Kit.block(model, "Fold", w * 0.8, 2 * scale, w * 0.75, at, 0, 2.2 * scale, 0, pal[1], soft)
-	Kit.block(
-		model,
-		"Top",
-		w * 0.5,
-		1.6 * scale,
-		w * 0.45,
-		at * CFrame.Angles(0, 0.3, 0),
-		0,
-		4.2 * scale,
-		0,
-		pal[1],
-		soft
-	)
-	-- a contrasting hem, so blankets read apart
-	Kit.block(
-		model,
-		"Hem",
-		w + 0.4,
-		0.5 * scale,
-		w * 0.95 + 0.4,
-		at,
-		0,
-		0,
-		0,
-		pal[2],
-		{ material = Enum.Material.Fabric }
-	)
-	for _, p in model:GetDescendants() do
-		if p:IsA("BasePart") then
-			p.CanCollide = false -- you walk through sleeping toys; the prompt is how you grab them
-		end
-	end
-	model.PrimaryPart = lump
+	local model = BlanketLook.build(Kit, parent, size, at)
+	model.Name = "SleepingToy"
+	model:SetAttribute("Size", size)
 	return model
 end
 local makeBlanket = Carry.makeBlanket

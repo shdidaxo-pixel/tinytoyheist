@@ -304,6 +304,20 @@ do
 		for _, h in row do
 			h.ZIndex = 10
 		end
+		-- testing (Studio only, no Robux yet): the button puts that many Large blankets in your home
+		local count = ({ 50, 10, 3, 1 } :: { number })[i]
+		local hit = row[2]:FindFirstChild("Hit") :: TextButton?
+		if hit then
+			hit.Activated:Connect(function()
+				local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("GameRemotes")
+				local claim = remotes and remotes:FindFirstChild("Claim") :: RemoteFunction?
+				if claim then
+					task.spawn(function()
+						claim:InvokeServer("TestBlanket", count)
+					end)
+				end
+			end)
+		end
 	end
 
 	-- Game passes, like Break and Steal an Egg: a colour card with rays bursting from behind a big detailed gold coin
@@ -722,7 +736,9 @@ do
 	selectTab(tabList[1].key)
 end
 
--- Settings: On / Off toggles (from @turiptoroblox).
+-- Settings: On / Off toggles (from @turiptoroblox). Each one is a LocalPlayer attribute ("SettingMusic",
+-- "SettingSoundEffects", "SettingPerformanceMode", "SettingHidePlayers"); GameView applies Performance Mode and Hide
+-- Players, and the sound code reads Music and Sound Effects.
 do
 	local p = UIKit.panel(gui, "Settings", P.blue, Vector2.new(560, 400))
 	panels.Settings = p
@@ -752,6 +768,8 @@ do
 			align = Enum.TextXAlignment.Left,
 		})
 		local on = r[3] :: boolean
+		local key = "Setting" .. string.gsub(r[1], " ", "")
+		Players.LocalPlayer:SetAttribute(key, on)
 		local toggle: Frame? = nil
 		local function draw()
 			if toggle then
@@ -765,6 +783,7 @@ do
 				textSize = 22,
 				onClick = function()
 					on = not on
+					Players.LocalPlayer:SetAttribute(key, on)
 					task.defer(draw)
 				end,
 			})
@@ -840,7 +859,7 @@ do
 	})
 	UIKit.button(left, "Upgrades", {
 		palette = P.green,
-		icon = img("Plus"),
+		icon = img("Bolt"),
 		size = UDim2.fromOffset(176, 54),
 		textSize = 24,
 		layoutOrder = 3,
@@ -900,6 +919,12 @@ do
 			})
 			:Play()
 		UIKit.tween(track, 0.18, { BackgroundColor3 = if slowOn then ON else OFF })
+		-- Slow Mode: walk at half speed and drag toys at half the noise
+		local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("GameRemotes")
+		local slowRemote = remotes and remotes:FindFirstChild("SlowMode")
+		if slowRemote then
+			(slowRemote :: RemoteEvent):FireServer(slowOn)
+		end
 	end)
 	slowHit.Name = "Toggle"
 
@@ -999,27 +1024,33 @@ do
 		end
 	end)
 
-	-- Right shortcuts: your toys, daily gift, playtime gifts, settings.
-	local right = group("Shortcuts", Vector2.new(1, 0.5), UDim2.new(1, -24, 0.5, 0), Vector2.new(64, 300))
-	list(right, 12, Enum.HorizontalAlignment.Right)
-	local rightList = right:FindFirstChildOfClass("UIListLayout") :: UIListLayout
-	rightList.VerticalAlignment = Enum.VerticalAlignment.Center
-	UIKit.square(right, img("ToyChest"), P.red, 60, function()
-		open("Toys")
-	end).LayoutOrder = 1
-	local rewards = UIKit.square(right, img("Gift"), P.orange, 60, function()
-		open("Daily")
-	end)
-	rewards.LayoutOrder = 2
-	local badge = UIKit.badge(rewards, "1", UDim2.new(1, -4, 0, 4)) -- top-right corner, clear of the button below
-	UIKit.pulse(badge, 0.15, 0.5)
-	hud.giftBadge = badge -- GameUI shows how many rewards are ready to claim
-	UIKit.square(right, img("Clock"), P.pink, 60, function()
-		open("Playtime")
-	end).LayoutOrder = 3
-	UIKit.square(right, img("Gear"), P.grey, 60, function()
-		open("Settings")
-	end).LayoutOrder = 4
+	-- Top-right: small buttons for your toys, the daily gift, playtime gifts and settings, each with its own badge,
+	-- so the right edge is free for your blankets (Dylan, 19 Oct).
+	local corner = group("Corner", Vector2.new(1, 0), UDim2.new(1, -14, 0, 64), Vector2.new(220, 52))
+	UIKit.new("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		Padding = UDim.new(0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}, corner)
+	local function cornerButton(name: string, image: string, palette: UIKit.Palette, order: number, panel: string)
+		local b = UIKit.square(corner, image, palette, 46, function()
+			open(panel)
+		end)
+		b.Name = name
+		b.LayoutOrder = order
+		return b
+	end
+	cornerButton("ToysButton", img("ToyChest"), P.red, 1, "Toys")
+	local daily = cornerButton("DailyButton", img("Gift"), P.orange, 2, "Daily")
+	local playtime = cornerButton("PlaytimeButton", img("Clock"), P.pink, 3, "Playtime")
+	cornerButton("SettingsButton", img("Gear"), P.grey, 4, "Settings")
+	hud.dailyBadge = UIKit.badge(daily, "1", UDim2.new(1, -2, 0, 2))
+	hud.playtimeBadge = UIKit.badge(playtime, "1", UDim2.new(1, -2, 0, 2))
+	hud.dailyBadge.Visible, hud.playtimeBadge.Visible = false, false
+
+	-- Right edge: the blankets waiting in your home (GameUI fills it)
+	hud.blankets = group("Blankets", Vector2.new(1, 0.5), UDim2.new(1, -14, 0.5, 0), Vector2.new(200, 320))
 
 	-- Pointer arrow that bobs over the Shop button (Break and Steal an Egg points at what to do next). It lives in
 	-- the button, so it always moves with it, and fades away after a little while.
@@ -1053,7 +1084,6 @@ do
 		return ic, t
 	end
 	local shoe, speedText = stat(1, img("Shoe"), "16", UIKit.White, 46, 36)
-	UIKit.icon(shoe, img("Plus"), 20, UDim2.new(1, -8, 1, -8), nil, 6)
 	local _, cashText = stat(2, img("Cash"), "$150", UIKit.CashGreen, 54, 42)
 	-- earning rate and speed multiplier sit beside the numbers, like "$147 +$14" and "200 (x2)"
 	local rate =
@@ -1067,26 +1097,35 @@ do
 	-- Bottom-right: the Giant's wake meter and timer.
 	local wake = group("Wake", Vector2.new(1, 1), UDim2.new(1, -14, 1, -14), Vector2.new(260, 70))
 	list(wake, 6, Enum.HorizontalAlignment.Right)
+	-- a dark track with the fill clipped inside its rounded inner edge, so the fill never pokes out of the bar
 	local meter = UIKit.new("Frame", {
 		Name = "Wake meter",
-		BackgroundColor3 = UIKit.Panel,
-		Size = UDim2.fromOffset(210, 20),
-		ClipsDescendants = true,
+		BackgroundColor3 = hex("1E1B26"),
+		Size = UDim2.fromOffset(210, 22),
 		LayoutOrder = 1,
 	}, wake)
-	UIKit.corner(meter, 10)
+	UIKit.corner(meter, 11)
 	UIKit.stroke(meter, UIKit.Ink, 3, true)
+	local inner = UIKit.new("CanvasGroup", {
+		Name = "Inner",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -6, 1, -6),
+		Position = UDim2.fromOffset(3, 3),
+	}, meter)
+	UIKit.corner(inner, 8)
 	local wakeFill =
-		UIKit.new("Frame", { Name = "Fill", BackgroundColor3 = hex("FF9A2E"), Size = UDim2.fromScale(0.38, 1) }, meter)
-	UIKit.corner(wakeFill, 10)
+		UIKit.new("Frame", { Name = "Fill", BackgroundColor3 = hex("FF9A2E"), Size = UDim2.fromScale(0, 1) }, inner)
+	UIKit.corner(wakeFill, 8)
 	UIKit.shade(wakeFill, hex("FF9A2E"))
 	UIKit.new("Frame", {
 		Name = "Wakes at 80",
-		BackgroundColor3 = hex("E8202E"),
+		BackgroundColor3 = UIKit.White,
+		BackgroundTransparency = 0.2,
 		BorderSizePixel = 0,
-		Size = UDim2.new(0, 4, 1, 0),
+		Size = UDim2.new(0, 3, 1, 0),
 		Position = UDim2.fromScale(0.8, 0),
-	}, meter)
+		ZIndex = 3,
+	}, inner)
 	hud.wakeFill = wakeFill
 	local timer = UIKit.new("Frame", {
 		Name = "Timer",
@@ -1151,7 +1190,7 @@ task.spawn(function()
 		if kid then
 			local meter = ((kid:GetAttribute("WakeMeter") :: number?) or 0) / 100
 			UIKit.tween(hud.wakeFill, 0.25, {
-				Size = UDim2.fromScale(math.clamp(meter, 0.02, 1), 1),
+				Size = UDim2.fromScale(math.clamp(meter, 0, 1), 1),
 				BackgroundColor3 = if meter >= 0.8 then hex("E8202E") else hex("FF9A2E"),
 			}, Enum.EasingStyle.Linear)
 			local state = kid:GetAttribute("State")

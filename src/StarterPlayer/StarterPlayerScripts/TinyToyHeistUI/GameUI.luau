@@ -67,7 +67,7 @@ local function perSecond(entry: any): number
 	return (if data then data.Money else 0) * (if m then m.Multiplier else 1)
 end
 
--- Your home, and which of your toys are still waking up (so their tiles don't spoil the reveal)
+-- Your home
 local function myHome(): Instance?
 	local bedroom = Workspace:FindFirstChild("Bedroom")
 	local holes = bedroom and bedroom:FindFirstChild("Holes")
@@ -80,20 +80,6 @@ local function myHome(): Instance?
 		end
 	end
 	return nil
-end
-local function wakingUids(): { [string]: boolean }
-	local out = {}
-	local home = myHome()
-	local waking = home and home:FindFirstChild("Waking")
-	if waking then
-		for _, b in waking:GetChildren() do
-			local u = b:GetAttribute("Uid")
-			if typeof(u) == "string" then
-				out[u] = true
-			end
-		end
-	end
-	return out
 end
 
 -- A short message over the action button
@@ -176,9 +162,10 @@ local function bar(parent: Instance, fraction: number, size: Vector2, position: 
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- Upgrades: your home level, rebirth, Speed (trained) and the three bought stats.
+-- Upgrades: your home level (slots and look), your Speed wheel's level (how fast you train), and your Speed.
+-- The home and the wheel are separate upgrades, so either can come first (Dylan, 19 Oct).
 local function buildUpgrades(ctx: Ctx)
-	local p = UIKit.panel(ctx.gui, "Upgrades", P.green, Vector2.new(760, 520))
+	local p = UIKit.panel(ctx.gui, "Upgrades", P.green, Vector2.new(760, 470))
 	ctx.panels.Upgrades = p
 	local function draw()
 		local c = content(p.body, "Content")
@@ -187,145 +174,108 @@ local function buildUpgrades(ctx: Ctx)
 			return
 		end
 		local cash = attr("Cash")
-		local level = profile.HomeLevel
-		local info = MapConfig.HOLE_LEVELS[level]
 
 		-- Home
+		local level = profile.HomeLevel
+		local info = MapConfig.HOLE_LEVELS[level]
 		local _, home = UIKit.tile(c, {
 			name = "Home",
-			size = UDim2.fromOffset(360, 200),
+			size = UDim2.fromOffset(360, 180),
 			position = UDim2.fromOffset(16, 78),
 			top = hex("3A3648"),
 			bottom = hex("2A2636"),
 		})
-		label(home, "YOUR HOME", 26, 16, 12, { color = UIKit.Yellow })
-		label(home, `Level {level} · {THEMES[info.theme] or info.theme}`, 20, 16, 46)
-		label(
-			home,
-			`{info.slots} toy slots · {#profile.Toys} used`,
-			15,
-			16,
-			74,
-			{ font = UIKit.Fonts.body, stroke = 0 }
-		)
-		local nextLevel = level + 1
-		local cost = GameConfig.HOME_COST[nextLevel]
+		label(home, "YOUR HOME", 24, 16, 12, { color = UIKit.Yellow })
+		label(home, `Level {level} · {THEMES[info.theme] or info.theme}`, 20, 16, 44)
+		label(home, `{info.slots} toy slots`, 15, 16, 72, { font = UIKit.Fonts.body, stroke = 0 })
+		local cost = GameConfig.HOME_COST[level + 1]
 		if cost then
-			local nextInfo = MapConfig.HOLE_LEVELS[nextLevel]
-			local needRebirth = GameConfig.HOME_REBIRTH[nextLevel]
-			label(
-				home,
-				`Next: Level {nextLevel} · {THEMES[nextInfo.theme] or nextInfo.theme} · {nextInfo.slots} slots`,
-				14,
-				16,
-				100,
-				{ font = UIKit.Fonts.body, stroke = 0, color = GREY_TEXT }
-			)
-			local blocked = needRebirth and profile.Rebirths < needRebirth
-			UIKit.button(
-				home,
-				if blocked then `Needs Rebirth {needRebirth}` else `Level up · {GameConfig.money(cost)}`,
-				{
-					palette = if not blocked and cash >= cost then P.green else P.grey,
-					size = UDim2.fromOffset(328, 52),
-					position = UDim2.fromOffset(16, 132),
-					textSize = 24,
-					onClick = function()
-						call("Buy", "Home")
-					end,
-				}
-			)
-		else
-			label(home, "MAX LEVEL!", 26, 16, 136, { color = UIKit.Yellow })
-		end
-
-		-- Rebirth
-		local n = profile.Rebirths + 1
-		local _, reb = UIKit.tile(c, {
-			name = "Rebirth",
-			size = UDim2.fromOffset(360, 214),
-			position = UDim2.fromOffset(16, 290),
-			top = hex("3D2A52"),
-			bottom = hex("2A1E3A"),
-		})
-		label(reb, "REBIRTH", 26, 16, 12, { color = hex("D9A8FF") })
-		label(reb, `Rebirth {n}: x{GameConfig.rebirthMultiplier(n)} money forever`, 18, 16, 46)
-		label(reb, "Keeps your toys and Index. Resets cash,", 14, 16, 76, { font = UIKit.Fonts.body, stroke = 0 })
-		label(reb, "stats and home level.", 14, 16, 94, { font = UIKit.Fonts.body, stroke = 0 })
-		local rule = GameConfig.REBIRTH[n]
-		local needCash = GameConfig.rebirthCost(n)
-		local needStrength = rule and rule.strength
-		local ready = cash >= needCash and (not needStrength or (profile.Stats.Strength or 0) >= needStrength)
-		local need = `Needs {GameConfig.money(needCash)}` .. (if needStrength then ` + Strength {needStrength}` else "")
-		label(reb, need, 15, 16, 118, { font = UIKit.Fonts.body, stroke = 0, color = GREY_TEXT })
-		UIKit.button(reb, if n > GameConfig.MAX_REBIRTHS then "MAX" else "Rebirth", {
-			palette = if ready then P.purple else P.grey,
-			size = UDim2.fromOffset(328, 52),
-			position = UDim2.fromOffset(16, 146),
-			textSize = 24,
-			onClick = function()
-				call("Buy", "Rebirth")
-			end,
-		})
-
-		-- Stats
-		local rows = { "Speed", "Strength", "Sneak", "Grip" }
-		for i, stat in rows do
-			local _, row = UIKit.tile(c, {
-				name = stat,
-				size = UDim2.fromOffset(352, 98),
-				position = UDim2.fromOffset(392, 78 + (i - 1) * 108),
-				top = hex("3A3648"),
-				bottom = hex("2A2636"),
+			local nextInfo = MapConfig.HOLE_LEVELS[level + 1]
+			label(home, `Next: {THEMES[nextInfo.theme] or nextInfo.theme} · {nextInfo.slots} slots`, 14, 16, 94, {
+				font = UIKit.Fonts.body,
+				stroke = 0,
+				color = GREY_TEXT,
 			})
-			if stat == "Speed" then
-				local points = profile.SpeedPoints
-				label(row, `Speed {GameConfig.SPEED_BASE + points}`, 22, 14, 10)
-				label(row, "Train on the wheel in your home", 14, 14, 40, { font = UIKit.Fonts.body, stroke = 0 })
-				local maxed = points >= GameConfig.SPEED_MAX_POINTS
-				local frac = if maxed then 1 else attr("TrainProgress")
-				bar(row, frac, Vector2.new(320, 14), UDim2.fromOffset(14, 68), hex("3DC8FF"))
-				label(
-					row,
-					if maxed then "MAX" else `+1 in {math.ceil(GameConfig.trainSeconds(points))}s of running`,
-					12,
-					18,
-					66,
-					{
-						font = UIKit.Fonts.body,
-						stroke = 2,
-						z = 9,
-					}
-				)
-			else
-				local s = GameConfig.STATS[stat]
-				local lv = profile.Stats[stat] or 0
-				label(row, `{stat}  Lv {lv}/{s.max}`, 22, 14, 10)
-				label(row, s.text, 14, 14, 40, { font = UIKit.Fonts.body, stroke = 0 })
-				if stat == "Strength" and lv < GameConfig.LARGE_STRENGTH then
-					label(row, `Lv {GameConfig.LARGE_STRENGTH}: drag Large toys`, 13, 14, 62, {
-						font = UIKit.Fonts.body,
-						stroke = 0,
-						color = UIKit.Yellow,
-					})
-				end
-				if lv >= s.max then
-					label(row, "MAX", 24, 270, 30, { color = UIKit.Yellow })
-				else
-					local price = GameConfig.statCost(stat, lv)
-					UIKit.button(row, GameConfig.money(price), {
-						palette = if cash >= price then P.green else P.grey,
-						size = UDim2.fromOffset(112, 46),
-						position = UDim2.new(1, -12, 0.5, 0),
-						anchor = Vector2.new(1, 0.5),
-						textSize = 20,
-						onClick = function()
-							call("Buy", "Stat", stat)
-						end,
-					})
-				end
-			end
+			UIKit.button(home, `Level up · {GameConfig.money(cost)}`, {
+				palette = if cash >= cost then P.green else P.grey,
+				size = UDim2.fromOffset(328, 50),
+				position = UDim2.fromOffset(16, 118),
+				textSize = 22,
+				onClick = function()
+					call("Buy", "Home")
+				end,
+			})
+		else
+			label(home, "MAX LEVEL!", 26, 16, 124, { color = UIKit.Yellow })
 		end
+
+		-- Speed wheel
+		local wheel = profile.WheelLevel or 1
+		local _, wh = UIKit.tile(c, {
+			name = "Wheel",
+			size = UDim2.fromOffset(360, 180),
+			position = UDim2.fromOffset(16, 270),
+			top = hex("23405E"),
+			bottom = hex("1A2C44"),
+		})
+		label(wh, "SPEED WHEEL", 24, 16, 12, { color = hex("7FD8FF") })
+		label(wh, `Level {wheel} · trains x{GameConfig.trainRate(wheel)}`, 20, 16, 44)
+		local wheelCost = GameConfig.WHEEL_COST[wheel + 1]
+		if wheelCost then
+			label(wh, `Next: x{GameConfig.trainRate(wheel + 1)} training, a fancier wheel`, 14, 16, 72, {
+				font = UIKit.Fonts.body,
+				stroke = 0,
+				color = GREY_TEXT,
+			})
+			UIKit.button(wh, `Upgrade · {GameConfig.money(wheelCost)}`, {
+				palette = if cash >= wheelCost then P.cyan else P.grey,
+				size = UDim2.fromOffset(328, 50),
+				position = UDim2.fromOffset(16, 118),
+				textSize = 22,
+				onClick = function()
+					call("Buy", "Wheel")
+				end,
+			})
+		else
+			label(wh, "MAX LEVEL!", 26, 16, 124, { color = UIKit.Yellow })
+		end
+
+		-- Speed
+		local points = profile.SpeedPoints
+		local maxed = points >= GameConfig.SPEED_MAX_POINTS
+		local _, sp = UIKit.tile(c, {
+			name = "Speed",
+			size = UDim2.fromOffset(352, 372),
+			position = UDim2.fromOffset(392, 78),
+			top = hex("3A3648"),
+			bottom = hex("2A2636"),
+		})
+		UIKit.burst(sp, UDim2.fromOffset(176, 108), 220, 0.18)
+		UIKit.icon(sp, img("Shoe"), 96, UDim2.fromOffset(176, 70), mid, 5)
+		UIKit.text(sp, "SPEED", 22, { position = UDim2.fromOffset(176, 124), anchor = Vector2.new(0.5, 0), z = 6 })
+		UIKit.text(sp, tostring(GameConfig.SPEED_BASE + points), 64, {
+			font = UIKit.Fonts.number,
+			position = UDim2.fromOffset(176, 148),
+			anchor = Vector2.new(0.5, 0),
+			stroke = 4,
+			z = 6,
+		})
+		local frac = if maxed then 1 else attr("TrainProgress")
+		label(sp, if maxed then "MAX SPEED!" else "Next +1", 15, 24, 236, { font = UIKit.Fonts.body, stroke = 2 })
+		bar(sp, frac, Vector2.new(304, 22), UDim2.fromOffset(24, 260), hex("3DC8FF"))
+		label(sp, "Hop on the wheel in your home and run!", 15, 24, 296, { font = UIKit.Fonts.body, stroke = 0 })
+		label(
+			sp,
+			`Up to {GameConfig.SPEED_BASE + GameConfig.SPEED_MAX_POINTS} · a better wheel trains faster`,
+			13,
+			24,
+			322,
+			{
+				font = UIKit.Fonts.body,
+				stroke = 0,
+				color = GREY_TEXT,
+			}
+		)
 	end
 	draw()
 	-- redraw when a price becomes affordable (or not) or the training bar moves
@@ -335,24 +285,26 @@ local function buildUpgrades(ctx: Ctx)
 		end
 		local cash = attr("Cash")
 		local cost = GameConfig.HOME_COST[profile.HomeLevel + 1]
-		local parts = { tostring(cost ~= nil and cash >= cost) }
-		for _, stat in GameConfig.STAT_ORDER do
-			table.insert(parts, tostring(cash >= GameConfig.statCost(stat, profile.Stats[stat] or 0)))
-		end
-		table.insert(parts, tostring(cash >= GameConfig.rebirthCost(profile.Rebirths + 1)))
-		table.insert(parts, tostring(math.floor(attr("TrainProgress") * 20)))
-		return table.concat(parts, ",")
+		local wheelCost = GameConfig.WHEEL_COST[(profile.WheelLevel or 1) + 1]
+		return table.concat({
+			tostring(cost ~= nil and cash >= cost),
+			tostring(wheelCost ~= nil and cash >= wheelCost),
+			tostring(math.floor(attr("TrainProgress") * 20)),
+		}, ",")
 	end
 	return p, draw, sig
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- Your Toys: everything in your home, with a detail card and Sell.
+-- Your Toys: your inventory. Equipped toys are in your pen earning (as many as your home's slots); the rest wait
+-- here. Equip / unequip, Equip Best, lock (Sell skips locked toys), sell one, or Sell Mode to pick many at once.
 local function buildToys(ctx: Ctx)
 	local p = UIKit.panel(ctx.gui, "Your Toys", P.violet, Vector2.new(860, 520))
 	ctx.panels.Toys = p
 	local filter = "All"
 	local selected: string? = nil
+	local selling = false
+	local picked: { [string]: boolean } = {}
 	local draw: () -> ()
 	draw = function()
 		local c = content(p.body, "Content")
@@ -363,45 +315,76 @@ local function buildToys(ctx: Ctx)
 			return
 		end
 		local capacity = MapConfig.HOLE_LEVELS[profile.HomeLevel].slots
+		local equipped = 0
+		for _, t in profile.Toys do
+			if t.e ~= false then
+				equipped += 1
+			end
+		end
 		local _, cap = UIKit.block(h, {
 			name = "Capacity",
-			size = UDim2.fromOffset(110, 36),
+			size = UDim2.fromOffset(190, 36),
 			position = UDim2.new(1, -70, 0.5, 0),
 			anchor = Vector2.new(1, 0.5),
 			color = UIKit.Panel,
 			edge = UIKit.Ink,
 			strokeWidth = 3,
 		})
-		UIKit.text(cap, `{#profile.Toys}/{capacity}`, 20, { position = center, anchor = mid })
-		for i, name in { "All", "Small", "Medium", "Large" } do
+		UIKit.text(cap, `In pen {equipped}/{capacity}`, 18, { position = center, anchor = mid })
+
+		-- filters, then the actions
+		for i, name in { "All", "Equipped", "Inventory" } do
 			UIKit.button(c, name, {
 				palette = if name == filter then P.cyan else P.grey,
-				size = UDim2.fromOffset(110, 40),
-				position = UDim2.fromOffset(16 + (i - 1) * 118, 78),
-				textSize = 20,
+				size = UDim2.fromOffset(98, 40),
+				position = UDim2.fromOffset(16 + (i - 1) * 104, 78),
+				textSize = 16,
 				onClick = function()
 					filter = name
 					task.defer(draw)
 				end,
 			})
 		end
-		local waking = wakingUids()
+		UIKit.button(c, "Equip Best", {
+			palette = P.green,
+			size = UDim2.fromOffset(106, 40),
+			position = UDim2.fromOffset(330, 78),
+			textSize = 16,
+			onClick = function()
+				call("Buy", "EquipBest")
+			end,
+		})
+		UIKit.button(c, if selling then "Cancel" else "Sell Mode", {
+			palette = if selling then P.grey else P.red,
+			size = UDim2.fromOffset(106, 40),
+			position = UDim2.fromOffset(442, 78),
+			textSize = 16,
+			onClick = function()
+				selling = not selling
+				table.clear(picked)
+				task.defer(draw)
+			end,
+		})
+
 		local list = {}
 		for _, entry in profile.Toys do
-			local data = ToyCatalog.get(entry.id)
-			local size = SIZE_NAME[entry.s or (data and data.Size) or ""]
-			if filter == "All" or size == filter then
+			local on = entry.e ~= false
+			if filter == "All" or (filter == "Equipped" and on) or (filter == "Inventory" and not on) then
 				table.insert(list, entry)
 			end
 		end
 		table.sort(list, function(a, b)
+			local ea, eb = a.e ~= false, b.e ~= false
+			if ea ~= eb then
+				return ea
+			end
 			return perSecond(a) > perSecond(b)
 		end)
 		local scroll = UIKit.new("ScrollingFrame", {
 			Name = "Grid",
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
-			Size = UDim2.fromOffset(536, 376),
+			Size = UDim2.fromOffset(536, if selling then 318 else 376),
 			Position = UDim2.fromOffset(12, 128),
 			CanvasSize = UDim2.new(),
 			AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -415,7 +398,9 @@ local function buildToys(ctx: Ctx)
 		}, scroll)
 		UIKit.new("UIPadding", { PaddingLeft = UDim.new(0, 4), PaddingTop = UDim.new(0, 4) }, scroll)
 		if #list == 0 then
-			label(c, "No toys yet! Grab a sleeping toy and drag it home.", 18, 24, 150, { font = UIKit.Fonts.body })
+			label(c, "No toys here yet! Grab a sleeping toy and drag it home.", 18, 24, 150, {
+				font = UIKit.Fonts.body,
+			})
 		end
 		local stillThere = false
 		for _, e in list do
@@ -424,56 +409,110 @@ local function buildToys(ctx: Ctx)
 			end
 		end
 		if not stillThere then
-			selected = nil
+			selected = list[1] and list[1].u
 		end
-		selected = selected or (list[1] and list[1].u)
 		local chosen: any = nil
 		for i, entry in list do
 			local data = ToyCatalog.get(entry.id)
-			local asleep = waking[entry.u]
 			if entry.u == selected then
 				chosen = entry
 			end
+			local on = entry.e ~= false
 			local holder, s = UIKit.tile(scroll, {
 				name = "Toy " .. i,
 				size = UDim2.fromOffset(82, 82),
-				top = hex("3A3648"),
-				bottom = hex("2A2636"),
-				edge = if asleep then hex("0B0910") else rarityColor(data and data.Rarity or "Common"),
+				top = if picked[entry.u] then hex("6A2232") else hex("3A3648"),
+				bottom = if picked[entry.u] then hex("4A1622") else hex("2A2636"),
+				edge = rarityColor(data and data.Rarity or "Common"),
 				layoutOrder = i,
 			})
-			if asleep then
-				UIKit.text(s, "Zzz", 22, { position = center, anchor = mid, color = GREY_TEXT })
-			else
-				UIKit.backing(s, center, 80, 0.3)
-				UIKit.hoverWiggle(s, UIKit.icon(s, toyImage(entry.id), 64, UDim2.fromScale(0.5, 0.45), mid))
-				UIKit.text(s, GameConfig.money(perSecond(entry)) .. "/s", 13, {
-					color = UIKit.CashGreen,
-					font = UIKit.Fonts.number,
-					position = UDim2.new(0.5, 0, 1, -3),
-					anchor = Vector2.new(0.5, 1),
-					stroke = 2,
-					z = 7,
-				})
-				if entry.m then
-					local dot = UIKit.new("Frame", {
-						BackgroundColor3 = mutationColor(entry.m),
-						Size = UDim2.fromOffset(14, 14),
-						Position = UDim2.fromOffset(5, 5),
-						ZIndex = 7,
-					}, s)
-					UIKit.corner(dot, 7)
-					UIKit.stroke(dot, UIKit.Ink, 2, true)
-				end
+			UIKit.backing(s, center, 80, 0.3)
+			UIKit.hoverWiggle(s, UIKit.icon(s, toyImage(entry.id), 64, UDim2.fromScale(0.5, 0.45), mid))
+			UIKit.text(s, GameConfig.money(perSecond(entry)) .. "/s", 13, {
+				color = UIKit.CashGreen,
+				font = UIKit.Fonts.number,
+				position = UDim2.new(0.5, 0, 1, -3),
+				anchor = Vector2.new(0.5, 1),
+				stroke = 2,
+				z = 7,
+			})
+			if on then
+				UIKit.icon(s, img("Check"), 22, UDim2.new(1, -3, 0, 3), Vector2.new(1, 0), 8)
 			end
-			if entry.u == selected then
+			if entry.l then
+				UIKit.icon(s, img("Lock"), 20, UDim2.fromOffset(3, 3), nil, 8)
+			elseif entry.m then
+				local dot = UIKit.new("Frame", {
+					BackgroundColor3 = mutationColor(entry.m),
+					Size = UDim2.fromOffset(14, 14),
+					Position = UDim2.fromOffset(5, 5),
+					ZIndex = 7,
+				}, s)
+				UIKit.corner(dot, 7)
+				UIKit.stroke(dot, UIKit.Ink, 2, true)
+			end
+			if entry.u == selected and not selling then
 				UIKit.stroke(s, UIKit.White, 3, true)
 			end
 			UIKit.clickable(holder, function()
-				selected = entry.u
+				if selling then
+					if not entry.l then
+						picked[entry.u] = if picked[entry.u] then nil else true
+					else
+						toast("That toy is locked", false)
+					end
+				else
+					selected = entry.u
+				end
 				task.defer(draw)
 			end)
 		end
+
+		-- Sell Mode: the bar under the grid
+		if selling then
+			local n, total = 0, 0
+			for uid in picked do
+				for _, e in profile.Toys do
+					if e.u == uid then
+						n += 1
+						total += math.floor(perSecond(e) * GameConfig.SELL_SECONDS)
+					end
+				end
+			end
+			UIKit.button(c, "Pick all in inventory", {
+				palette = P.grey,
+				size = UDim2.fromOffset(220, 46),
+				position = UDim2.fromOffset(16, 458),
+				textSize = 18,
+				onClick = function()
+					for _, e in profile.Toys do
+						if e.e == false and not e.l then
+							picked[e.u] = true
+						end
+					end
+					task.defer(draw)
+				end,
+			})
+			UIKit.button(c, if n > 0 then `Sell {n} · {GameConfig.money(total)}` else "Pick toys to sell", {
+				palette = if n > 0 then P.gold else P.grey,
+				size = UDim2.fromOffset(300, 46),
+				position = UDim2.fromOffset(244, 458),
+				textSize = 20,
+				onClick = function()
+					if n == 0 then
+						return
+					end
+					local uids = {}
+					for uid in picked do
+						table.insert(uids, uid)
+					end
+					call("Buy", "Sell", uids)
+					table.clear(picked)
+					selling = false
+				end,
+			})
+		end
+
 		-- the detail card
 		local _, det = UIKit.tile(c, {
 			name = "Detail",
@@ -487,21 +526,17 @@ local function buildToys(ctx: Ctx)
 			return
 		end
 		local data = ToyCatalog.get(chosen.id)
-		if waking[chosen.u] then
-			UIKit.text(det, "Waking up...", 26, { position = UDim2.fromOffset(142, 150), anchor = mid })
-			return
-		end
 		local rarity = data and data.Rarity or "Common"
 		UIKit.burst(det, UDim2.fromOffset(142, 76), 230, 0.22)
-		UIKit.hoverWiggle(det, UIKit.icon(det, toyImage(chosen.id), 150, UDim2.fromOffset(142, 76), mid))
+		UIKit.hoverWiggle(det, UIKit.icon(det, toyImage(chosen.id), 140, UDim2.fromOffset(142, 74), mid))
 		UIKit.text(det, if data then data.Name else chosen.id, 24, {
-			position = UDim2.fromOffset(142, 150),
+			position = UDim2.fromOffset(142, 146),
 			anchor = Vector2.new(0.5, 0),
 		})
 		local tag = UIKit.new("Frame", {
 			BackgroundColor3 = rarityColor(rarity),
 			Size = UDim2.fromOffset(130, 28),
-			Position = UDim2.fromOffset(142, 184),
+			Position = UDim2.fromOffset(142, 178),
 			AnchorPoint = Vector2.new(0.5, 0),
 			ZIndex = 5,
 		}, det)
@@ -512,37 +547,61 @@ local function buildToys(ctx: Ctx)
 			local m = MutationData.List[chosen.m]
 			UIKit.text(det, `{chosen.m} x{m and m.Multiplier or 1}`, 18, {
 				color = mutationColor(chosen.m),
-				position = UDim2.fromOffset(142, 218),
+				position = UDim2.fromOffset(142, 210),
 				anchor = Vector2.new(0.5, 0),
 			})
 		end
-		UIKit.text(det, GameConfig.money(perSecond(chosen)) .. "/s", 30, {
+		UIKit.text(det, GameConfig.money(perSecond(chosen)) .. "/s", 28, {
 			font = UIKit.Fonts.number,
 			color = UIKit.CashGreen,
-			position = UDim2.fromOffset(142, 244),
+			position = UDim2.fromOffset(142, 234),
 			anchor = Vector2.new(0.5, 0),
 		})
 		UIKit.text(
 			det,
 			`{SIZE_NAME[chosen.s or (data and data.Size) or ""] or ""} · {data and data.SetName or ""} set`,
-			15,
+			14,
 			{
 				font = UIKit.Fonts.body,
 				color = GREY_TEXT,
 				stroke = 0,
-				position = UDim2.fromOffset(142, 288),
+				position = UDim2.fromOffset(142, 272),
 				anchor = Vector2.new(0.5, 0),
 			}
 		)
-		local price = math.floor(perSecond(chosen) * GameConfig.SELL_SECONDS)
-		UIKit.button(det, "Sell · " .. GameConfig.money(price), {
-			palette = P.gold,
-			size = UDim2.fromOffset(252, 50),
-			position = UDim2.fromOffset(16, 356),
+		local on = chosen.e ~= false
+		UIKit.button(det, if on then "Unequip" else "Equip", {
+			palette = if on then P.grey else P.green,
+			size = UDim2.fromOffset(252, 48),
+			position = UDim2.fromOffset(16, 304),
 			textSize = 22,
 			onClick = function()
+				call("Buy", if on then "Unequip" else "Equip", chosen.u)
+			end,
+		})
+		UIKit.button(det, if chosen.l then "Unlock" else "Lock", {
+			palette = if chosen.l then P.orange else P.light,
+			icon = img("Lock"),
+			iconSize = 22,
+			size = UDim2.fromOffset(120, 48),
+			position = UDim2.fromOffset(16, 362),
+			textSize = 18,
+			onClick = function()
+				call("Buy", if chosen.l then "Unlock" else "Lock", chosen.u)
+			end,
+		})
+		local price = math.floor(perSecond(chosen) * GameConfig.SELL_SECONDS)
+		UIKit.button(det, "Sell " .. GameConfig.money(price), {
+			palette = if chosen.l then P.grey else P.gold,
+			size = UDim2.fromOffset(124, 48),
+			position = UDim2.fromOffset(144, 362),
+			textSize = 18,
+			onClick = function()
+				if chosen.l then
+					toast("Unlock it first to sell it", false)
+					return
+				end
 				call("Buy", "Sell", chosen.u)
-				selected = nil
 			end,
 		})
 	end
@@ -1068,6 +1127,18 @@ local function showReveal(ctx: Ctx, info: any)
 		anchor = Vector2.new(0.5, 0),
 		stroke = 3.5,
 	})
+	UIKit.text(
+		pop,
+		(SIZE_NAME[info.size or ""] or "") .. (if info.equipped then " · in your pen" else " · in your inventory"),
+		15,
+		{
+			font = UIKit.Fonts.body,
+			color = GREY_TEXT,
+			position = UDim2.fromOffset(210, 298),
+			anchor = Vector2.new(0.5, 0),
+			stroke = 2,
+		}
+	)
 	local hit = UIKit.new("TextButton", {
 		BackgroundTransparency = 1,
 		Text = "",
@@ -1086,61 +1157,198 @@ local function showReveal(ctx: Ctx, info: any)
 	task.delay(4, close)
 end
 
--- How many rewards can be claimed right now (the badge on the gift button)
-local function readyRewards(): number
+-- Rewards ready to claim right now: the daily gift (0 or 1) and the playtime gifts (a badge on each button)
+local function readyRewards(): (number, number)
 	if not profile then
-		return 0
+		return 0, 0
 	end
-	local n = 0
-	if profile.Daily.Day ~= math.floor(Workspace:GetServerTimeNow() / 86400) then
-		n += 1
-	end
+	local daily = if profile.Daily.Day ~= math.floor(Workspace:GetServerTimeNow() / 86400) then 1 else 0
 	local claimed: { [number]: boolean } = {}
 	for _, k in meta.playtimeClaimed or {} do
 		claimed[k] = true
 	end
+	local playtime = 0
 	for i, g in GameConfig.PLAYTIME do
 		if not claimed[i] and g.minutes * 60 <= playedNow() then
-			n += 1
+			playtime += 1
 		end
 	end
-	return n
+	return daily, playtime
+end
+
+local function setBadge(badge: Frame?, n: number)
+	if not badge then
+		return
+	end
+	badge.Visible = n > 0
+	local t = badge:FindFirstChildWhichIsA("TextLabel", true)
+	if t then
+		t.Text = tostring(n)
+	end
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- The quest banner: what to do next, from your game state.
-local function questText(): string
+-- Your blankets: the ones waiting in your home, on the right edge, with their timers ("READY!" when you can hatch).
+local BLANKET_COLOUR = { S = hex("4DA8FF"), M = hex("9B7BFF"), L = hex("FF8A3D") } :: { [string]: Color3 }
+local function drawBlankets(holder: Frame)
+	holder:ClearAllChildren()
+	local list = if profile then profile.Blankets or {} else {}
+	if #list == 0 then
+		return
+	end
+	UIKit.new("UIListLayout", {
+		Padding = UDim.new(0, 6),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+	}, holder)
+	local title = UIKit.text(holder, `BLANKETS {#list}/{GameConfig.MAX_BLANKETS}`, 16, { stroke = 3 })
+	title.LayoutOrder = 0
+	local sorted = table.clone(list)
+	table.sort(sorted, function(a, b)
+		return a.w < b.w
+	end)
+	local now = Workspace:GetServerTimeNow()
+	for i, b in sorted do
+		local left = b.w - now
+		local ready = left <= 0
+		local _, face = UIKit.block(holder, {
+			name = "Blanket " .. i,
+			size = UDim2.fromOffset(190, 38),
+			color = if ready then hex("2E7D32") else hex("2F2F36"),
+			edge = UIKit.Ink,
+			strokeWidth = 2.5,
+			layoutOrder = i,
+		})
+		local chipFrame = UIKit.new("Frame", {
+			BackgroundColor3 = BLANKET_COLOUR[b.s] or UIKit.White,
+			Size = UDim2.fromOffset(26, 26),
+			Position = UDim2.new(0, 6, 0.5, 0),
+			AnchorPoint = Vector2.new(0, 0.5),
+			ZIndex = 4,
+		}, face)
+		UIKit.corner(chipFrame, 6)
+		UIKit.stroke(chipFrame, UIKit.Ink, 2, true)
+		UIKit.text(chipFrame, b.s, 15, { position = center, anchor = mid, stroke = 2, z = 5 })
+		UIKit.text(face, (SIZE_NAME[b.s] or "") .. " toy", 15, {
+			position = UDim2.new(0, 40, 0.5, 0),
+			anchor = Vector2.new(0, 0.5),
+			align = Enum.TextXAlignment.Left,
+			z = 5,
+		})
+		UIKit.text(face, if ready then "READY!" else clock(left), 15, {
+			font = UIKit.Fonts.number,
+			color = if ready then UIKit.Yellow else UIKit.White,
+			position = UDim2.new(1, -8, 0.5, 0),
+			anchor = Vector2.new(1, 0.5),
+			z = 5,
+		})
+	end
+	local hint = UIKit.text(holder, "Hold E on a ready one at home", 12, { font = UIKit.Fonts.body, stroke = 2 })
+	hint.LayoutOrder = 99
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- The first-time tutorial (Dylan, 19 Oct: short, like Steal an Egg, and only once): grab a toy, bring it home, hatch
+-- it, done. A line from you and an arrow show the way. After that the banner stays hidden.
+type Pointer = { beam: Beam, from: Attachment, to: Attachment, arrow: BillboardGui }
+local pointer: Pointer? = nil
+local function point(target: BasePart?)
+	local root = me.Character and me.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not target or not root then
+		if pointer then
+			pointer.beam:Destroy()
+			pointer.from:Destroy()
+			pointer.to:Destroy()
+			pointer.arrow:Destroy()
+			pointer = nil
+		end
+		return
+	end
+	if not pointer or pointer.from.Parent ~= root then
+		point(nil)
+		local from = Instance.new("Attachment")
+		from.Name = "TutorialFrom"
+		from.Position = Vector3.new(0, -2.6, 0)
+		from.Parent = root
+		local to = Instance.new("Attachment")
+		to.Name = "TutorialTo"
+		local beam = Instance.new("Beam")
+		beam.Attachment0, beam.Attachment1 = from, to
+		beam.Color = ColorSequence.new(UIKit.Yellow)
+		beam.Width0, beam.Width1 = 1.2, 1.2
+		beam.FaceCamera = true
+		beam.LightEmission = 1
+		beam.Transparency = NumberSequence.new(0.25)
+		beam.Segments = 2
+		beam.Parent = root
+		local arrow = Instance.new("BillboardGui")
+		arrow.Name = "TutorialArrow"
+		arrow.Size = UDim2.fromOffset(60, 60)
+		arrow.StudsOffsetWorldSpace = Vector3.new(0, 10, 0)
+		arrow.AlwaysOnTop = true
+		arrow.LightInfluence = 0
+		local t = Instance.new("TextLabel")
+		t.BackgroundTransparency = 1
+		t.Size = UDim2.fromScale(1, 1)
+		t.Text = "▼"
+		t.TextScaled = true
+		t.Font = Enum.Font.GothamBlack
+		t.TextColor3 = UIKit.Yellow
+		local s = Instance.new("UIStroke")
+		s.Thickness = 3
+		s.Color = UIKit.Ink
+		s.Parent = t
+		t.Parent = arrow
+		arrow.Parent = me:WaitForChild("PlayerGui")
+		pointer = { beam = beam, from = from, to = to, arrow = arrow }
+	end
+	local p = pointer :: Pointer
+	if p.to.Parent ~= target then
+		p.to.Parent = target
+	end
+	p.arrow.Adornee = target
+end
+
+-- What the tutorial says now, and what it points at
+local function tutorialStep(): (string?, BasePart?)
+	if not profile or profile.Tutorial == 1 then
+		return nil, nil
+	end
+	local home = myHome()
 	if me:GetAttribute("Carrying") then
-		return "Drag it to your home!"
+		local sign = home and home:FindFirstChild("Sign") :: BasePart?
+		return "Bring it home!", sign
 	end
-	if me:GetAttribute("Training") then
-		return "Training Speed! Jump to stop"
-	end
-	if next(wakingUids()) then
-		return "Your toy is waking up..."
-	end
-	if not profile then
-		return "Grab a sleeping toy"
+	local waking = home and home:FindFirstChild("Waking")
+	if waking and #waking:GetChildren() > 0 then
+		for _, b in waking:GetChildren() do
+			if b:IsA("Model") and b:GetAttribute("Ready") then
+				return "Hold E on your blanket to hatch it!", b.PrimaryPart
+			end
+		end
+		local b = waking:GetChildren()[1] :: Model
+		return "Your toy is waking up...", b.PrimaryPart
 	end
 	if #profile.Toys == 0 then
-		return "Grab a sleeping toy"
+		-- the nearest sleeping toy
+		local root = me.Character and me.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local bedroom = Workspace:FindFirstChild("Bedroom")
+		local sleeping = bedroom and bedroom:FindFirstChild("SleepingToys")
+		local best, bestDistance = nil, math.huge
+		if root and sleeping then
+			for _, s in sleeping:GetChildren() do
+				if s:IsA("Model") and s.PrimaryPart and s:GetAttribute("Spawn") then
+					local d = (s.PrimaryPart.Position - root.Position).Magnitude
+					if d < bestDistance then
+						best, bestDistance = s.PrimaryPart, d
+					end
+				end
+			end
+		end
+		return "Grab a sleeping toy!", best
 	end
-	local cash = attr("Cash")
-	local level = profile.HomeLevel
-	local cost = GameConfig.HOME_COST[level + 1]
-	if cost and cash >= cost and not GameConfig.HOME_REBIRTH[level + 1] then
-		return "Level up your home in Upgrades!"
-	end
-	if profile.SpeedPoints == 0 then
-		return "Train Speed on your wheel"
-	end
-	if (profile.Stats.Strength or 0) < GameConfig.LARGE_STRENGTH and cash >= GameConfig.statCost("Strength", 0) then
-		return `Get Strength {GameConfig.LARGE_STRENGTH} to drag Large toys`
-	end
-	if cost and not GameConfig.HOME_REBIRTH[level + 1] then
-		return `Earn {GameConfig.money(cash)}/{GameConfig.money(cost)} for home level {level + 1}`
-	end
-	return "Steal toys from other homes!"
+	return "Your toys make cash every second!", nil
 end
 
 function GameUI.start(ctx: Ctx)
@@ -1189,9 +1397,18 @@ function GameUI.start(ctx: Ctx)
 				redraw(v)
 			end
 		end
+		if hud.blankets then
+			drawBlankets(hud.blankets)
+		end
 	end);
 	(remotes:WaitForChild("Reveal") :: RemoteEvent).OnClientEvent:Connect(function(info: any)
 		showReveal(ctx, info)
+	end)
+	-- the Index stand in your home opens the Index
+	game:GetService("ProximityPromptService").PromptTriggered:Connect(function(prompt)
+		if prompt.Name == "IndexPrompt" then
+			ctx.open("Index")
+		end
 	end)
 
 	-- cash, $/s and speed
@@ -1233,27 +1450,34 @@ function GameUI.start(ctx: Ctx)
 		hud.setTraining(me:GetAttribute("Training") == true)
 	end)
 
-	-- the quest banner and the live panels (timers, prices) once a second
+	-- the tutorial banner, badges, blankets and the live panels, once a second
+	local band = hud.quest.Parent :: GuiObject
 	local lastQuest = ""
+	local doneAt: number? = nil
 	task.spawn(function()
 		while ctx.gui.Parent do
-			local q = questText()
-			if q ~= lastQuest then
-				local sameKind = string.sub(q, 1, 5) == string.sub(lastQuest, 1, 5)
+			local q, target = tutorialStep()
+			band.Visible = q ~= nil
+			if q and q ~= lastQuest then
 				hud.quest.Text = q
-				if not sameKind then
-					UIKit.bump(hud.quest)
-				end
+				UIKit.bump(hud.quest)
 				lastQuest = q
 			end
-			live()
-			if hud.giftBadge then
-				local ready = readyRewards()
-				hud.giftBadge.Visible = ready > 0
-				local t = hud.giftBadge:FindFirstChildWhichIsA("TextLabel", true)
-				if t then
-					t.Text = tostring(ready)
+			point(target)
+			-- the last step shows for a few seconds, then the tutorial is done for good
+			if q == "Your toys make cash every second!" then
+				doneAt = doneAt or os.clock()
+				if os.clock() - (doneAt :: number) > 5 and profile then
+					profile.Tutorial = 1
+					call("Claim", "Tutorial")
 				end
+			end
+			live()
+			local daily, playtime = readyRewards()
+			setBadge(hud.dailyBadge, daily)
+			setBadge(hud.playtimeBadge, playtime)
+			if hud.blankets then
+				drawBlankets(hud.blankets)
 			end
 			task.wait(1)
 		end

@@ -217,11 +217,11 @@ The Night Watchman replaces The Original Teddy as the Secret roll on Giant blank
 
 **These can't be rolled from a normal spawn, so owning one says something about you.** Each has a single, specific way to get it.
 
-| Toy | Rarity | Money /s | How you get it | Look | Perk |
-| --- | --- | --- | --- | --- | --- |
-| The Original Teddy | Secret | $1,500,000 | 0.1% Secret roll on any Giant blanket; at most one spawns per server per hour. Server-wide banner and a sound when it spawns, before anyone knows where | A worn, patched, one-eyed brown teddy with a faded name tag reading "#1"; a soft golden halo | +25% money for the whole hole; gold "Original" chat tag |
-| Growth Chart Giraffe | Mythic | $300,000 | Reward for Rebirth 3 | A wooden height-chart giraffe with pencil marks and dates up its neck | +5% money for every rebirth you've done |
-| Index Teddy | Epic (always Gold) | $5,000 | Reward for finding all 84 room-set toys in the Toy Index | A teddy made of book pages, a bookmark ribbon tail, gold-leaf edges | +5% luck forever |
+| Toy | Rarity | Money /s | How you get it | Look | Idle animation | Perk |
+| --- | --- | --- | --- | --- | --- | --- |
+| The Original Teddy | Secret | $1,500,000 | 0.1% Secret roll on any Giant blanket; at most one spawns per server per hour. Server-wide banner and a sound when it spawns, before anyone knows where | A worn, patched, one-eyed brown teddy with a faded name tag reading "#1"; a soft golden halo | Gives a slow, proud wave while its halo bobs | +25% money for the whole hole; gold "Original" chat tag |
+| Growth Chart Giraffe | Mythic | $300,000 | Reward for Rebirth 3 | A wooden height-chart giraffe with pencil marks and dates up its neck | Stretches its neck up extra tall, then settles back down | +5% money for every rebirth you've done |
+| Index Teddy | Epic (always Gold) | $5,000 | Reward for finding all 84 room-set toys in the Toy Index | A teddy made of book pages, a bookmark ribbon tail, gold-leaf edges | Flips through the pages on its tummy, its bookmark tail wagging | +5% luck forever |
 
 **Secret spawn rules:** when a Secret is rolled, the blanket is Giant-sized and gives off a constant rainbow shimmer under the Flashlight, so the whole server races for it. It can't be co-carried, so only one player can take it home, and it's the best clip moment in the game.
 

@@ -280,7 +280,8 @@ function ToyVFX.addGlowTell(target: Instance, rarity: string)
 	local H = math.max(size.Y, 4)
 	local att = Instance.new("Attachment")
 	att.Name = "GlowTell"
-	att.Position = Vector3.new(0, -size.Y / 2 + H * 0.4, 0)
+	-- on top of the blanket, and the glow drawn in front of it, so the blanket itself doesn't hide the tell
+	att.Position = Vector3.new(0, size.Y / 2, 0)
 	local light = Instance.new("PointLight")
 	light.Name = "Light"
 	light.Color = color
@@ -300,6 +301,7 @@ function ToyVFX.addGlowTell(target: Instance, rarity: string)
 	glow.Transparency = seq({ { 0, 1 }, { 0.35, 0.35 }, { 1, 1 } })
 	glow.LightEmission = 1
 	glow.LightInfluence = 0
+	glow.ZOffset = math.max(size.X, size.Z) * 0.6
 	glow.Parent = att
 	local spark = Instance.new("ParticleEmitter")
 	spark.Name = "Sparkles"
@@ -395,10 +397,10 @@ function ToyVFX.revealBurst(model: Model)
 	confetti.Color = secret and RAINBOW or ColorSequence.new(color, Color3.new(1, 1, 1))
 	confetti.Enabled = false
 	confetti.Lifetime = NumberRange.new(1.2, 1.8)
-	confetti.Speed = NumberRange.new(3 * unit, 6 * unit)
+	confetti.Speed = NumberRange.new(7 * unit, 13 * unit)
 	confetti.SpreadAngle = Vector2.new(70, 70)
 	confetti.Acceleration = Vector3.new(0, -9 * unit, 0)
-	confetti.Drag = 1
+	confetti.Drag = 2.2
 	confetti.Size = seq({ { 0, 0.5 * unit, 0.15 * unit }, { 1, 0.35 * unit } })
 	confetti.Transparency = seq({ { 0, 0 }, { 0.8, 0 }, { 1, 1 } })
 	confetti.Rotation = NumberRange.new(0, 360)
@@ -424,8 +426,8 @@ function ToyVFX.revealBurst(model: Model)
 	flash.Lifetime = NumberRange.new(0.45)
 	flash.Speed = NumberRange.new(0)
 	flash.LockedToPart = true
-	flash.Size = seq({ { 0, H * 1.5 }, { 1, H * 3.2 } })
-	flash.Transparency = seq({ { 0, 0.1 }, { 1, 1 } })
+	flash.Size = seq({ { 0, H * 1.2 }, { 1, H * 2.4 } })
+	flash.Transparency = seq({ { 0, 0.45 }, { 1, 1 } })
 	flash.LightEmission = 1
 	flash.LightInfluence = 0
 	flash.Parent = att
@@ -436,11 +438,11 @@ function ToyVFX.revealBurst(model: Model)
 
 	local light = Instance.new("PointLight")
 	light.Color = color
-	light.Brightness = 6
-	light.Range = math.min(60, H * 4)
+	light.Brightness = 3
+	light.Range = math.min(50, H * 3)
 	light.Shadows = false
 	light.Parent = att
-	TweenService:Create(light, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Brightness = 0 })
+	TweenService:Create(light, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Brightness = 0 })
 		:Play()
 
 	-- shockwave ring on the floor

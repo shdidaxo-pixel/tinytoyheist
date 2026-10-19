@@ -1,0 +1,151 @@
+<title>Toy Shelf Renders</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: same family as the Bedroom v6 review. A short header, what's new and what to decide, then numbered photos
+   grouped by what they show (room sets, real scale, mutations, effects, Studio). One night look: navy shelf, warm
+   lamp accent for numbers, and the game's own rarity colours as the only other colours. */
+:root{
+  --bg:#0E1226; --panel:#161B37; --line:#2A3160; --ink:#ECEFFA; --soft:#A5ACCD; --lamp:#FFB36B; --safe:#4FC6A8;
+  --common:#B8BCC6; --uncommon:#5BE36A; --rare:#3DA5FF; --epic:#B45CFF; --legendary:#FFD43B; --mythic:#FF4D5E;
+  --display:'Lilita One','Trebuchet MS',sans-serif; --body:'Nunito',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:30px}
+header{display:grid;gap:10px;max-width:74ch}
+.eyebrow{font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--safe)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,5vw,54px);line-height:1.02;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;color:var(--lamp)}
+h3{font-family:var(--display);font-weight:400;font-size:clamp(24px,3vw,30px);margin:0;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--soft);font-size:17px}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.links a{color:var(--bg);background:var(--lamp);font-weight:900;text-decoration:none;border-radius:999px;padding:8px 16px}
+.links a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;display:grid;gap:8px;align-content:start;min-width:0}
+.note ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.note li::marker{color:var(--lamp)}
+.muts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:4px 18px;margin-top:2px}
+.mut{display:grid;grid-template-columns:1fr auto auto;gap:10px;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line);padding:4px 0}
+.mut b{font-weight:900}.mut span{color:var(--soft);font-family:var(--mono);font-size:13px;align-self:center}
+.mut em{font-style:normal;color:var(--safe);font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}
+section.group{display:grid;gap:14px}
+.grouphead{display:grid;gap:4px;max-width:74ch}
+.grouphead p{color:var(--soft)}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr));gap:22px}
+.photos.wide{grid-template-columns:minmax(0,1fr)}
+figure{margin:0;display:grid;gap:10px;min-width:0}
+.shot{position:relative;display:block;border:0;padding:0;background:none;cursor:zoom-in;border-radius:12px;overflow:hidden;max-width:100%}
+.shot img{display:block;width:100%;height:auto;background:#05071A}
+.shot:focus-visible{outline:3px solid var(--lamp);outline-offset:3px}
+.num{position:absolute;left:10px;top:10px;min-width:36px;height:36px;padding:0 10px;border-radius:999px;display:grid;place-items:center;
+  background:var(--lamp);color:#22140A;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+figcaption{display:grid;gap:3px}
+figcaption b{font-weight:900;font-size:17px}
+figcaption span{color:var(--soft);font-size:15px}
+.dots{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--soft)}
+.dots i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1600px)}
+dialog::backdrop{background:rgba(5,7,20,.9)}
+dialog img{display:block;max-width:100%;max-height:86vh;border-radius:10px}
+dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
+.close{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:calc(12px + env(safe-area-inset-right,0px));border:0;border-radius:999px;
+  background:var(--panel);color:var(--ink);font:800 15px var(--body);padding:8px 14px;cursor:pointer}
+.close:focus-visible{outline:3px solid var(--lamp)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Tiny Toy Heist · Toys · batch 1</div>
+    <h1>Every toy, built and moving</h1>
+    <p class="lede">The voxel toy models, with their idle animations, rarity glows and mutations. These are drawn from the same data Studio builds the toys from, so what you see here is what's in the game. Comment on any photo by its number.</p>
+    <div class="links"><a href="toy-turntables.html" target="_blank" rel="noopener">Open the 3D turntable</a></div>
+  </header>
+
+  <section class="notes" aria-label="What's new and what to decide">
+    <div class="note">
+      <h2>What's new</h2>
+      <ul id="new">
+        <li><strong>This batch: the whole Kid's Bedroom set</strong> (6 MVP toys plus the 8 new ones) as voxel models, with the effects and mutations below. The other rooms, the events and the specials are being built now and will appear on this page as they finish.</li>
+        <li>Each toy plays its catalog idle animation (waddle, hop, twirl, pop out…), and the bigger ones have their own little effect: steam, sparks, flames, bubbles.</li>
+        <li>Rarity glows you can read at a glance: nothing for Common, a floor ring from Uncommon up, sparkles from Rare, an aura and light for Legendary, Mythic and Secret.</li>
+        <li>Sleeping Epic and up toys leak their colour from under the blanket for a second every 8 seconds, and every wake-up bursts confetti and a shockwave in the rarity colour.</li>
+        <li>10 mutations, 3 of them new. Each is one shared piece of code that works on any toy.</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h2>Mutations</h2>
+      <div class="muts" id="muts"></div>
+      <p class="lede" style="font-size:15px">About 1 toy in 8 wakes up mutated. The rarer the mutation, the more it pays.</p>
+    </div>
+    <div class="note">
+      <h2>Still to decide</h2>
+      <ul>
+        <li>Are Candy, Bubble and Frozen the right new mutations, at those odds?</li>
+        <li>Any toys that don't read as what they are, or that you'd redo? Say the photo number and the toy.</li>
+        <li>Rarity glows: too strong, too subtle, or right?</li>
+        <li>Sizes: each toy has a natural size (Small 8, Medium 12, Large 17, Giant 25 studs; a player is 5). The plan rolls the blanket size first, so a toy can come out of a bigger blanket and be scaled up. Keep that, or give each toy one fixed size?</li>
+      </ul>
+    </div>
+  </section>
+
+  <div id="groups"></div>
+</div>
+
+<dialog id="zoom" aria-label="Enlarged photo"><button class="close" id="closezoom">Close</button><img id="zoomimg" alt=""><p id="zoomcap"></p></dialog>
+
+<script>
+const MUTS = [
+  ['Gold', '5%', 'x2'], ['Candy', '3%', 'x2.5', 'new'], ['Glitter', '2%', 'x3'], ['Bubble', '1.5%', 'x4', 'new'], ['Shadow', '1%', 'x5'],
+  ['Frozen', '0.5%', 'x7', 'new'], ['Rainbow', '0.2%', 'x10'], ['Cosmic', '0.02%', 'x25'], ['Glow', '10% Nightmare Night', 'x2.5'], ['Haunted', '3% Halloween', 'x4']];
+document.getElementById('muts').innerHTML = MUTS.map(([n, c, x, isNew]) => `<div class="mut"><b>${n}${isNew ? '<em>new</em>' : ''}</b><span>${c}</span><span>${x}</span></div>`).join('');
+
+// [file, caption, note]
+const GROUPS = [
+  { title: 'The room sets', note: 'Every toy in each set with its rarity glow on, in catalog order. Six rooms of 14, from the soft Bedroom out to the Attic.', photos: [
+    ['bedroom', "Kid's Bedroom", 'Soft bedtime toys. Six MVP toys plus the eight new ones.'],
+    ['hallway', 'Hallway', 'Dropped and wind-up toys.'],
+    ['kitchen', 'Kitchen', 'Play-kitchen toys and things from the sink.'],
+    ['livingroom', 'Living Room', 'Board games, remotes, the fish tank, the couch.'],
+    ['garage', 'Garage', 'Outdoor and mechanical; Large and Giant.'],
+    ['attic', 'Attic', 'Antique and spooky-cute.']] },
+  { title: 'Events and specials', note: 'The event lines spawn in any room while their event is on. The specials are rewards and the 0.1% Secret.', photos: [
+    ['halloween', 'Halloween line', 'Spooky-cute, ready for the first October after launch.'],
+    ['nightmarenight', 'Nightmare Night line', 'Only spawns with the lights out, so these glow.'],
+    ['winter', 'Winter line', 'The week 8 seasonal event.'],
+    ['specials', 'Specials', 'The Original Teddy, Growth Chart Giraffe and Index Teddy.']] },
+  { title: 'Mutations', note: 'The same toy in every mutation. Rolled once at wake-up.', photos: [
+    ['muts', 'Teddy Knight, every mutation', 'Gold, Candy, Glitter, Bubble, Shadow, Frozen, Rainbow, Cosmic, Glow and Haunted.'],
+    ['muts-duck', 'Rubber Duck, every mutation', 'A small toy, to check the effects still read when it is little.']] },
+  { title: 'Rarity, blankets and the reveal', note: 'What a toy looks like asleep, waking up and awake.', photos: [
+    ['rarity', 'Rarity glows', 'One toy per rarity, glow on.'],
+    ['blanket-bedroom', 'Under the blankets', 'The Bedroom set asleep. Epic and up leak their glow (shown on here; in game it flickers on for a second about every 8).'],
+    ['reveal-unicorn', 'Reveal: Mythic', 'Blanket shakes, bursts, the toy pops in and starts its idle.'],
+    ['reveal-teddy', 'Reveal: Rare', 'A smaller burst for a smaller rarity.']], wide: true },
+  { title: 'At real scale', note: 'Each set side by side at its real size next to a player (the mouse, 5 studs tall).', photos: [
+    ['bedroom-lineup', "Kid's Bedroom"], ['hallway-lineup', 'Hallway'], ['kitchen-lineup', 'Kitchen'], ['livingroom-lineup', 'Living Room'], ['garage-lineup', 'Garage'],
+    ['attic-lineup', 'Attic'], ['halloween-lineup', 'Halloween'], ['nightmarenight-lineup', 'Nightmare Night'], ['winter-lineup', 'Winter'], ['specials-lineup', 'Specials']] },
+  { title: 'In Studio', note: 'The built models in Roblox Studio, in the place\'s current night lighting.', photos: [
+    ['studio-sets', 'The toy shelf in Studio', 'Every built toy lined up, one row per set.'],
+    ['studio-mutations', 'Mutations in Studio', 'Teddy Knight in every mutation, playing.']] },
+];
+// Photos in this batch. Numbers stay fixed across batches, so a comment keeps pointing at the same photo.
+const HAVE = new Set(['bedroom', 'bedroom-lineup', 'muts', 'muts-duck', 'rarity', 'blanket-bedroom', 'reveal-unicorn', 'reveal-teddy']);
+if (!HAVE.has('turntable')) document.querySelector('.links').hidden = true;
+let n = 0;
+document.getElementById('groups').innerHTML = GROUPS.map(g => !g.photos.some(([f]) => HAVE.has(f)) ? (n += g.photos.length, '') : `<section class="group" aria-label="${g.title}"><div class="grouphead"><h3>${g.title}</h3><p>${g.note}</p></div>
+  <div class="photos${g.wide ? ' wide' : ''}">${g.photos.map(([f, cap, note]) => { n++; if (!HAVE.has(f)) return ''; return `<figure><button class="shot" data-src="toy-renders/${f}.jpg" data-cap="${n}. ${cap}" aria-label="Enlarge photo ${n}: ${cap}">
+  <img src="toy-renders/${f}.jpg" alt="${cap}" loading="lazy"><span class="num">${n}</span></button><figcaption><b>${cap}</b>${note ? `<span>${note}</span>` : ''}</figcaption></figure>`; }).join('')}</div></section>`).join('');
+
+const dlg = document.getElementById('zoom');
+document.getElementById('groups').addEventListener('click', e => { const b = e.target.closest('.shot'); if (!b) return;
+  document.getElementById('zoomimg').src = b.dataset.src; document.getElementById('zoomimg').alt = b.dataset.cap; document.getElementById('zoomcap').textContent = b.dataset.cap; dlg.showModal(); });
+document.getElementById('closezoom').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+</script>

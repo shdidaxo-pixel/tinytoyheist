@@ -4,6 +4,8 @@
 
 Snapshot of the "Toy Catalog" tab, 18 Oct 2026. Live version: https://claude.ai/code/artifact/0ed341c5-17c5-4d87-af8c-479b7f472662
 
+**Models (19 Oct 2026):** every toy here is a voxel model built from data in `src/ReplicatedStorage/Shared/Toys/Sets/` (one file per set, with each toy's blocks, idle animation and effect), built into Studio at `ServerStorage.TinyToyHeistAssets.Toys`. The game code reads names, rarities and money from there, so change a toy in both places. Review page: `design/toy-turntables.html`. How to design one in the data: `tools/toys/README.md`. Mutations (10, three new: Candy, Bubble, Frozen) are in the main plan's Mutations table.
+
 ## How a toy is picked
 
 **Every room has its own set of 14 toys, and deeper rooms pay more for the same rarity.** A Garage Common earns about 10x a Bedroom Common, so each new room feels like a big jump.

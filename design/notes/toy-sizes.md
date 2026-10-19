@@ -46,6 +46,21 @@ which builds anticipation. The blanket's timer is now a big clock ("2:45", "12s"
 On the Server: `game.Players.<name>:SetAttribute("DebugSizeTier", "Giant")` and the next hatch comes out that size
 (Studio only). `GameDebug("give", player, "L")` gives a blanket.
 
+## Play test (19 Oct, 16:12, Dylan's real save, solo)
+
+Captures in `design/studio-toysizes/`.
+- Timers: gave S, M, L blankets: S Uncommon 15 s, M Common 1:00, L Uncommon 4:00, shown as "50s" / "3:50" clocks
+  (01).
+- Hatched with forced tiers (`ready`, then hold E): Giant Night-Light Owl from the Large ($12 to $120/s, 02),
+  Huge Crayon Buddy from the Medium ($4 to $16/s, 03), Big Night-Light Owl from the Small ($12 to $24/s, 04).
+  Reveal stamps punch in; Steal prompts read "Giant Night-Light Owl" etc.
+- Pen: the Giant owl is 51 studs tall and towers over the pen, BIG / GIANT tags float over them (05).
+- Your Toys: tier word on each tile, "Giant x10", Sell $2.4K (06).
+- Roaming: sampled 50 min of PenRoam for all six toys: every body stays inside the pen walls (Giant reach 18.9).
+- No errors from this code in the output.
+- Dylan's save now has those 3 sized toys (6 toys, pen 6/6).
+- Not tested: stealing a Huge/Giant toy with two players (the slower carry and the wider steal range are code-only).
+
 ## Not done / ideas
 
 - The Index doesn't track sizes yet (it's toy x mutation). Could add a "biggest found" badge later.

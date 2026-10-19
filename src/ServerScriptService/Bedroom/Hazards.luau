@@ -8,7 +8,10 @@
 -- Each hazard model gets a "Fired" attribute (server time) when it goes off, so clients can animate it.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+
+local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig")) :: any
 
 local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
@@ -37,16 +40,16 @@ function Hazards.start(bedroom: Model)
 		})
 	end
 	for _, trap in folder:WaitForChild("Traps"):GetChildren() do
-		add(trap, "Trap", Vector3.new(16, 8, 8))
+		add(trap, "Trap", Vector3.new(16, 8, 8) * MapConfig.SCALE + Vector3.new(1.5, 2, 1.5))
 	end
 	for _, board in folder:WaitForChild("LooseBoards"):GetChildren() do
-		add(board, "Board", Vector3.new(17, 6, 5))
+		add(board, "Board", Vector3.new(17, 6, 5) * MapConfig.SCALE + Vector3.new(1.5, 2, 1.5))
 	end
 	for _, duck in folder:WaitForChild("Ducks"):GetChildren() do
-		add(duck, "Duck", Vector3.new(8, 12, 7))
+		add(duck, "Duck", Vector3.new(8, 12, 7) * MapConfig.SCALE + Vector3.new(1.5, 2, 1.5))
 	end
 	for _, brick in folder:WaitForChild("Bricks"):GetChildren() do
-		add(brick, "Brick", Vector3.new(7.5, 10, 4.5))
+		add(brick, "Brick", Vector3.new(7.5, 10, 4.5) * MapConfig.SCALE + Vector3.new(1.5, 2, 1.5))
 	end
 
 	task.spawn(function()

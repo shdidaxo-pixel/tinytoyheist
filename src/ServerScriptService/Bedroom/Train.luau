@@ -12,9 +12,9 @@ local Knock = require(script.Parent.Knock)
 
 local Train = {}
 -- half the size of a car's hit box: along the track, across it, and how high you can be and still get hit
-Train.HALF_LENGTH = 13
-Train.HALF_WIDTH = 9
-Train.HEIGHT = 22
+Train.HALF_LENGTH = 13 * MapConfig.SCALE + 2
+Train.HALF_WIDTH = 9 * MapConfig.SCALE + 2
+Train.HEIGHT = 22 * MapConfig.SCALE + 4
 
 function Train.start()
 	local path = MapConfig.trackPath()
@@ -25,7 +25,7 @@ function Train.start()
 			local roots = {}
 			for _, player in Players:GetPlayers() do
 				local root = Knock.root(player)
-				if root and root.Position.Z > 540 and Knock.ready(player) then
+				if root and root.Position.Z > 540 * MapConfig.SCALE and Knock.ready(player) then
 					table.insert(roots, { player = player, root = root })
 				end
 			end
@@ -45,7 +45,9 @@ function Train.start()
 						and offset.Y < Train.HEIGHT
 					then
 						-- thrown forward and off to the side you were on
-						local from = position - direction * 20 - across * math.sign(side + 1e-3) * 10
+						local from = position
+							- direction * 20 * MapConfig.SCALE
+							- across * math.sign(side + 1e-3) * 10 * MapConfig.SCALE
 						Knock.hit(r.player, from, { message = "Hit by the train!", push = 80, stun = 1.6 })
 					end
 				end

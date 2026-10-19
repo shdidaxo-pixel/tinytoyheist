@@ -9,23 +9,46 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig")) :: any
+local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
 
 local Cat = {}
-Cat.CALM = { sight = 60, stalk = 9, patrol = 8, pounceFrom = 26 }
-Cat.ANGRY = { sight = 150, stalk = 22, patrol = 12, pounceFrom = 40 }
-Cat.LEAP_SPEED = 75
+local S = MapConfig.SCALE -- the room (and the cat) are shrunk; distances that come from its size shrink too
+Cat.CALM = { sight = 70, stalk = 9, patrol = 8, pounceFrom = 26 * S }
+Cat.ANGRY = { sight = 130, stalk = 20, patrol = 12, pounceFrom = 40 * S }
+Cat.CARRY_SIGHT = 1.6 -- a mouse dragging a toy is noticed from further away
+Cat.LEAP_SPEED = 75 * S
 Cat.LEAP_TIME = 0.45
-Cat.HIT_RADIUS = 16
+Cat.HIT_RADIUS = 16 * S + 2
 Cat.REST = 2.5 -- seconds it sits after a pounce
+Cat.HEARS_GRAB = 700 -- it hears a toy being grabbed this far away (full-size studs: the whole start area)
+Cat.ALERT_TIME = 12 -- and comes for that mouse for this long
+Cat.RUN = 15 -- how fast it comes: just slower than a mouse with a Small toy, faster than with a bigger one
 Cat.FAST = 12 -- a mouse moving faster than this catches its eye (calm)
 
 -- Keep a point where the cat may walk: inside the run, away from the homes, off the furniture
 local function allowed(p: Vector3): Vector3
-	local x = math.clamp(p.X, -185, 185)
-	local z = math.clamp(p.Z, MapConfig.CAT.minZ, MapConfig.LENGTH - 50)
+	local edge = MapConfig.HALF_WIDTH - 25 * S
+	local x = math.clamp(p.X, -edge, edge)
+	local z = math.clamp(p.Z, MapConfig.CAT.minZ, MapConfig.LENGTH - 50 * S)
+	-- never into the safe ring: stay just inside its inner edge
+	local cz = MapConfig.HOME_CURVE_CENTER_Z
+	local fromCentre = Vector3.new(x, 0, z - cz)
+	if z < cz and fromCentre.Magnitude > MapConfig.SAFE_RADIUS - 8 * S then
+		local inside = fromCentre.Unit * (MapConfig.SAFE_RADIUS - 8 * S)
+		x, z = inside.X, cz + inside.Z
+	end
+	-- round the tower and the fallen block
+	for _, c in MapConfig.KEEP_OUTS do
+		local d = Vector3.new(x - c[1], 0, z - c[2])
+		local r = c[3] + 20 * S
+		if d.Magnitude < r then
+			local out = (if d.Magnitude > 0.01 then d.Unit else Vector3.xAxis) * r
+			x, z = c[1] + out.X, c[2] + out.Z
+		end
+	end
 	for _, f in MapConfig.FOOTPRINTS do
-		local x0, z0, x1, z1 = f[1] - 22, f[2] - 22, f[3] + 22, f[4] + 22
+		local x0, z0, x1, z1 = f[1] - 22 * S, f[2] - 22 * S, f[3] + 22 * S, f[4] + 22 * S
 		if x > x0 and x < x1 and z > z0 and z < z1 then
 			-- step out of the footprint the shortest way
 			local options = { { x0 - x, 0 }, { x1 - x, 0 }, { 0, z0 - z }, { 0, z1 - z } }
@@ -53,6 +76,12 @@ function Cat.start(bedroom: Model)
 	local angle = math.atan2((position.Z - centre.Z) / half.Z, (position.X - centre.X) / half.X)
 	local state = "Patrol"
 	local target: Player? = nil
+	local alerted: { [Player]: number } = {} -- mice it heard grabbing a toy, until when
+	Events.ToyGrabbed.Event:Connect(function(player: Player, at: Vector3)
+		if typeof(at) == "Vector3" and (Vector3.new(at.X, 0, at.Z) - position).Magnitude <= Cat.HEARS_GRAB * S then
+			alerted[player] = os.clock() + Cat.ALERT_TIME
+		end
+	end)
 	local leapFrom, leapDir, leapAt = position, facing, 0
 	local restUntil = 0
 
@@ -97,11 +126,22 @@ function Cat.start(bedroom: Model)
 					if root and inPlay(root.Position) and Knock.ready(player) then
 						local distance = (Vector3.new(root.Position.X, 0, root.Position.Z) - position).Magnitude
 						local velocity = root.AssemblyLinearVelocity
+						local heard = (alerted[player] or 0) > os.clock()
 						local interesting = aggressive
+							or heard
 							or player:GetAttribute("Carrying")
 							or Vector3.new(velocity.X, 0, velocity.Z).Magnitude > Cat.FAST
 							or player == target
-						local sight = if player == target then tune.sight * 1.5 else tune.sight
+						local sight = tune.sight
+						if player:GetAttribute("Carrying") then
+							sight *= Cat.CARRY_SIGHT
+						end
+						if player == target then
+							sight *= 1.5
+						end
+						if heard then
+							sight = math.max(sight, Cat.HEARS_GRAB * S * 1.3)
+						end
 						if interesting and distance <= sight and distance < bestDistance then
 							best, bestDistance = player, distance
 						end
@@ -118,35 +158,37 @@ function Cat.start(bedroom: Model)
 						leapDir = (goal - position).Unit
 						facing = leapDir
 					else
-						moveToward(goal, tune.stalk, dt)
+						local running = (alerted[target :: Player] or 0) > os.clock()
+						moveToward(goal, if running then math.max(tune.stalk, Cat.RUN) else tune.stalk, dt)
 					end
 				else
 					state = "Patrol"
 					-- walk the ellipse at an even pace
 					local tangent = Vector3.new(-half.X * math.sin(angle), 0, half.Z * math.cos(angle))
 					local onRing = centre + Vector3.new(half.X * math.cos(angle), 0, half.Z * math.sin(angle))
-					if (onRing - position).Magnitude > 6 then
-						moveToward(onRing, tune.patrol, dt)
-					else
+					-- the point on the ring keeps moving even if something is in the way, so it never gets stuck
+					if (onRing - position).Magnitude < 40 * S then
 						angle += tune.patrol * dt / tangent.Magnitude
-						moveToward(
-							centre + Vector3.new(half.X * math.cos(angle), 0, half.Z * math.sin(angle)),
-							tune.patrol * 1.5,
-							dt
-						)
+					else
+						angle += tune.patrol * 0.3 * dt / tangent.Magnitude
 					end
+					moveToward(
+						centre + Vector3.new(half.X * math.cos(angle), 0, half.Z * math.sin(angle)),
+						tune.patrol * 1.5,
+						dt
+					)
 				end
 			elseif state == "Pounce" then
 				local u = (os.clock() - leapAt) / Cat.LEAP_TIME
 				position = allowed(leapFrom + leapDir * Cat.LEAP_SPEED * Cat.LEAP_TIME * math.min(u, 1))
-				hop = math.sin(math.min(u, 1) * math.pi) * 12
+				hop = math.sin(math.min(u, 1) * math.pi) * 12 * S
 				tilt = 0.18 * math.sin(math.min(u, 1) * math.pi)
 				-- anyone under the cat as it lands gets knocked over
 				for _, player in Players:GetPlayers() do
 					local root = Knock.root(player)
 					if root and inPlay(root.Position) then
 						local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
-						if (flat - position).Magnitude <= Cat.HIT_RADIUS and root.Position.Y < 30 then
+						if (flat - position).Magnitude <= Cat.HIT_RADIUS and root.Position.Y < 30 * S + 6 then
 							Knock.hit(
 								player,
 								position - leapDir * 10,
@@ -176,6 +218,7 @@ function Cat.start(bedroom: Model)
 		end
 	end)
 	Players.PlayerRemoving:Connect(function(player)
+		alerted[player] = nil
 		if target == player then
 			target = nil
 		end

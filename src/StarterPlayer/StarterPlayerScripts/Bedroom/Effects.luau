@@ -117,7 +117,8 @@ local function watchHazards(hazards: Instance)
 			continue
 		end
 		local base = trap.PrimaryPart :: BasePart
-		local hinge = base.CFrame * CFrame.new(6, 2.8 - 1.2, 0)
+		local s = base.Size.X / 30 -- the trap was built 30 long, then shrunk with the room
+		local hinge = base.CFrame * CFrame.new(6 * s, (2.8 - 1.2) * s, 0)
 		local bail: { BasePart } = {}
 		for _, p in trap:GetChildren() do
 			if p:IsA("BasePart") and p.Name == "Bail" then

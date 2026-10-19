@@ -37,6 +37,29 @@ local function homeOf(player: Player): Model?
 end
 Homes.homeOf = homeOf
 
+-- Rebuild a home's level dressing and wheel. The look is built at the map's full size (like the map builder does)
+-- and the new parts are then shrunk about the room's start by MapConfig.SCALE, so they land in the scaled world.
+function Homes.relevel(hole: Model, level: number)
+	local before = {}
+	for _, c in hole:GetChildren() do
+		before[c] = true
+	end
+	HomeLook.applyLevel(Kit, MapConfig.unscaled, hole, level)
+	local holder = Instance.new("Model")
+	for _, c in hole:GetChildren() do
+		if not before[c] then
+			c.Parent = holder
+		end
+	end
+	holder.Parent = Workspace
+	holder.WorldPivot = CFrame.new()
+	holder:ScaleTo(MapConfig.SCALE)
+	for _, c in holder:GetChildren() do
+		c.Parent = hole
+	end
+	holder:Destroy()
+end
+
 local function refreshSign(hole: Model)
 	local sign = hole:FindFirstChild("Sign") :: BasePart?
 	if not sign then
@@ -242,7 +265,7 @@ function Homes.start(bedroom: Model)
 		refreshSign(hole)
 		hole:GetAttributeChangedSignal("Level"):Connect(function()
 			local level = math.clamp(hole:GetAttribute("Level") :: number, 1, #MapConfig.HOLE_LEVELS)
-			HomeLook.applyLevel(Kit, MapConfig, hole, level)
+			Homes.relevel(hole, level)
 			refreshSign(hole)
 		end)
 		local pin = hole:FindFirstChild("LockButton")

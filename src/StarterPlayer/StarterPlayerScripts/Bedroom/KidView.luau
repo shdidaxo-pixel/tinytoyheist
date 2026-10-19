@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig")) :: any
 
 local KidView = {}
+local S = MapConfig.SCALE -- the Kid was built full size and shrunk with the room
 
 -- the lying-down parts that hide when he sits up (the lump under the duvet stays: his legs)
 local LYING = {
@@ -140,21 +141,21 @@ function KidView.start(bedroom: Model)
 			local moved = (walkerCurrent.Position - lastWalker).Magnitude
 			lastWalker = walkerCurrent.Position
 			speed += (moved / math.max(dt, 1e-3) - speed) * math.min(1, dt * 6)
-			stride += dt * (1 + speed * 0.12)
-			local amount = math.clamp(speed / 8, 0, 1)
-			local bob = math.abs(math.sin(stride * 2)) * 4 * amount
+			stride += dt * (1 + speed * 0.12 / S)
+			local amount = math.clamp(speed / (8 * S), 0, 1)
+			local bob = math.abs(math.sin(stride * 2)) * 4 * S * amount
 			walkerRoot.CFrame = walkerCurrent
 			for _, limb in limbs do
 				local cf
 				if limb.kind == "Leg" then
-					local hip = CFrame.new(limb.side * 20, 86, 0)
+					local hip = CFrame.new(limb.side * 20 * S, 86 * S, 0)
 					cf = walkerCurrent
 						* hip
 						* CFrame.Angles(math.sin(stride + (limb.side + 1) * 0.5 * math.pi) * 0.45 * amount, 0, 0)
 						* hip:Inverse()
 						* limb.offset
 				elseif limb.kind == "Arm" then
-					local shoulder = CFrame.new(limb.side * 53, 156, 0)
+					local shoulder = CFrame.new(limb.side * 53 * S, 156 * S, 0)
 					cf = walkerCurrent
 						* CFrame.new(0, bob, 0)
 						* shoulder

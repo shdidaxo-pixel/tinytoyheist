@@ -4,7 +4,9 @@
 --   local s = game.ServerStorage.TinyToyHeistTests["MapConfig.spec"]:Clone()
 --   print(require(s)(game.ReplicatedStorage.Shared:Clone()))
 return function(shared: Folder)
-	local MapConfig = require(shared:WaitForChild("MapConfig")) :: any
+	local Scaled = require(shared:WaitForChild("MapConfig")) :: any
+	-- the full-size layout; the checks below are in its numbers (the game sees them times SCALE)
+	local MapConfig = Scaled.unscaled
 	local checks = 0
 	local function check(ok: boolean, message: string)
 		assert(ok, message)
@@ -156,6 +158,19 @@ return function(shared: Folder)
 		local target = MapConfig.flashlightTarget(t)
 		check(MapConfig.inRoom(target), "flashlight target in the room at t " .. t)
 	end
+
+	-- The scaled config is the full-size one shrunk evenly
+	local S = Scaled.SCALE
+	check(S > 0.3 and S <= 1, "scale " .. S)
+	check(near(Scaled.HALF_WIDTH, MapConfig.HALF_WIDTH * S), "scaled half width")
+	check(near(Scaled.LENGTH, MapConfig.LENGTH * S), "scaled length")
+	for i = 1, MapConfig.HOLE_COUNT do
+		check((Scaled.homeFront(i) - MapConfig.homeFront(i) * S).Magnitude < 1e-3, "scaled home " .. i)
+	end
+	check(near(Scaled.trackPath().length, path.length * S, 2), "scaled track length")
+	check(#Scaled.toySpawns() == #spawns, "same spawns when scaled")
+	check((Scaled.flashlightTarget(1) - MapConfig.flashlightTarget(1) * S).Magnitude < 1e-3, "scaled flashlight")
+	check(near(Scaled.noiseAt(Vector3.new(-150, 0, 1500) * S), 3), "scaled creaky noise")
 
 	return {
 		checks = checks,

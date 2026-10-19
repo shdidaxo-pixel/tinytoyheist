@@ -5,6 +5,8 @@
 --   ServerStorage.BedroomEvents.MakeNoise    (BindableEvent) fire with (position, points, kind) to make noise: kind
 --                                            "Drag" or "Step" counts the floor under it (MapConfig.noiseAt); any other
 --                                            kind ("Spike", "Board", "Duck", ...) only the baby monitor's zone.
+--   ServerStorage.BedroomEvents.ToyGrabbed   (BindableEvent) fired with (player, position) when someone grabs a
+--                                            sleeping toy: the cat hears the rustle and comes running.
 --   ReplicatedStorage.BedroomRemotes.Knocked     server -> client: (push: Vector3, stun: number, message: string)
 --   ReplicatedStorage.BedroomRemotes.NoiseRipple server -> clients: (position: Vector3, points: number)
 -- Whether a player is carrying is read from the Player attribute "Carrying" (truthy = carrying).
@@ -29,6 +31,7 @@ local remotes = child(ReplicatedStorage, "Folder", "BedroomRemotes")
 return {
 	DropCarried = child(bindables, "BindableEvent", "DropCarried") :: BindableEvent,
 	MakeNoise = child(bindables, "BindableEvent", "MakeNoise") :: BindableEvent,
+	ToyGrabbed = child(bindables, "BindableEvent", "ToyGrabbed") :: BindableEvent,
 	Knocked = child(remotes, "RemoteEvent", "Knocked") :: RemoteEvent,
 	NoiseRipple = child(remotes, "RemoteEvent", "NoiseRipple") :: RemoteEvent,
 }

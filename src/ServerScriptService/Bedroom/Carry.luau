@@ -313,6 +313,7 @@ function Carry.start(bedroom: Model)
 		carrying[player] = { blanket = blanket, data = data, size = size, weld = weld, baseSpeed = base }
 		player:SetAttribute("Carrying", if id ~= "" then id else "Toy")
 		player:SetAttribute("CarrySize", size)
+		Events.ToyGrabbed:Fire(player, root.Position)
 	end
 
 	-- Into your own home: the toy wakes up in your pen

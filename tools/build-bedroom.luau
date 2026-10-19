@@ -20,7 +20,8 @@ end
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local pieces = ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom")
-local MapConfig = fresh(Shared:WaitForChild("MapConfig"))
+local Scaled = fresh(Shared:WaitForChild("MapConfig"))
+local MapConfig = Scaled.unscaled -- built full size, then shrunk to Scaled.SCALE at the end
 local BedroomLighting = fresh(Shared:WaitForChild("BedroomLighting"))
 local Kit = fresh(pieces:WaitForChild("Kit"))
 local started = os.clock()
@@ -61,6 +62,19 @@ for _, point in MapConfig.toySpawns() do
 	)
 end
 
+-- Shrink the whole room to MapConfig.SCALE about the start of the room on the floor, so the world matches the scaled
+-- numbers game code reads. Attributes measured in studs shrink with it.
+bedroom.WorldPivot = CFrame.new()
+bedroom:ScaleTo(Scaled.SCALE)
+for _, d in bedroom:GetDescendants() do
+	for _, name in { "PenMin", "PenMax", "PenTop" } do
+		local v = d:GetAttribute(name)
+		if v ~= nil then
+			d:SetAttribute(name, v * Scaled.SCALE)
+		end
+	end
+end
+
 BedroomLighting.apply(BedroomLighting.Night, 0)
 
 local parts, lights = 0, 0
@@ -78,5 +92,6 @@ return {
 	toySpawns = string.format("%d S, %d M, %d L", counts.S, counts.M, counts.L),
 	floorTiles = room.floorTiles,
 	trackPieces = landmarks.trackPieces,
+	scale = Scaled.SCALE,
 	seconds = math.floor((os.clock() - started) * 10) / 10,
 }

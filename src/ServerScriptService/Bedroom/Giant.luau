@@ -27,10 +27,10 @@ Giant.AWAKE = 60
 Giant.DRAIN = 2 -- meter points a second while asleep
 Giant.FLASHLIGHT_ON = 80
 Giant.FLASHLIGHT_OFF = 60
-Giant.BEAM_RADIUS = 34 -- the pool of light on the floor
+Giant.BEAM_RADIUS = 34 * MapConfig.SCALE -- the pool of light on the floor
 Giant.BACK_TO_BED = 12
 Giant.WALK_SPEED = 13 -- a little slower than a mouse, faster than one dragging a Medium or Large toy
-Giant.REACH = 34
+Giant.REACH = 34 * MapConfig.SCALE + 4
 Giant.HEARING = 5 -- seconds of noise he remembers when choosing where to go
 Giant.heard = {} :: { { position: Vector3, points: number, at: number } }
 
@@ -150,10 +150,12 @@ function Giant.start(bedroom: Model)
 	local position = Vector3.new(home.Position.X, 0, home.Position.Z)
 	local facing = Vector3.new(0, 0, -1)
 	local function allowed(p: Vector3): Vector3
-		local x = math.clamp(p.X, -170, 170)
-		local z = math.clamp(p.Z, 640, MapConfig.LENGTH - 60)
+		local S = MapConfig.SCALE
+		local edge = MapConfig.HALF_WIDTH - 40 * S
+		local x = math.clamp(p.X, -edge, edge)
+		local z = math.clamp(p.Z, 640 * S, MapConfig.LENGTH - 60 * S)
 		for _, f in MapConfig.FOOTPRINTS do
-			local x0, z0, x1, z1 = f[1] - 36, f[2] - 36, f[3] + 36, f[4] + 36
+			local x0, z0, x1, z1 = f[1] - 36 * S, f[2] - 36 * S, f[3] + 36 * S, f[4] + 36 * S
 			if x > x0 and x < x1 and z > z0 and z < z1 then
 				local options = { { x0 - x, 0 }, { x1 - x, 0 }, { 0, z0 - z }, { 0, z1 - z } }
 				table.sort(options, function(a, b)
@@ -167,7 +169,7 @@ function Giant.start(bedroom: Model)
 	end
 	local start = allowed(position)
 	local function inRun(p: Vector3): boolean
-		return MapConfig.inRoom(p) and not MapConfig.inSafeZone(p) and p.Z >= 560
+		return MapConfig.inRoom(p) and not MapConfig.inSafeZone(p) and p.Z >= 560 * MapConfig.SCALE
 	end
 	local function setPose()
 		local yaw = math.atan2(-facing.X, -facing.Z)
@@ -209,7 +211,7 @@ function Giant.start(bedroom: Model)
 							best = d
 							goal = flat
 						end
-						if d <= Giant.REACH and root.Position.Y < 80 then
+						if d <= Giant.REACH and root.Position.Y < 80 * MapConfig.SCALE + 6 then
 							Knock.hit(player, position, {
 								message = "The Giant caught you!",
 								push = 90,
@@ -221,14 +223,14 @@ function Giant.start(bedroom: Model)
 				end
 				goal = goal or Vector3.new(0, 0, 1000)
 				local d = Vector3.new(goal.X - position.X, 0, goal.Z - position.Z)
-				if d.Magnitude > 4 then
+				if d.Magnitude > 4 * MapConfig.SCALE then
 					position = allowed(position + d.Unit * math.min(d.Magnitude, Giant.WALK_SPEED * dt))
 					facing = facing:Lerp(d.Unit, math.min(1, dt * 3)).Unit
 				end
 				setPose()
 			elseif state == "BackToBed" and kid:GetAttribute("Walking") then
 				local d = start - position
-				if d.Magnitude < 6 then
+				if d.Magnitude < 6 * MapConfig.SCALE then
 					kid:SetAttribute("Walking", false)
 				else
 					position = allowed(position + d.Unit * math.min(d.Magnitude, Giant.WALK_SPEED * 1.6 * dt))

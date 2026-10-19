@@ -4,20 +4,24 @@
 -- while it patrols and locks on while it hunts, and it crouches as it lands a pounce. Shows the red "!" when hunting.
 -- Every part is placed from its rest offset each frame (relative to the cat's Root), so nothing drifts.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig")) :: any
+
 local CatView = {}
+local S = MapConfig.SCALE -- the cat was built full size and shrunk with the room
 
 -- Joints in the cat's own space (Root at the origin, +X forward, +Y up), from the builder's sizes
 local HIPS = {
-	{ x = -26, z = -11, phase = 0 },
-	{ x = -26, z = 11, phase = math.pi },
-	{ x = 24, z = -11, phase = math.pi },
-	{ x = 24, z = 11, phase = 0 },
+	{ x = -26 * S, z = -11 * S, phase = 0 },
+	{ x = -26 * S, z = 11 * S, phase = math.pi },
+	{ x = 24 * S, z = -11 * S, phase = math.pi },
+	{ x = 24 * S, z = 11 * S, phase = 0 },
 }
-local HIP_Y = 15.5
-local NECK = CFrame.new(30, 39.5, 0)
-local TAIL_BASE = CFrame.new(-34, 29.5, 0)
+local HIP_Y = 15.5 * S
+local NECK = CFrame.new(30 * S, 39.5 * S, 0)
+local TAIL_BASE = CFrame.new(-34 * S, 29.5 * S, 0)
 local HEAD_PARTS = { Head = true, Muzzle = true, Nose = true, Ear = true, Eye = true, Pupil = true, Whisker = true }
 
 type Piece = { part: BasePart, offset: CFrame, kind: string, index: number }
@@ -78,17 +82,17 @@ function CatView.start(bedroom: Model)
 		local moved = (Vector3.new(current.X, 0, current.Z) - Vector3.new(lastPosition.X, 0, lastPosition.Z)).Magnitude
 		lastPosition = current.Position
 		speed += (moved / math.max(dt, 1e-3) - speed) * math.min(1, dt * 8)
-		stride += dt * (1.5 + speed * 0.35)
+		stride += dt * (1.5 + speed * 0.35 / S)
 		local t = os.clock()
 		local state = cat:GetAttribute("State")
 		local hunting = state == "Stalk" or state == "Pounce"
-		local walking = math.clamp(speed / 10, 0, 1)
+		local walking = math.clamp(speed / (10 * S), 0, 1)
 
 		-- crouch low while stalking, spring up on the pounce
 		local wantCrouch = if state == "Stalk" then 1 elseif state == "Pounce" then -0.5 else 0
 		crouch += (wantCrouch - crouch) * math.min(1, dt * 6)
-		local bob = math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4
-		local breathe = math.sin(t * 2) * 0.4
+		local bob = (math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4) * S
+		local breathe = math.sin(t * 2) * 0.4 * S
 		local body = current * CFrame.new(0, bob + breathe * (1 - walking), 0)
 
 		-- the head: looks around on patrol, locks forward when hunting

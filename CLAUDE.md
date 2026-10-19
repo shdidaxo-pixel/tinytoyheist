@@ -8,5 +8,5 @@ Notes, decisions and the devlog live in the Obsidian vault (Games/Tiny Toy Heist
 - **Commit every change.** After each change (code, assets, design files, places), run StyLua and Selene, then
   commit with a short plain message. Don't batch unrelated changes. Videos (*.mp4) stay out of git.
 - **Save the place every time Studio changes.** Tools can't save a place file, so after changing anything in
-  Studio, ask Dylan to save with File > Save to File As into `places/TinyToyHeist-Latest.rbxl`, check the file's
+  Studio, ask Dylan to save with File > Download a Copy into `places/TinyToyHeist-Latest.rbxl`, check the file's
   timestamp, then commit it.

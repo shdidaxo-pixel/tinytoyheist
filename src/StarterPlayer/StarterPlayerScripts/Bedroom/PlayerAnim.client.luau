@@ -9,6 +9,7 @@
 --     (looking about), a Hatch pats the blanket.
 --   Knocked over: arms and legs flailing while you tumble, then dizzy for a moment when you get up.
 --   Celebrating: arms up and two hops after a hatch in your home, a smaller one when you get a toy home.
+--   Holding a toy to show it off (Holding, the hotbar): both arms forward hugging it, bobbing with the walk.
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -57,6 +58,7 @@ type Rig = {
 	extra: { [Joint]: CFrame },
 	drag: number, -- pose weights, eased
 	reach: number,
+	show: number,
 	tumble: number,
 	dizzyUntil: number,
 	cheerAt: number,
@@ -124,6 +126,7 @@ local function setup(player: Player, character: Model)
 		extra = {},
 		drag = 0,
 		reach = 0,
+		show = 0,
 		tumble = 0,
 		dizzyUntil = 0,
 		cheerAt = -100,
@@ -178,6 +181,10 @@ local function build(rig: Rig, now: number, dt: number)
 	end
 	rig.drag = ease(rig.drag, if carrying and not fallen then rig.pull else 0, 6)
 	rig.reach = ease(rig.reach, if holding and not fallen then 1 else 0, 10)
+	-- showing off a toy (Holding); a cheer or a knock-down takes over the arms
+	local cheering = now - rig.cheerAt < 1.1 + 0.6 * rig.cheerSize
+	local showing = typeof(rig.player:GetAttribute("Holding")) == "string" and not carrying
+	rig.show = ease(rig.show, if showing and not fallen and not cheering then 1 else 0, 8)
 	rig.tumble = ease(rig.tumble, if fallen then 1 else 0, 12)
 
 	-- dragging: lean into it, arms back to the load, head up, a tug every step
@@ -236,6 +243,18 @@ local function build(rig: Rig, now: number, dt: number)
 		else
 			add("Neck", CFrame.Angles(-0.15 * w, 0, 0))
 		end
+	end
+
+	-- holding a toy up to show it off (the hotbar): both arms forward, hugging it from below, bobbing with the walk
+	w = rig.show
+	if w > 0.01 then
+		local bob = math.sin(rig.walk * 2) * 0.06 * moving
+		add("Waist", CFrame.Angles(0.06 * w, 0, 0))
+		add("Neck", CFrame.Angles(-0.12 * w, 0, 0))
+		add("RightShoulder", CFrame.Angles((1.05 + bob) * w, 0, -0.3 * w))
+		add("LeftShoulder", CFrame.Angles((1.05 + bob) * w, 0, 0.3 * w))
+		add("RightElbow", CFrame.Angles(0.55 * w, 0, 0))
+		add("LeftElbow", CFrame.Angles(0.55 * w, 0, 0))
 	end
 
 	-- knocked over: flailing

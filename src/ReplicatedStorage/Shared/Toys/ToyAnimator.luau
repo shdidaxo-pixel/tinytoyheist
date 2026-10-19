@@ -12,13 +12,16 @@
 -- Two layers, added together on each group's Motor6D ("Rig.<Group>.Joint"):
 --   1. The idle tracks from the toy's data (Idle = { { target, channel, amp, speed, wave, phase, duty } }, see
 --      tools/toys/README.md): the toy's own little loop.
---   2. Personality, the same for every toy: it breathes, leans into its walk and waddles, eases round when it turns,
---      squashes when it lands a hop (the head and ears sink into the body, then spring back), looks around while it
---      stands still, and now and then does a move. Rarer toys do more, and fancier ones: Common hops and stretches,
---      Rare spins, Legendary flips, Mythic twirls in the air, Secret glitches. A fresh hatch (RevealedAt) plays a big
---      happy jump. Carried off by a thief it struggles and flails; dropped (StolenGlow) it shivers and looks about.
+--   2. Personality, the same for every toy: it breathes; walking, its legs and arms swing in step, it leans in,
+--      waddles and bobs; it eases round when it turns, squashes when it lands a hop (the head and ears sink into the
+--      body, then spring back), looks around while it stands still, and now and then does a move. Rarer toys do more,
+--      and fancier ones: Common hops and stretches, Rare spins, Legendary flips, Mythic twirls in the air, Secret
+--      glitches. A fresh hatch (RevealedAt) plays a big happy jump. Carried off by a thief it struggles and flails;
+--      dropped (StolenGlow) it shivers and looks about; held up in a player's hands (welded to their
+--      HumanoidRootPart, the hotbar) it sways calmly and looks about.
 -- Everything is in studs from the toy's Root size, so it works at any Model:ScaleTo scale. Moving the toy around
--- (roaming a pen) is separate: move the model with PivotTo; the animation plays on top.
+-- (roaming a pen) is separate: move the model with PivotTo; the animation plays on top. How fast it's walking is
+-- measured from how it moves, or read from a "RoamSpeed" attribute (studs a second) if the mover sets one.
 local CollectionService = game:GetService("CollectionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -527,12 +530,14 @@ type Layer = {
 	sq: number,
 	arms: number,
 	flail: number,
+	swing: number, -- the walk cycle, -1..1 (left legs forward when +)
 	flop: number,
 	look: number,
 	tilt: number,
 	t: number,
 }
-local layer: Layer = { body = CFrame.identity, sq = 0, arms = 0, flail = 0, flop = 0, look = 0, tilt = 0, t = 0 }
+local layer: Layer =
+	{ body = CFrame.identity, sq = 0, arms = 0, flail = 0, swing = 0, flop = 0, look = 0, tilt = 0, t = 0 }
 
 local function personality(st: State, now: number, dt: number): Layer
 	local root = st.root
@@ -541,6 +546,9 @@ local function personality(st: State, now: number, dt: number): Layer
 	local pos = cf.Position
 	local carried = root:FindFirstChild("CarryWeld") ~= nil
 	local loose = not carried and st.model:FindFirstChild("StolenGlow") ~= nil
+	-- held up in someone's hands (the hotbar): welded to a player but not being dragged off
+	local holder = root.AssemblyRootPart
+	local held = not carried and holder ~= nil and holder ~= root and holder.Name == "HumanoidRootPart"
 
 	-- how it's moving (the pen roam moves the model; we just watch)
 	local last = st.lastPos or pos
@@ -553,6 +561,13 @@ local function personality(st: State, now: number, dt: number): Layer
 	local inv = 1 / math.max(dt, 1 / 240)
 	local vy = d.Y * inv
 	local flat = Vector3.new(d.X, 0, d.Z).Magnitude * inv
+	-- whatever moves the toy can say how fast it's walking (studs a second); otherwise we measure it
+	local roam = st.model:GetAttribute("RoamSpeed")
+	if typeof(roam) == "number" then
+		flat = roam
+	elseif held then
+		flat = 0 -- the player's moving, not the toy
+	end
 	st.speed += (flat - st.speed) * math.min(1, dt * 10)
 	-- landing a hop: the head sinks in, then springs back
 	if st.vy < -0.6 and vy >= -0.05 and not carried then
@@ -569,7 +584,7 @@ local function personality(st: State, now: number, dt: number): Layer
 	local yaw = math.atan2(-look.X, -look.Z)
 	st.yaw = st.yaw or yaw
 	st.yaw = (st.yaw :: number) + angleDiff(yaw, st.yaw :: number) * math.min(1, dt * 7)
-	local turnLag = math.clamp(angleDiff(st.yaw :: number, yaw), -1.4, 1.4)
+	local turnLag = if held then 0 else math.clamp(angleDiff(st.yaw :: number, yaw), -1.4, 1.4)
 
 	local walking = st.speed > H * 0.05
 	if walking then
@@ -578,7 +593,9 @@ local function personality(st: State, now: number, dt: number): Layer
 		st.still += dt
 	end
 	local walkAmount = math.clamp(st.speed / (H * 0.4), 0, 1)
-	st.walk += flat * dt / (H * 0.3) * math.pi
+	-- the walk cycle: one step every 0.3 of its height walked
+	st.walk += st.speed * dt / (H * 0.3) * math.pi
+	local swing = math.sin(st.walk) * walkAmount
 
 	local t = now - st.t0
 	local p = PERSONALITY[st.rarity] or PERSONALITY.Common
@@ -607,10 +624,26 @@ local function personality(st: State, now: number, dt: number): Layer
 			st.tiltGoal = (math.random() * 2 - 1) * 0.15
 			st.nextLook = now + 0.4 + math.random() * 0.6
 		end
+	elseif held then
+		-- held up to show off: calm and pleased, swaying a little, looking about
+		sq = 0.025 * math.sin(t * 2.2 + st.seed)
+		rz = 0.05 * math.sin(t * 1.6 + st.seed)
+		y = 0.02 * math.abs(math.sin(t * 2))
+		arms = 0.25 + 0.1 * math.sin(t * 1.6)
+		swing = 0
+		if now >= st.nextLook then
+			st.lookGoal = (math.random() * 2 - 1) * 0.6
+			st.tiltGoal = (math.random() * 2 - 1) * 0.15
+			st.nextLook = now + 1.5 + math.random() * 2
+		end
+		if st.move ~= "Hatch" then
+			st.move = nil
+		end
 	else
-		-- walking: lean in and waddle
+		-- walking: lean in, waddle, a little bob each step (legs and arms swing in pose())
 		rx = -0.16 * walkAmount
-		rz = 0.07 * math.sin(st.walk) * walkAmount
+		rz = 0.07 * swing
+		y = 0.03 * math.abs(swing)
 		-- breathing (the head rises and falls a little)
 		sq = 0.025 * math.sin(t * 2.2 + st.seed)
 		-- standing still: look around
@@ -671,6 +704,7 @@ local function personality(st: State, now: number, dt: number): Layer
 	layer.sq = sq + st.sq
 	layer.arms = arms - layer.sq * 2 -- arms splay out as it squashes
 	layer.flail = flail
+	layer.swing = swing
 	layer.flop = flop + st.sq * 2.5 + st.sqv * 0.08
 	layer.look = st.look
 	layer.tilt = st.lookTilt
@@ -729,10 +763,13 @@ local function pose(st: State, t: number, now: number, dt: number)
 				if role == "Head" then
 					e *= CFrame.Angles(0, L.look, 0) * CFrame.Angles(0, 0, L.tilt)
 				elseif role == "Arm" then
+					-- arms swing against the legs as it walks (a +X turn swings a limb forward)
 					local a = L.arms + L.flail * 0.7 * math.sin(L.t * 21 + info.side * 1.3)
-					e *= CFrame.Angles(L.flail * 0.5 * math.sin(L.t * 17 + info.side), 0, a * info.side * 0.6)
+					local pitch = L.flail * 0.5 * math.sin(L.t * 17 + info.side) - 0.4 * L.swing * info.side
+					e *= CFrame.Angles(pitch, 0, a * info.side * 0.6)
 				elseif role == "Leg" then
-					e *= CFrame.Angles(L.flail * 0.6 * math.sin(L.t * 19 + info.side * math.pi), 0, 0)
+					local pitch = L.flail * 0.6 * math.sin(L.t * 19 + info.side * math.pi) + 0.55 * L.swing * info.side
+					e *= CFrame.Angles(pitch, 0, 0)
 				elseif role == "Flop" then
 					e *= CFrame.Angles(L.flop * 0.5, 0, 0)
 				end

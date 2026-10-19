@@ -439,7 +439,6 @@ local function buildToys(ctx: Ctx)
 			})
 			if on then
 				UIKit.icon(s, img("Check"), 22, UDim2.new(1, -3, 0, 3), Vector2.new(1, 0), 8)
-			end
 			if ToySize.isBig(entry.z) then
 				UIKit.text(s, string.upper(entry.z), 11, {
 					color = ToySize.color(entry.z),
@@ -448,6 +447,7 @@ local function buildToys(ctx: Ctx)
 					stroke = 2,
 					z = 8,
 				})
+			end
 			end
 			if entry.l then
 				UIKit.icon(s, img("Lock"), 20, UDim2.fromOffset(3, 3), nil, 8)
@@ -1131,7 +1131,6 @@ local function showReveal(ctx: Ctx, info: any)
 	local pic = UIKit.icon(pop, toyImage(info.id), picSize, UDim2.fromOffset(210, 120), mid, 6)
 	UIKit.bob(pic, 6, 0.8)
 	UIKit.sparkle(pop, UDim2.fromOffset(110, 70), 22)
-	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	-- the size roll: a tilted BIG / HUGE / GIANT stamp that punches in just after the card
 	if ToySize.isBig(info.sizeTier) then
 		local stamp = UIKit.text(
@@ -1154,6 +1153,7 @@ local function showReveal(ctx: Ctx, info: any)
 			UIKit.tween(punch, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
 		end)
 	end
+	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	UIKit.text(pop, info.name, 30, { position = UDim2.fromOffset(210, 196), anchor = Vector2.new(0.5, 0), stroke = 4 })
 	local line = info.rarity .. (if info.mutation then "  ·  " .. string.upper(info.mutation) .. "!" else "")
 	local rarityLabel = UIKit.text(pop, line, 22, {

@@ -6,7 +6,9 @@
 --   Pounce: front legs reach forward and back legs kick out in the air; it lands in a crouch with a puff of dust.
 --   Grooming (Rest after a pounce, and Groom now and then on patrol): crouched, one front paw up, licking it, now and
 --     then rubbing it over an ear, the tail curled round.
---   Lights on (Aggressive): ears flat back, tail up and bristling, and the red "!".
+--   Lights on (Aggressive): ears flat back, tail up and bristling, and the red "!". After a pounce lands it Bites
+--     (braced low, head clamped down, shaking the mouse side to side, tail lashing) and Throws (rears up, a big head
+--     flick up and to the side, front paws lift); LightsOnView holds the mouse at its mouth.
 -- Every part is placed from its rest offset each frame (relative to the cat's Root), so nothing drifts.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -100,7 +102,8 @@ function CatView.start(bedroom: Model)
 	local lastPosition = pivot.Position
 	local speed, stride, lookYaw = 0, 0, 0
 	local crouch, crouchV = 0, 0
-	local groom, angry, air = 0, 0, 0
+	local groom, angry, air, bite = 0, 0, 0, 0
+	local throwAt = -100
 	local lastState: any = nil
 	local flickAt, nextFlick = -100, os.clock() + 3
 	RunService.RenderStepped:Connect(function(dt)
@@ -115,7 +118,7 @@ function CatView.start(bedroom: Model)
 		stride += dt * (1.5 + speed * 0.35 / S)
 		local t = os.clock()
 		local state = cat:GetAttribute("State")
-		local hunting = state == "Stalk" or state == "Pounce"
+		local hunting = state == "Stalk" or state == "Pounce" or state == "Bite" or state == "Throw"
 		local walking = math.clamp(speed / (10 * S), 0, 1)
 
 		-- landing a pounce: a deep crouch that springs back, and a puff
@@ -124,6 +127,9 @@ function CatView.start(bedroom: Model)
 			if VFX then
 				pcall(VFX.burst, "Poof", current.Position - Vector3.new(0, current.Y, 0), { scale = 2.5 })
 			end
+		end
+		if state == "Throw" and lastState ~= "Throw" then
+			throwAt = t
 		end
 		lastState = state
 
@@ -135,8 +141,12 @@ function CatView.start(bedroom: Model)
 		groom += (wantGroom - groom) * math.min(1, dt * 5)
 		angry += ((if cat:GetAttribute("Aggressive") == true then 1 else 0) - angry) * math.min(1, dt * 4)
 		air += ((if state == "Pounce" then 1 else 0) - air) * math.min(1, dt * 14)
+		-- lights on, a mouse in its mouth: braced low, shaking it (Bite), then a flick to fling it (Throw)
+		bite += ((if state == "Bite" then 1 else 0) - bite) * math.min(1, dt * 16)
+		local fling = math.sin(math.clamp((t - throwAt) / 0.45, 0, 1) * math.pi)
+		local shake = math.sin(t * 30) * bite
 
-		local bob = (math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4 - groom * 2.5) * S
+		local bob = (math.abs(math.sin(stride * 2)) * 1.2 * walking - crouch * 4 - groom * 2.5 - bite * 1.5) * S
 		local breathe = math.sin(t * 2) * 0.4 * S
 		local body = current * CFrame.new(0, bob + breathe * (1 - walking), 0)
 		-- prowl: the shoulders roll as it walks
@@ -148,6 +158,8 @@ function CatView.start(bedroom: Model)
 		end
 		-- grooming: the front dips toward the paw
 		body *= BACK_HIP * CFrame.Angles(0, 0, -0.15 * groom) * BACK_HIP:Inverse()
+		-- biting: the front dips, braced; throwing: it rears up
+		body *= BACK_HIP * CFrame.Angles(0, 0, -0.1 * bite + 0.18 * fling) * BACK_HIP:Inverse()
 
 		-- the head: looks around on patrol, locks forward when hunting, licks the paw while grooming
 		local wantYaw = if hunting then 0 else math.sin(t * 0.7) * 0.35
@@ -157,6 +169,8 @@ function CatView.start(bedroom: Model)
 		local neck = NECK
 			* CFrame.Angles(0, lookYaw * (1 - groom) + 0.35 * groom, math.sin(stride * 2) * 0.04 * walking)
 			* CFrame.Angles(0.35 * rub * groom, 0, (-0.6 + lick) * groom - 0.12 * crouch)
+			-- the bite: head clamped down, shaking side to side; the throw: a big flick up and to the side
+			* CFrame.Angles(0.15 * shake, 0.35 * shake + 0.7 * fling, -0.4 * bite + 0.75 * fling)
 			* NECK:Inverse()
 
 		-- an ear flick now and then
@@ -176,6 +190,8 @@ function CatView.start(bedroom: Model)
 				swing += (if front then 0.9 else -0.8) * air
 				-- landing crouch: legs splay a little
 				swing += (if front then -0.25 else 0.25) * math.max(0, crouch - 1)
+				-- biting: legs braced wide; throwing: the front paws come up
+				swing += (if front then 0.3 else -0.2) * bite + (if front then 0.6 else 0) * fling
 				if piece.index == GROOM_PAW then
 					swing += (2.3 + 0.4 * rub + 0.12 * math.sin(t * 11)) * groom
 				end
@@ -197,7 +213,7 @@ function CatView.start(bedroom: Model)
 				if state == "Stalk" then
 					sway = math.sin(t * 9 - k) * 0.03 * k
 				end
-				sway += math.sin(t * 40 + k) * 0.02 * angry + 0.12 * groom
+				sway += math.sin(t * 40 + k) * 0.02 * angry + 0.12 * groom + math.sin(t * 14 - k) * 0.05 * bite
 				local lift = 0.05 * k + (if hunting then 0.12 else 0) + 0.12 * angry - 0.06 * groom
 				cf = body * TAIL_BASE * CFrame.Angles(0, sway * k * 0.6, lift) * TAIL_BASE:Inverse() * piece.offset
 			elseif piece.kind == "Collar" then

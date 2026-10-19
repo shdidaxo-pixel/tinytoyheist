@@ -62,7 +62,7 @@ dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Tiny Toy Heist · Toys · batch 1</div>
+    <div class="eyebrow">Tiny Toy Heist · Toys · all 105</div>
     <h1>Every toy, built and moving</h1>
     <p class="lede">The voxel toy models, with their idle animations, rarity glows and mutations. These are drawn from the same data Studio builds the toys from, so what you see here is what's in the game. Comment on any photo by its number.</p>
     <div class="links"><a href="toy-turntables.html" target="_blank" rel="noopener">Open the 3D turntable</a></div>
@@ -72,7 +72,7 @@ dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
     <div class="note">
       <h2>What's new</h2>
       <ul id="new">
-        <li><strong>This batch: the whole Kid's Bedroom set</strong> (6 MVP toys plus the 8 new ones) as voxel models, with the effects and mutations below. The other rooms, the events and the specials are being built now and will appear on this page as they finish.</li>
+        <li><strong>All 105 toys</strong>: the six room sets of 14, the Halloween, Nightmare Night and Winter lines, and the 3 specials, as voxel models. The 15 MVP toys keep their designs.</li>
         <li>Each toy plays its catalog idle animation (waddle, hop, twirl, pop out…), and the bigger ones have their own little effect: steam, sparks, flames, bubbles.</li>
         <li>Rarity glows you can read at a glance: nothing for Common, a floor ring from Uncommon up, sparkles from Rare, an aura and light for Legendary, Mythic and Secret.</li>
         <li>Sleeping Epic and up toys leak their colour from under the blanket for a second every 8 seconds, and every wake-up bursts confetti and a shockwave in the rarity colour.</li>
@@ -96,10 +96,25 @@ dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
   </section>
 
   <div id="groups"></div>
+
+  <section class="group" id="index" aria-label="The Toy Index" hidden>
+    <div class="grouphead"><h3>The Toy Index</h3><p>Every toy's icon, by set, as the Index book and shop could show them. The ring colour is the toy's rarity.</p></div>
+    <div id="indexsets" class="indexsets"></div>
+  </section>
 </div>
 
 <dialog id="zoom" aria-label="Enlarged photo"><button class="close" id="closezoom">Close</button><img id="zoomimg" alt=""><p id="zoomcap"></p></dialog>
 
+<style>
+.indexsets{display:grid;gap:18px}
+.iset h4{font:900 13px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--safe);margin:0 0 8px}
+.icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.icon{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 6px 8px;display:grid;gap:2px;justify-items:center;text-align:center;min-width:0}
+.icon img{width:100%;max-width:120px;aspect-ratio:1;border-radius:50%;box-shadow:0 0 0 3px var(--ring) inset;background:radial-gradient(circle,#232A55 55%,#161B37)}
+.icon b{font-weight:800;font-size:13px;line-height:1.2}
+.icon span{font:500 11px var(--mono);color:var(--soft)}
+</style>
+<script src="toy-data.js"></script>
 <script>
 const MUTS = [
   ['Gold', '5%', 'x2'], ['Candy', '3%', 'x2.5', 'new'], ['Glitter', '2%', 'x3'], ['Bubble', '1.5%', 'x4', 'new'], ['Shadow', '1%', 'x5'],
@@ -136,13 +151,19 @@ const GROUPS = [
     ['studio-mutations', 'Mutations in Studio', 'Teddy Knight in every mutation, playing.']] },
 ];
 // Photos in this batch. Numbers stay fixed across batches, so a comment keeps pointing at the same photo.
-const HAVE = new Set(['bedroom', 'bedroom-lineup', 'muts', 'muts-duck', 'rarity', 'blanket-bedroom', 'reveal-unicorn', 'reveal-teddy']);
+const HAVE = new Set(['turntable', 'bedroom', 'hallway', 'kitchen', 'livingroom', 'garage', 'attic', 'halloween', 'nightmarenight', 'winter', 'specials', 'muts', 'muts-duck', 'rarity', 'blanket-bedroom', 'reveal-unicorn', 'reveal-teddy', 'bedroom-lineup', 'hallway-lineup', 'kitchen-lineup', 'livingroom-lineup', 'garage-lineup', 'attic-lineup', 'halloween-lineup', 'nightmarenight-lineup', 'winter-lineup', 'specials-lineup', 'icons']);
 if (!HAVE.has('turntable')) document.querySelector('.links').hidden = true;
 let n = 0;
 document.getElementById('groups').innerHTML = GROUPS.map(g => !g.photos.some(([f]) => HAVE.has(f)) ? (n += g.photos.length, '') : `<section class="group" aria-label="${g.title}"><div class="grouphead"><h3>${g.title}</h3><p>${g.note}</p></div>
   <div class="photos${g.wide ? ' wide' : ''}">${g.photos.map(([f, cap, note]) => { n++; if (!HAVE.has(f)) return ''; return `<figure><button class="shot" data-src="toy-renders/${f}.jpg" data-cap="${n}. ${cap}" aria-label="Enlarge photo ${n}: ${cap}">
   <img src="toy-renders/${f}.jpg" alt="${cap}" loading="lazy"><span class="num">${n}</span></button><figcaption><b>${cap}</b>${note ? `<span>${note}</span>` : ''}</figcaption></figure>`; }).join('')}</div></section>`).join('');
 
+if (HAVE.has('icons') && window.TOY_DATA) {
+  const RING = { Common: 'var(--common)', Uncommon: 'var(--uncommon)', Rare: 'var(--rare)', Epic: 'var(--epic)', Legendary: 'var(--legendary)', Mythic: 'var(--mythic)', Secret: 'var(--lamp)' };
+  document.getElementById('indexsets').innerHTML = TOY_DATA.sets.map(s => `<div class="iset"><h4>${s.SetName} · ${s.Toys.length}</h4><div class="icons">${s.Toys.map(t =>
+    `<div class="icon" style="--ring:${RING[t.Rarity]}"><img src="toy-icons/${t.Id}.png" alt="${t.Name}" loading="lazy"><b>${t.Name}</b><span>${t.Rarity} · $${t.Money.toLocaleString('en-US')}/s</span></div>`).join('')}</div></div>`).join('');
+  document.getElementById('index').hidden = false;
+}
 const dlg = document.getElementById('zoom');
 document.getElementById('groups').addEventListener('click', e => { const b = e.target.closest('.shot'); if (!b) return;
   document.getElementById('zoomimg').src = b.dataset.src; document.getElementById('zoomimg').alt = b.dataset.cap; document.getElementById('zoomcap').textContent = b.dataset.cap; dlg.showModal(); });

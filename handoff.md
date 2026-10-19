@@ -1294,7 +1294,8 @@ blankets, the reveal). How to make or edit a toy: `tools/toys/README.md`.
 | Idle animations | `ReplicatedStorage.Shared.Toys.ToyAnimator`, started for you by `StarterPlayerScripts.TinyToyHeistToys.ToyClient` |
 | Effects | `ReplicatedStorage.Shared.Toys.ToyVFX` (rarity, glow tell, reveal) |
 | Mutations | `ReplicatedStorage.Shared.Toys.Mutations` (+ `MutationData` for chances and multipliers) |
-| Review page | `design/toy-turntables.html` (every toy, mutation and view; stills in `design/toy-renders/`) |
+| Review page | `design/toy-turntables.html` (every toy, mutation and view; stills in `design/toy-renders/`); `design/toy-review.html` is the published review |
+| Icons | `design/toy-icons/<Id>.png`, 256 px, transparent, for the Index and shop (`bash tools/toys/make-icons.sh` remakes them) |
 
 ### A toy model
 
@@ -1310,7 +1311,7 @@ blankets, the reveal). How to make or edit a toy: `tools/toys/README.md`.
   `Size` is the toy's natural size. The plan rolls the blanket size first, so if a toy comes out of a different size
   of blanket, scale it: `toy:ScaleTo(ToyBuilder.SIZE_TARGET[blanketSize] / ToyBuilder.SIZE_TARGET[toy:GetAttribute("Size")])`
   (effects and joints scale with it).
-- About 28 blocks per toy on average; blocks under 0.3 studs don't cast shadows.
+- All 105 toys, about 33 blocks each on average (3,500 or so in all); blocks under 0.3 studs don't cast shadows.
 
 ### Recipes
 

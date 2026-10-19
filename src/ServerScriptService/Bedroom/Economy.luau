@@ -1,7 +1,8 @@
 --!strict
 -- Money: every second, each player's awake toys at home pay straight into their cash (auto collect: Dylan, 19 Oct).
 -- Income = the toys' money (base x mutation) x the rebirth bonus x a x2 boost while one runs. The home's sign and
--- the HUD show it (Player and home attribute Income).
+-- the HUD show it (Player and home attribute Income), and so does the player list (leaderstats Cash and Per Sec;
+-- Dylan, 19 Oct: put the cash/s on the base names or the leaderboard instead of a cash pile).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -29,6 +30,27 @@ function Economy.income(player: Player): number
 	return Pens.income(player) * Economy.multiplier(player)
 end
 
+-- The player list: Cash and Per Sec, in short money ("$1.5K")
+local function leaderstats(player: Player): (StringValue, StringValue)
+	local folder = player:FindFirstChild("leaderstats")
+	if not folder then
+		folder = Instance.new("Folder")
+		folder.Name = "leaderstats"
+		folder.Parent = player
+	end
+	local function stat(name: string): StringValue
+		local v = (folder :: Instance):FindFirstChild(name) :: StringValue?
+		if not v then
+			local made = Instance.new("StringValue")
+			made.Name = name
+			made.Parent = folder
+			v = made
+		end
+		return v :: StringValue
+	end
+	return stat("Cash"), stat("Per Sec")
+end
+
 function Economy.start(_bedroom: Model)
 	task.spawn(function()
 		while true do
@@ -45,6 +67,9 @@ function Economy.start(_bedroom: Model)
 				if player:GetAttribute("Income") ~= income then
 					player:SetAttribute("Income", income)
 				end
+				local cash, perSec = leaderstats(player)
+				cash.Value = GameConfig.money(player:GetAttribute("Cash") :: number? or 0)
+				perSec.Value = GameConfig.money(income) .. "/s"
 				if s.hole:GetAttribute("Income") ~= income then
 					s.hole:SetAttribute("Income", income)
 					Homes.refreshSign(s.hole)

@@ -1,13 +1,12 @@
 --!strict
 -- The 8 homes at runtime: each player who joins gets a free home (its Owner attribute), spawns on its matchbox bed and
 -- sees their name float over it. The push-pin locks the door for a while (strangers who walk in are pushed back
--- out). Changing a home's Level attribute rebuilds its dressing and Speed wheel. In Studio, empty pens get a few
--- demo toys so the roaming can be seen.
+-- out). Changing a home's Level attribute rebuilds its dressing and Speed wheel.
+-- Empty homes stay at Level 1 with nothing in them.
 -- The look of a home is built by ServerStorage.TinyToyHeistTools.Bedroom.Homes (the same code as the map builder).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -24,7 +23,6 @@ Kit.yieldEvery = 0 -- rebuilds at runtime are small; do them in one go
 local Homes = {}
 Homes.LOCK_TIME = 45
 Homes.CLAIM_ORDER = { 4, 5, 3, 6, 2, 7, 1, 8 } -- the middle of the curve first
-Homes.DEMO_TOYS = { 9, 3, 12, 5, 17, 10, 2, 14 } -- as in the concept render
 
 local holes: Folder
 
@@ -38,14 +36,14 @@ local function homeOf(player: Player): Model?
 end
 Homes.homeOf = homeOf
 
--- Rebuild a home's level dressing and wheel. The look is built at the map's full size (like the map builder does)
--- and the new parts are then shrunk about the room's start by MapConfig.SCALE, so they land in the scaled world.
-function Homes.relevel(hole: Model, level: number)
+-- Build part of a home's look at the map's full size (like the map builder does), then shrink the new parts about
+-- the room's start by MapConfig.SCALE, so they land in the scaled world.
+local function scaledBuild(hole: Model, build: () -> ())
 	local before = {}
 	for _, c in hole:GetChildren() do
 		before[c] = true
 	end
-	HomeLook.applyLevel(Kit, MapConfig.unscaled, hole, level)
+	build()
 	local holder = Instance.new("Model")
 	for _, c in hole:GetChildren() do
 		if not before[c] then
@@ -59,6 +57,27 @@ function Homes.relevel(hole: Model, level: number)
 		c.Parent = hole
 	end
 	holder:Destroy()
+end
+
+-- The Speed wheel has its own level (bought apart from the home): rebuild it at the home's WheelLevel
+function Homes.rewheel(hole: Model, level: number)
+	local old = hole:FindFirstChild("TrainingWheel")
+	if old then
+		old:Destroy()
+	end
+	level = math.clamp(level, 1, #MapConfig.HOLE_LEVELS)
+	scaledBuild(hole, function()
+		local index = hole:GetAttribute("HoleIndex") :: number
+		HomeLook.buildWheel(Kit, MapConfig.unscaled, hole, MapConfig.unscaled.homeFrame(index), level)
+	end)
+end
+
+-- Rebuild a home's level dressing, then its wheel at the wheel's own level
+function Homes.relevel(hole: Model, level: number)
+	scaledBuild(hole, function()
+		HomeLook.applyLevel(Kit, MapConfig.unscaled, hole, level)
+	end)
+	Homes.rewheel(hole, (hole:GetAttribute("WheelLevel") :: number?) or 1)
 end
 
 local function refreshSign(hole: Model)
@@ -109,12 +128,6 @@ local function claim(player: Player)
 		local hole = holes:FindFirstChild("Hole" .. index)
 		if hole and hole:GetAttribute("Owner") == 0 then
 			hole:SetAttribute("Owner", player.UserId)
-			-- your pen starts with only your own toys
-			for _, toy in (hole:FindFirstChild("PenToys") :: Instance):GetChildren() do
-				if toy:GetAttribute("Demo") then
-					toy:Destroy()
-				end
-			end
 			local spawnPad = hole:FindFirstChild("Spawn")
 			if spawnPad and spawnPad:IsA("SpawnLocation") then
 				player.RespawnLocation = spawnPad
@@ -158,102 +171,6 @@ local function lock(hole: Model)
 	end)
 end
 
--- Demo toys for the pens (Studio only): real voxel toys (ServerStorage.TinyToyHeistAssets.Toys, or built from the
--- toy data) when the place has them, otherwise little placeholder figures.
-local function demoToy(index: number, k: number, rng: Random): Model?
-	local size = if k % 5 == 4 then "L" elseif k % 2 == 1 then "M" else "S"
-	local ok, toy = pcall(function()
-		local Toys = Shared:FindFirstChild("Toys")
-		if not Toys then
-			return nil
-		end
-		local ToyCatalog = require(Toys:FindFirstChild("ToyCatalog") :: ModuleScript) :: any
-		local ToyBuilder = require(Toys:FindFirstChild("ToyBuilder") :: ModuleScript) :: any
-		local choices = {}
-		for _, data in ToyCatalog.inSet("Bedroom") do
-			if data.Size == size then
-				table.insert(choices, data)
-			end
-		end
-		if #choices == 0 then
-			choices = ToyCatalog.list()
-		end
-		local data = choices[rng:NextInteger(1, #choices)]
-		-- the prebuilt model when the toy session has exported it, otherwise build it now
-		local assets = ServerStorage:FindFirstChild("TinyToyHeistAssets")
-		local prebuilt = assets and assets:FindFirstChild("Toys") and assets.Toys:FindFirstChild(data.Id)
-		if prebuilt and prebuilt:IsA("Model") then
-			return prebuilt:Clone()
-		end
-		return ToyBuilder.build(data)
-	end)
-	if ok and toy then
-		toy:SetAttribute("Size", toy:GetAttribute("Size") or size)
-		return toy
-	end
-	-- placeholder: a little block figure with two eyes
-	local colors = { 0xFFD43B, 0xF45B5B, 0x3D7BFF, 0xFF7AC8, 0xF6E7CF, 0xD8FF7A, 0x9B7BFF, 0x3DDC97 }
-	local model = Instance.new("Model")
-	model.Name = "PlaceholderToy"
-	local scale = ({ S = 1, M = 1.4, L = 2 } :: any)[size]
-	local color = colors[(index * 3 + k) % #colors + 1]
-	local root = Kit.part(model, "Root", Vector3.new(4, 4, 4) * scale, CFrame.new(0, 2 * scale, 0), color, {
-		material = Enum.Material.SmoothPlastic,
-	})
-	Kit.part(model, "Head", Vector3.new(3, 3, 3) * scale, CFrame.new(0, 5.5 * scale, -0.3 * scale), color, {})
-	for _, x in { -0.7, 0.7 } do
-		Kit.part(
-			model,
-			"Eye",
-			Vector3.new(0.5, 0.8, 0.3) * scale,
-			CFrame.new(x * scale, 6 * scale, -1.85 * scale),
-			0x1A1430,
-			{
-				collide = false,
-			}
-		)
-	end
-	model.PrimaryPart = root
-	model.WorldPivot = CFrame.new()
-	model:SetAttribute("Size", size)
-	return model
-end
-
-local function fillDemoPen(hole: Model)
-	local pen = hole:FindFirstChild("Pen") :: BasePart?
-	local toys = hole:FindFirstChild("PenToys")
-	if not pen or not toys or #toys:GetChildren() > 0 then
-		return
-	end
-	local index = hole:GetAttribute("HoleIndex") :: number
-	local level = hole:GetAttribute("Level") :: number
-	local count = math.min(Homes.DEMO_TOYS[index] or 4, MapConfig.HOLE_LEVELS[level].slots)
-	local rng = Random.new(index * 101)
-	for k = 0, count - 1 do
-		local toy = demoToy(index, k, rng)
-		if toy then
-			toy:SetAttribute("RoamSeed", index * 1000 + k * 37)
-			toy:SetAttribute("Demo", true)
-			local frame = MapConfig.homeFrame(index)
-			local penMin = pen:GetAttribute("PenMin") :: Vector3
-			local penMax = pen:GetAttribute("PenMax") :: Vector3
-			local p = penMin:Lerp(penMax, rng:NextNumber())
-			toy:PivotTo(frame * CFrame.new(p.X, pen:GetAttribute("PenTop") :: number, p.Z))
-			for _, d in toy:GetDescendants() do
-				if d:IsA("BasePart") then
-					d.Anchored = true
-				end
-			end
-			if hole:GetAttribute("Owner") ~= 0 then
-				-- someone moved in while the demo toys were being made
-				toy:Destroy()
-				break
-			end
-			toy.Parent = toys
-		end
-	end
-end
-
 function Homes.start(bedroom: Model)
 	holes = bedroom:WaitForChild("Holes") :: Folder
 	Knock.sendHome = Homes.sendHome
@@ -263,9 +180,11 @@ function Homes.start(bedroom: Model)
 		end
 		hole:SetAttribute("Owner", 0)
 		hole:SetAttribute("Locked", false)
-		if not RunService:IsStudio() and hole:GetAttribute("Level") ~= 1 then
-			-- the map is saved with every theme on show; a real server starts every home at Level 1
+		if hole:GetAttribute("Level") ~= 1 or hole:GetAttribute("WheelLevel") ~= 1 then
+			-- the map is saved with every theme on show; a server starts every home empty at Level 1 (Dylan: "why do
+			-- the other plots have stuff but there isn't even players in it")
 			hole:SetAttribute("Level", 1)
+			hole:SetAttribute("WheelLevel", 1)
 			Homes.relevel(hole, 1)
 		end
 		refreshSign(hole)
@@ -273,6 +192,9 @@ function Homes.start(bedroom: Model)
 			local level = math.clamp(hole:GetAttribute("Level") :: number, 1, #MapConfig.HOLE_LEVELS)
 			Homes.relevel(hole, level)
 			refreshSign(hole)
+		end)
+		hole:GetAttributeChangedSignal("WheelLevel"):Connect(function()
+			Homes.rewheel(hole, (hole:GetAttribute("WheelLevel") :: number?) or 1)
 		end)
 		local pin = hole:FindFirstChild("LockButton")
 		local prompt = pin and pin:FindFirstChild("LockPrompt") :: ProximityPrompt?
@@ -282,9 +204,6 @@ function Homes.start(bedroom: Model)
 					lock(hole)
 				end
 			end)
-		end
-		if RunService:IsStudio() then
-			task.spawn(fillDemoPen, hole)
 		end
 	end
 

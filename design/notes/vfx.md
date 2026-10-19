@@ -115,3 +115,12 @@ If you add a moment, add a row here.
 - Upload the 18 PNGs in `design/vfx/out/` (not `_preview.png`) and paste the ids into `Assets.luau`. Until then they
   only show in Studio (local copies in Studio's `content/textures/TTHVFX1/`; copy `design/vfx/out/*.png` there on a
   new PC or Studio version).
+
+## Tested (19 Oct, Studio Play)
+- Captures in `design/studio-vfx/` (hatch frames + gif, Mythic Giant reveal card, mutation auras, home level-up,
+  Kid awake). A real hatch by another session showed the card waiting for the burst, with rays and confetti.
+- Kid stir/wake: red "!" over him, red edges; lights-on session's banner shows at the same time (fine).
+- The "robbed" moment once showed the camera badly tilted; the shake now takes last frame's wobble off before the
+  camera updates (can't add up). Not re-tested in Play yet.
+- Not captured yet: steal start / success, dropped stolen toy beacon, rare blanket pillar, knocked-down stars,
+  Performance Mode, phone size.

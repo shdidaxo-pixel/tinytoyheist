@@ -11,6 +11,9 @@
 			"StarterPlayerScripts": {
 				"TinyToyHeistUI": {
 					"$path": "src/StarterPlayer/StarterPlayerScripts/TinyToyHeistUI"
+				},
+				"TinyToyHeistToys": {
+					"$path": "src/StarterPlayer/StarterPlayerScripts/TinyToyHeistToys"
 				}
 			}
 		},
@@ -22,6 +25,9 @@
 				"$className": "Folder",
 				"BuildBedroom": {
 					"$path": "tools/build-bedroom.luau"
+				},
+				"BuildToys": {
+					"$path": "tools/toys/build-toys.luau"
 				},
 				"Bedroom": {
 					"$path": "tools/bedroom"

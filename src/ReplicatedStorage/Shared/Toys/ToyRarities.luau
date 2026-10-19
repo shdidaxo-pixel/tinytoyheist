@@ -23,9 +23,9 @@ return {
 		Common = { Ring = 0, Sparkle = 0, Aura = 0, Embers = 0, Light = 0, Tell = false },
 		Uncommon = { Ring = 0.3, Sparkle = 0, Aura = 0, Embers = 0, Light = 0, Tell = false },
 		Rare = { Ring = 0.5, Sparkle = 0.7, Aura = 0, Embers = 0, Light = 0, Tell = false },
-		Epic = { Ring = 0.7, Sparkle = 2, Aura = 0, Embers = 0, Light = 0.6, Tell = true },
-		Legendary = { Ring = 0.85, Sparkle = 3.5, Aura = 0.45, Embers = 0, Light = 1, Tell = true },
-		Mythic = { Ring = 0.95, Sparkle = 3, Aura = 0.55, Embers = 4, Light = 1.3, Tell = true },
-		Secret = { Ring = 1, Sparkle = 6, Aura = 0.6, Embers = 3, Light = 1.5, Tell = true },
+		Epic = { Ring = 0.7, Sparkle = 2, Aura = 0, Embers = 0, Light = 0, Tell = true },
+		Legendary = { Ring = 0.85, Sparkle = 3.5, Aura = 0.3, Embers = 0, Light = 0.9, Tell = true },
+		Mythic = { Ring = 0.95, Sparkle = 3, Aura = 0.38, Embers = 4, Light = 1.1, Tell = true },
+		Secret = { Ring = 1, Sparkle = 6, Aura = 0.42, Embers = 3, Light = 1.3, Tell = true },
 	},
 }

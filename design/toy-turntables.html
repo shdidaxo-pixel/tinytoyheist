@@ -444,7 +444,7 @@ const MUT_FX = {
   },
   Glow(o, each) {
     const H = o.userData.size.y;
-    each((m, b) => { if (DARK(b.color)) return; m.color.copy(b.color).lerp(C3('#A8FFBF'), .62); m.emissive.copy(m.color); m.emissiveIntensity = .55; });
+    each((m, b) => { if (DARK(b.color)) return; m.color.copy(b.color).lerp(C3('#2FC46A'), .7); m.emissive.copy(m.color); m.emissiveIntensity = .55; });
     const L = new THREE.PointLight(LIN(0x7CFF9A), 1.3, H * 2.6, 1.2); L.position.set(0, H * .5, 0); o.add(L);
     return [new Emitter(o, { tex: 'glow', rate: 3, life: 1.6, size: [.2, .38], from: 'volume', vel: [0, .6, 0], fade: 'twinkle', colors: ['#B8FFC8', '#E6FFD0'] }), { update() {}, dispose() { o.remove(L); } }];
   },

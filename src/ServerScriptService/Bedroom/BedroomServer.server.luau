@@ -1,5 +1,6 @@
 --!strict
--- Starts the Kid's Bedroom: homes, the Giant's wake meter and flashlight, the train, the cat and the small hazards.
+-- Starts the Kid's Bedroom: the game (saving, homes and pens, money, upgrades, raids, rewards), the Giant's wake
+-- meter and flashlight, the train, the cat and the small hazards.
 -- The map itself (Workspace.Bedroom) is built in Edit mode by tools/build-bedroom.luau.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,7 +11,11 @@ local BedroomLighting = require(ReplicatedStorage:WaitForChild("Shared"):WaitFor
 
 BedroomLighting.apply(BedroomLighting.Night, 0)
 
-for _, name in { "Homes", "Carry", "Giant", "Train", "Cat", "Hazards" } do
+-- Game systems first (they hook into PlayerData), then the hazards; PlayerData starts last so every system is
+-- listening before the first profile loads.
+for _, name in
+	{ "Homes", "Pens", "Carry", "Economy", "Upgrades", "Raids", "Rewards", "Giant", "Train", "Cat", "Hazards" }
+do
 	local ok, err = pcall(function()
 		local system = require(script.Parent:WaitForChild(name)) :: any
 		system.start(bedroom)
@@ -18,4 +23,33 @@ for _, name in { "Homes", "Carry", "Giant", "Train", "Cat", "Hazards" } do
 	if not ok then
 		warn(`Bedroom: {name} didn't start: {err}`)
 	end
+end
+
+local PlayerData = require(script.Parent:WaitForChild("PlayerData")) :: any
+PlayerData.start()
+
+-- Studio only: ServerStorage.GameDebug (BindableFunction) lets the command bar and test tools poke the game,
+-- e.g. GameDebug:Invoke("cash", player, 1e6), ("give", player, "M"), ("profile", player).
+if game:GetService("RunService"):IsStudio() then
+	local debug = Instance.new("BindableFunction")
+	debug.Name = "GameDebug"
+	debug.OnInvoke = function(command: string, player: Player, arg: any): any
+		local Carry = require(script.Parent.Carry) :: any
+		local profile = PlayerData.get(player)
+		if command == "cash" and profile then
+			PlayerData.addCash(player, arg)
+			PlayerData.changed(player)
+		elseif command == "give" then
+			return Carry.giveSleeping(player, arg or "S")
+		elseif command == "profile" then
+			return game:GetService("HttpService"):JSONEncode(profile)
+		elseif command == "set" and profile then
+			for k, v in arg do
+				(profile :: any)[k] = v
+			end
+			PlayerData.changed(player)
+		end
+		return true
+	end
+	debug.Parent = game:GetService("ServerStorage")
 end

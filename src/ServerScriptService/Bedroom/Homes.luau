@@ -13,6 +13,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
+local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local pieces = ServerStorage:WaitForChild("TinyToyHeistTools"):WaitForChild("Bedroom")
 local Kit = require(pieces:WaitForChild("Kit")) :: any
 local HomeLook = require(pieces:WaitForChild("Homes")) :: any
@@ -81,7 +82,7 @@ local function refreshSign(hole: Model)
 		HomeLook.setSign(
 			sign,
 			if owner then owner.DisplayName else "EMPTY HOME",
-			if owner then string.format("Lv %d · $%d/s", level, income) else "Lv " .. level
+			if owner then "Lv " .. level .. " · " .. GameConfig.money(income) .. "/s" else "Lv " .. level
 		)
 	end
 end
@@ -262,6 +263,11 @@ function Homes.start(bedroom: Model)
 		end
 		hole:SetAttribute("Owner", 0)
 		hole:SetAttribute("Locked", false)
+		if not RunService:IsStudio() and hole:GetAttribute("Level") ~= 1 then
+			-- the map is saved with every theme on show; a real server starts every home at Level 1
+			hole:SetAttribute("Level", 1)
+			Homes.relevel(hole, 1)
+		end
 		refreshSign(hole)
 		hole:GetAttributeChangedSignal("Level"):Connect(function()
 			local level = math.clamp(hole:GetAttribute("Level") :: number, 1, #MapConfig.HOLE_LEVELS)

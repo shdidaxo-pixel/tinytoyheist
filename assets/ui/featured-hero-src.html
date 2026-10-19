@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent;overflow:hidden}canvas{display:block}#gl{display:none}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head><body><canvas id="out" width="640" height="640"></canvas><script>
+const PALS=[[0x4DA8FF,0xFFFFFF],[0xFF7AA8,0xFFFFFF],[0x3DDC97,0xFFF6D5],[0x9B7BFF,0xFFE07A],[0xFF8A3D,0xFFF1D6],[0x2F6FB9,0xFFD95A],[0xE04848,0xFFFFFF],[0x7FD6E8,0x2B5F8C],[0xF2C6E0,0x9B4D7A],[0xFFD95A,0xE04848]];
+const PATS=['plain','dots','stars','checks'];
+const TOON_GRAD=(()=>{const d=new Uint8Array([95,165,220,255]);const t=new THREE.DataTexture(d,4,1,THREE.LuminanceFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.needsUpdate=true;return t})();
+function fabricTex(main,trim,kind){
+  const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d'),hex=n=>'#'+n.toString(16).padStart(6,'0');
+  g.fillStyle=hex(main);g.fillRect(0,0,256,256);g.fillStyle=hex(trim);
+  if(kind==='dots')for(let y=16;y<256;y+=32)for(let x=(y/32)%2?32:16;x<256;x+=32){g.beginPath();g.arc(x,y,6,0,7);g.fill()}
+  if(kind==='stars'){g.font='bold 24px sans-serif';g.textAlign='center';g.textBaseline='middle';for(let y=20;y<256;y+=42)for(let x=(Math.round(y/42)%2)?42:21;x<256;x+=42)g.fillText('★',x,y)}
+  if(kind==='checks'){g.globalAlpha=.35;for(let y=0;y<256;y+=32)for(let x=(y/32)%2?32:0;x<256;x+=64)g.fillRect(x,y,32,32);g.globalAlpha=1}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
+function blanketMesh(boxes,{pal=PALS[0],pattern='plain',trail=null,trailLen=9}={}){
+  const b=boxes.reduce((a,x)=>a.union(x),new THREE.Box3()),cx=(b.min.x+b.max.x)/2,cz=(b.min.z+b.max.z)/2,TOP=b.max.y;
+  let ext=0;boxes.forEach(bx=>[[bx.min.x,bx.min.z],[bx.max.x,bx.min.z],[bx.min.x,bx.max.z],[bx.max.x,bx.max.z]].forEach(([x,z])=>{ext=Math.max(ext,Math.hypot(x-cx,z-cz))}));
+  const R=ext+3.2,L=2*(R+1),G=48,gs=L/G,ss=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+  const topAt=(x,z)=>{let h=0;for(const bx of boxes)if(x>bx.min.x-.6&&x<bx.max.x+.6&&z>bx.min.z-.6&&z<bx.max.z+.6)h=Math.max(h,bx.max.y);return h};
+  const hf=new Float32Array(G*G);for(let i=0;i<G;i++)for(let k=0;k<G;k++)hf[i*G+k]=topAt(cx-L/2+i*gs,cz-L/2+k*gs);
+  let H=hf;for(let p=0;p<10;p++){const S=new Float32Array(G*G);for(let i=0;i<G;i++)for(let k=0;k<G;k++){let s=0,w=0;for(let a=-1;a<=1;a++)for(let c=-1;c<=1;c++){const ii=i+a,kk=k+c;if(ii>=0&&ii<G&&kk>=0&&kk<G){s+=Math.max(H[ii*G+kk],hf[ii*G+kk]*.92);w++}}S[i*G+k]=s/w}H=S}
+  const hAt=(x,z)=>{const u=(x-cx+L/2)/gs,v=(z-cz+L/2)/gs,i=Math.max(0,Math.min(G-2,Math.floor(u))),k=Math.max(0,Math.min(G-2,Math.floor(v))),fu=Math.min(1,Math.max(0,u-i)),fv=Math.min(1,Math.max(0,v-k));
+    return H[i*G+k]*(1-fu)*(1-fv)+H[(i+1)*G+k]*fu*(1-fv)+H[i*G+k+1]*(1-fu)*fv+H[(i+1)*G+k+1]*fu*fv};
+  const NF=6,ph=Math.random()*6.283,ph2=Math.random()*6.283;
+  const ridge=t=>Math.pow(Math.max(0,Math.cos(NF*t+ph)),2)-.3;
+  const tAng=trail?Math.atan2(trail[1],trail[0]):0,trailExt=t=>trail?trailLen*Math.pow(Math.max(0,Math.cos(t-tAng)),5):0;
+  const baseEdge=t=>R*(.82+.06*Math.sin(t*5+ph2)+.03*Math.sin(t*11+1));
+  const NT=200,NR=72,pos=[],col=[],uv=[],idx=[];
+  for(let a=0;a<=NT;a++){const t=a/NT*Math.PI*2,rd=ridge(t),be=baseEdge(t),fe=be+trailExt(t);let sa=0,px=0,py=0,pz=0;
+    for(let r=0;r<=NR;r++){const f=r/NR,rr=f*fe,fb=rr/be,x=cx+Math.cos(t)*rr,z=cz+Math.sin(t)*rr;let y,sh;
+      if(fb<=1){const dome=TOP*.92*(1-fb*fb*.85);y=(hAt(x,z)*.95+.5)*.55+dome*.45;
+        const k=Math.pow(fb,1.2);y+=rd*k*1.9;const drop=Math.max(0,(fb-.62)/.38);y=y*(1-drop*drop)+(.4+.35*Math.max(0,rd))*drop*drop;
+        sh=1+.1*rd*k}
+      else{const q=fb-1;y=.32+.2*Math.max(0,Math.sin(q*5.5+t*3))+.15*Math.max(0,rd);sh=1+.1*Math.sin(q*5.5+t*3)}
+      if(r===NR)y=.18;
+      const yy=Math.max(.18,y);if(r>0)sa+=Math.hypot(x-px,yy-py,z-pz);px=x;py=yy;pz=z;
+      pos.push(x,yy,z);const s=Math.min(1.08,Math.max(.6,sh));col.push(s,s,s);uv.push(t*rr/6.5,sa/6.5)}}
+  for(let a=0;a<NT;a++)for(let r=0;r<NR;r++){const i0=a*(NR+1)+r,i1=(a+1)*(NR+1)+r;idx.push(i0,i1,i0+1,i0+1,i1,i1+1)}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+  const [main,trim]=pal,mat=new THREE.MeshToonMaterial({color:0xffffff,vertexColors:true,map:fabricTex(main,trim,pattern),gradientMap:TOON_GRAD,transparent:true});
+  const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;
+  const og=geo.clone(),op=og.attributes.position,on=og.attributes.normal;for(let i=0;i<op.count;i++)op.setXYZ(i,op.getX(i)+on.getX(i)*.15,op.getY(i)+on.getY(i)*.15,op.getZ(i)+on.getZ(i)*.15);
+  const outline=new THREE.Mesh(og,new THREE.MeshBasicMaterial({color:0x1A1430,side:THREE.BackSide}));
+  const pts=[];for(let a=0;a<NT;a++){const t=a/NT*Math.PI*2,e=baseEdge(t)+trailExt(t)+.05;pts.push(new THREE.Vector3(cx+Math.cos(t)*e,.26,cz+Math.sin(t)*e))}
+  const lip=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),260,.28,10,true),new THREE.MeshToonMaterial({color:trim,gradientMap:TOON_GRAD}));lip.castShadow=true;
+  const g=new THREE.Group();g.add(outline,mesh,lip);g.userData={mat,extras:[outline,lip]};return g}
+const B=(x,y,z,w,h,d)=>new THREE.Box3(new THREE.Vector3(x,y,z),new THREE.Vector3(x+w,y+h,z+d));
+const SHAPES={
+  S:[B(-3,0,-3,7,4,6),B(-4.5,2,-2,1.5,2.5,4),B(.5,4,-2,4,4,4),B(4.5,5,-1,2,1,2),B(.6,8,-1.8,3.8,1.3,3.6)],
+  M:[B(-3,0,-3,6,6,6),B(-3.6,6,-3,.5,6,6),B(-.75,6,-.75,1.5,3,1.5),B(-2,9,-2,4,4,4),B(-1.5,13,-1.5,3,1.5,3),B(-.75,14.5,-.75,1.5,1.5,1.5),B(3,2.7,-.3,1.2,2.2,.6)],
+  L:[B(-3,3.5,-2,6,5,4),B(-1.5,0,-2,2,4,1.5),B(-1.5,0,.5,2,4,1.5),B(-6,4.5,-1.25,3,2.5,2.5),B(-8.5,4,-.75,2.5,1.5,1.5),B(1,8,-1,2,1.5,2),B(1.5,9,-1.75,5,3,3.5),B(-2,8.5,-.4,1,1,.8),B(-.5,8.5,-.4,1,1,.8),B(1,8.5,-.4,1,1,.8)]};
+const S=640;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setSize(S,S);renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(28,1,0.1,500);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6a5aa8,.75));
+const key=new THREE.DirectionalLight(0xfff2d0,.9);key.position.set(14,26,22);scene.add(key);
+const rim=new THREE.DirectionalLight(0xffd36b,.9);rim.position.set(-20,14,-18);scene.add(rim);
+const m=blanketMesh(SHAPES.L,{pal:[0x8A4BE8,0xFFD95A],pattern:'stars'});scene.add(m);
+const box=new THREE.Box3().setFromObject(m),c=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3());
+m.position.sub(new THREE.Vector3(c.x,box.min.y,c.z));
+const r=Math.max(sz.x,sz.y,sz.z)*0.62;const d=r/Math.sin(THREE.MathUtils.degToRad(14))*0.95;
+camera.position.set(d*0.55,sz.y*0.5+d*0.26,d*0.75);camera.lookAt(0,sz.y*0.5,0);
+renderer.render(scene,camera);
+// compose: golden aura + rays, the blanket, a big gold "?" and sparkles
+const o=document.getElementById('out').getContext('2d');
+const cx=S/2,cy=S*0.6;
+let g=o.createRadialGradient(cx,cy,10,cx,cy,S*0.48);g.addColorStop(0,'rgba(255,226,120,.85)');g.addColorStop(.45,'rgba(255,190,60,.35)');g.addColorStop(1,'rgba(255,170,40,0)');
+o.fillStyle=g;o.fillRect(0,0,S,S);
+o.save();o.translate(cx,cy);o.globalAlpha=.6;for(let i=0;i<16;i++){o.rotate(Math.PI/8);o.beginPath();o.moveTo(0,0);o.lineTo(S*.5,-22);o.lineTo(S*.5,22);o.closePath();const rg=o.createLinearGradient(0,0,S*.5,0);rg.addColorStop(0,'rgba(255,200,60,1)');rg.addColorStop(1,'rgba(255,200,60,0)');o.fillStyle=rg;o.fill()}o.restore();
+o.drawImage(renderer.domElement,0,0);
+o.font='900 170px "Arial Black", Arial, sans-serif';o.textAlign='center';o.textBaseline='middle';
+o.lineJoin='round';o.lineWidth=26;o.strokeStyle='#3A1A00';o.strokeText('?',cx+6,cy-30);
+let tg=o.createLinearGradient(0,cy-130,0,cy+70);tg.addColorStop(0,'#FFF6B0');tg.addColorStop(.5,'#FFC83A');tg.addColorStop(1,'#E08A10');o.fillStyle=tg;o.fillText('?',cx+6,cy-30);
+o.lineWidth=6;o.strokeStyle='rgba(255,255,255,.7)';
+function spark(x,y,s){o.save();o.translate(x,y);o.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?s*.28:s;o.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}o.closePath();o.fillStyle='#FFFFFF';o.fill();o.lineWidth=4;o.strokeStyle='#3A1A00';o.stroke();o.restore()}
+spark(130,170,34);spark(520,140,26);spark(560,380,30);spark(95,420,22);spark(470,250,16);
+document.title='done';
+</script></body></html>

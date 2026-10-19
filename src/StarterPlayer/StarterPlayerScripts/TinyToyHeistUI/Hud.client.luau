@@ -90,7 +90,7 @@ do
 	UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 16) }, scroll)
 
 	-- Small gift button + green Robux price button, used on every card.
-	local function buyRow(parent: Instance, price: string, position: UDim2, width: number)
+	local function buyRow(parent: Instance, price: string, position: UDim2, width: number): { Frame }
 		local giftHolder, giftFace = UIKit.block(parent, {
 			name = "Gift",
 			size = UDim2.fromOffset(44, 44),
@@ -99,7 +99,7 @@ do
 		})
 		UIKit.icon(giftFace, img("Gift"), 30, center, mid)
 		UIKit.clickable(giftHolder)
-		UIKit.button(parent, price, {
+		local priceHolder = UIKit.button(parent, price, {
 			palette = P.green,
 			icon = img("Robux"),
 			size = UDim2.fromOffset(width - 50, 44),
@@ -107,84 +107,158 @@ do
 			textSize = 26,
 			iconSize = 26,
 		})
+		return { giftHolder, priceHolder }
 	end
 
-	-- Featured: the Mystery Blanket with the odds for every rarity.
+	-- Featured: built like Break and Steal an Egg's featured egg. A painted night-bedroom background, a gold ornate
+	-- frame, a big glowing mystery blanket spilling out of the top-left corner, a gold serif title, odds tiles that
+	-- grow with rarity, and price buttons with their labels tucked into the bottom edge.
 	local jump: { [string]: GuiObject } = {}
 	jump.Featured = UIKit.section(scroll, "Featured", nil, 1)
-	local _, card = UIKit.block(scroll, {
-		name = "Mystery Blanket",
-		size = UDim2.fromOffset(712, 318),
-		color = hex("6B2BD9"),
-		radius = 6,
-		layoutOrder = 2,
-	})
-	UIKit.burst(clip(card, 6), UDim2.fromScale(0.85, 0.3), 420, 0.12)
+	local card = UIKit.new("Frame", {
+		Name = "Mystery Blanket",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(712, 344),
+		LayoutOrder = 2,
+	}, scroll)
+	local art = UIKit.new("ImageLabel", {
+		Name = "Art",
+		BackgroundTransparency = 1,
+		Image = img("Featured_bg"),
+		ScaleType = Enum.ScaleType.Crop,
+		Size = UDim2.new(1, -16, 1, -16),
+		Position = UDim2.fromOffset(8, 8),
+		ZIndex = 1,
+	}, card)
+	UIKit.corner(art, 6)
+	UIKit.new("ImageLabel", {
+		Name = "Frame",
+		BackgroundTransparency = 1,
+		Image = img("Featured_frame"),
+		ScaleType = Enum.ScaleType.Stretch,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 7,
+	}, card)
+	local hero = UIKit.new("ImageLabel", {
+		Name = "Hero",
+		BackgroundTransparency = 1,
+		Image = img("Featured_hero"),
+		Size = UDim2.fromOffset(230, 230),
+		Position = UDim2.fromOffset(-14, 8),
+		ZIndex = 8,
+	}, card)
+	UIKit.bob(hero, 5, 1.2)
 	local newTag = UIKit.new("Frame", {
+		Name = "New",
 		BackgroundColor3 = hex("E8202E"),
-		Size = UDim2.fromOffset(76, 32),
-		Position = UDim2.fromOffset(14, 14),
-		ZIndex = 5,
+		Size = UDim2.fromOffset(84, 34),
+		Position = UDim2.fromOffset(18, 22),
+		Rotation = -6,
+		ZIndex = 12,
 	}, card)
 	UIKit.corner(newTag, 4)
 	UIKit.stroke(newTag, hex("2A0306"), 3, true)
-	UIKit.text(newTag, "NEW!", 18, { position = center, anchor = mid, z = 6 })
+	UIKit.text(newTag, "NEW!", 20, { position = center, anchor = mid, z = 13 })
 	UIKit.pulse(newTag, 0.08, 0.6)
-	local title = UIKit.text(card, "MYSTERY BLANKET", 34, {
-		position = UDim2.fromOffset(102, 8),
-		align = Enum.TextXAlignment.Left,
-		stroke = 3.5,
-	})
-	UIKit.new("UIGradient", { Rotation = 90, Color = ColorSequence.new(hex("FFE48A"), hex("D8902A")) }, title)
-	UIKit.text(card, "Limited Time!", 20, { position = UDim2.fromOffset(104, 50) })
-	UIKit.text(card, "5d 10h 46m 46s", 22, { position = UDim2.new(1, -16, 0, 16), anchor = Vector2.new(1, 0) })
-	UIKit.sparkle(card, UDim2.fromOffset(96, 20), 20)
-	UIKit.sparkle(card, UDim2.fromOffset(440, 16), 16)
+	-- gold serif title with a hard dark shadow
+	local serif = Font.new("rbxasset://fonts/families/Merriweather.json", Enum.FontWeight.Heavy)
+	for _, layer in { { hex("2A1600"), 4 }, { UIKit.White, 0 } } do
+		local t = UIKit.text(card, "MYSTERY BLANKET", 34, {
+			font = serif,
+			color = layer[1],
+			stroke = 3,
+			position = UDim2.fromOffset(196, 24 + layer[2]),
+			align = Enum.TextXAlignment.Left,
+			z = if layer[2] > 0 then 9 else 10,
+		})
+		local s = t:FindFirstChildOfClass("UIStroke")
+		if s then
+			s.Color = hex("2A1600")
+		end
+		if layer[2] == 0 then
+			UIKit.new("UIGradient", {
+				Rotation = 90,
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, hex("FFF3A8")),
+					ColorSequenceKeypoint.new(0.5, hex("F2B533")),
+					ColorSequenceKeypoint.new(1, hex("B9741A")),
+				}),
+			}, t)
+		end
+	end
+	UIKit.text(card, "Limited Time!", 20, { position = UDim2.fromOffset(198, 66), z = 10 })
+	UIKit.text(card, "5d 10h 46m 46s", 20, { position = UDim2.new(1, -30, 0, 30), anchor = Vector2.new(1, 0), z = 10 })
+	-- odds tiles: small for common, big for rare, bottoms lined up, sitting over the art (and the hero's hem)
 	local odds = {
-		{ "Common", "45%", "duck" },
-		{ "Uncommon", "30%", "frog" },
-		{ "Rare", "15%", "jack" },
-		{ "Epic", "7%", "robodino" },
-		{ "Legendary", "2.5%", "cosmicteddy" },
-		{ "Mythic", "0.5%", "kingduck" },
+		{ "Common", "45%", "duck", 72 },
+		{ "Uncommon", "30%", "frog", 80 },
+		{ "Rare", "15%", "jack", 90 },
+		{ "Epic", "7%", "robodino", 100 },
+		{ "Legendary", "2.5%", "cosmicteddy", 112 },
+		{ "Mythic", "0.5%", "kingduck", 126 },
 	}
-	for i, o in odds do
-		local big = i == 6
-		local px = if big then 128 else 100
-		local _, t = UIKit.tile(card, {
+	local x = 712 - 26
+	for i = #odds, 1, -1 do
+		x -= odds[i][4]
+		odds[i][5] = x
+		x -= 8
+	end
+	for _, o in odds do
+		local px = o[4]
+		local big = o[1] == "Mythic"
+		local holder, t = UIKit.tile(card, {
 			name = o[1],
 			size = UDim2.fromOffset(px, px),
-			position = UDim2.fromOffset(22 + (i - 1) * 108, if big then 84 else 112), -- 5 x 100 + 128 + gaps = 668, centred
-			top = hex("3A2F5A"),
-			bottom = hex("1E1630"),
+			position = UDim2.fromOffset(o[5], 240 - px),
+			top = hex("2A1A4A"),
+			bottom = hex("100822"),
 			edge = UIKit.Rarity[o[1]],
 			edgeWidth = if big then 4 else 3,
 		})
+		holder.ZIndex = 9
+		t.BackgroundTransparency = 0.12
 		if big then
-			UIKit.burst(clip(t, 4), center, 190, 0.16)
+			local stroke = t:FindFirstChildOfClass("UIStroke")
+			if stroke then
+				stroke.Color = UIKit.White
+				UIKit.new("UIGradient", {
+					Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0, hex("FF4D5E")),
+						ColorSequenceKeypoint.new(0.25, hex("FFD43B")),
+						ColorSequenceKeypoint.new(0.5, hex("5BE36A")),
+						ColorSequenceKeypoint.new(0.75, hex("3DA5FF")),
+						ColorSequenceKeypoint.new(1, hex("B45CFF")),
+					}),
+					Rotation = 45,
+				}, stroke)
+			end
+			UIKit.burst(clip(t, 4), center, 200, 0.18)
 		else
-			UIKit.backing(t, UDim2.fromScale(0.5, 0.48), px * 1.1)
+			UIKit.backing(t, UDim2.fromScale(0.5, 0.46), px * 1.05, 0.3)
 		end
-		local pic = UIKit.icon(t, toy(o[3]), math.floor(px * 0.74), UDim2.fromScale(0.5, 0.48), mid)
+		local pic = UIKit.icon(t, toy(o[3]), math.floor(px * 0.8), UDim2.fromScale(0.5, 0.46), mid)
 		UIKit.hoverWiggle(t, pic)
 		if big then
 			UIKit.pulse(pic, 0.06, 0.9)
 		end
-		UIKit.text(t, o[2], if big then 22 else 18, {
-			color = if big then UIKit.Yellow else UIKit.White,
-			position = UDim2.new(1, -6, 1, -4),
+		UIKit.text(t, o[2], if px >= 110 then 22 else 17, {
+			color = if px >= 110 then UIKit.Yellow else UIKit.White,
+			position = UDim2.new(1, -5, 1, -3),
 			anchor = Vector2.new(1, 1),
 		})
 	end
+	-- price row: gift + green price, label tucked into the bottom edge of the price button
 	for i, buy in { { "3,499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
-		local x = 8 + (i - 1) * 176 -- 4 groups of 168 + 8 gaps = 696, centred in the 712-wide card
-		buyRow(card, buy[1], UDim2.fromOffset(x, 240), 168)
-		UIKit.text(
-			card,
-			buy[2],
-			15,
-			{ stroke = 2.5, position = UDim2.fromOffset(x + 109, 288), anchor = Vector2.new(0.5, 0) }
-		)
+		local gx = 24 + (i - 1) * 168 -- 4 groups of 160 + 8 gaps = 664, inside the gold frame
+		for _, h in buyRow(card, buy[1], UDim2.fromOffset(gx, 252), 160) do
+			h.ZIndex = 10
+		end
+		UIKit.text(card, buy[2], 15, {
+			stroke = 2.5,
+			position = UDim2.fromOffset(gx + 105, 302),
+			anchor = Vector2.new(0.5, 0),
+			z = 12,
+		})
 	end
 
 	-- Game passes: round gold "x2" badges, a title, a line of description and a price.

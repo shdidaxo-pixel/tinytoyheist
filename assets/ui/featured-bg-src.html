@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;overflow:hidden;background:#000}canvas{display:block}</style></head><body>
+<canvas id="c" width="1424" height="600"></canvas><script>
+const c=document.getElementById('c'),g=c.getContext('2d'),W=1424,H=600;
+// sky
+let gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#150832');gr.addColorStop(.55,'#3B1870');gr.addColorStop(1,'#1E0B3E');g.fillStyle=gr;g.fillRect(0,0,W,H);
+// big soft moon glow + moon
+function glow(x,y,r,col,a){const q=g.createRadialGradient(x,y,0,x,y,r);q.addColorStop(0,col.replace('A',a));q.addColorStop(1,col.replace('A',0));g.fillStyle=q;g.fillRect(x-r,y-r,r*2,r*2)}
+glow(980,120,520,'rgba(170,120,255,A)',.45);
+glow(1010,110,160,'rgba(255,240,210,A)',.55);
+const mc=document.createElement('canvas');mc.width=mc.height=140;const mg=mc.getContext('2d');mg.fillStyle='#FFF4D8';mg.beginPath();mg.arc(70,70,56,0,7);mg.fill();mg.globalCompositeOperation='destination-out';mg.beginPath();mg.arc(96,56,52,0,7);mg.fill();g.drawImage(mc,940,40);
+
+// stars
+for(let i=0;i<120;i++){const x=Math.random()*W,y=Math.random()*H*.55,s=Math.random()*2.2+.4;g.fillStyle='rgba(255,255,255,'+(Math.random()*.6+.2)+')';g.beginPath();g.arc(x,y,s,0,7);g.fill()}
+// light rays from top-left
+g.save();g.globalCompositeOperation='lighter';
+for(let i=0;i<7;i++){const a=.35+i*.13;g.save();g.translate(-60,-80);g.rotate(a);const rg=g.createLinearGradient(0,0,1300,0);rg.addColorStop(0,'rgba(255,220,150,.09)');rg.addColorStop(1,'rgba(255,220,150,0)');g.fillStyle=rg;g.fillRect(0,-18-i*3,1300,36+i*6);g.restore()}
+g.restore();
+// far silhouettes: shelves, block towers, teddy, lamp (purple dusk tones)
+function rect(x,y,w,h,col){g.fillStyle=col;g.fillRect(x,y,w,h)}
+const far='#2A1052',mid='#1B0A38',near='#10051F';
+// shelf on the wall
+rect(120,150,330,14,far);rect(140,95,40,55,far);rect(190,115,30,35,far);rect(232,100,56,50,far);g.fillStyle=far;g.beginPath();g.arc(330,128,22,0,7);g.fill();rect(360,110,70,40,far);
+// bed silhouette on the right
+g.fillStyle=mid;g.beginPath();g.moveTo(860,600);g.lineTo(860,360);g.quadraticCurveTo(860,330,890,330);g.lineTo(1340,330);g.quadraticCurveTo(1380,330,1380,360);g.lineTo(1380,600);g.fill();
+rect(1330,250,60,350,mid);g.beginPath();g.arc(1360,250,30,Math.PI,0);g.fill();
+// blanket drape on the bed edge
+g.fillStyle='#24104A';g.beginPath();g.moveTo(860,380);g.bezierCurveTo(900,420,960,400,1000,440);g.bezierCurveTo(1060,480,1120,430,1180,470);g.lineTo(1180,330);g.lineTo(860,330);g.fill();
+// toy block towers (left)
+const blocks=[[40,440,70,70],[110,470,60,60],[60,380,56,60],[180,500,80,60],[250,520,60,40]];
+for(const [x,y,w,h] of blocks){rect(x,y,w,h,mid);g.fillStyle='rgba(180,140,255,.18)';g.fillRect(x,y,w,5)}
+// teddy silhouette
+g.fillStyle=near;g.beginPath();g.arc(560,470,62,0,7);g.arc(560,370,46,0,7);g.arc(522,335,16,0,7);g.arc(598,335,16,0,7);g.fill();
+// rim light on teddy
+g.strokeStyle='rgba(200,160,255,.35)';g.lineWidth=4;g.beginPath();g.arc(560,370,46,-2.6,-.6);g.stroke();
+// floor
+gr=g.createLinearGradient(0,520,0,H);gr.addColorStop(0,'rgba(10,4,24,0)');gr.addColorStop(1,'rgba(10,4,24,.85)');g.fillStyle=gr;g.fillRect(0,480,W,120);
+// glowing cat eyes peeking from under the bed
+function eye(x,y){glow(x,y,60,'rgba(255,200,40,A)',.55);g.save();g.translate(x,y);g.fillStyle='#FFD43B';g.beginPath();g.ellipse(0,0,24,13,0,0,7);g.fill();g.fillStyle='#160826';g.beginPath();g.ellipse(0,0,5,12,0,0,7);g.fill();g.fillStyle='#FFF7C8';g.beginPath();g.arc(-8,-4,3,0,7);g.fill();g.restore()}
+g.fillStyle='#07020F';g.fillRect(860,470,520,130);
+eye(1090,520);eye(1160,516);
+// dust sparkles
+for(let i=0;i<40;i++){const x=Math.random()*W,y=Math.random()*H,s=Math.random()*2+1;g.fillStyle='rgba(255,230,170,'+(Math.random()*.5+.2)+')';g.beginPath();g.arc(x,y,s,0,7);g.fill()}
+// vignette
+const v=g.createRadialGradient(W/2,H/2,H*.3,W/2,H/2,W*.65);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.6)');g.fillStyle=v;g.fillRect(0,0,W,H);
+document.title='done';
+</script></body></html>

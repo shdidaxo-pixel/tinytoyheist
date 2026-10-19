@@ -90,31 +90,65 @@ do
 	}, scroll)
 	UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 16) }, scroll)
 
-	-- Small gift button + green Robux price button, used on every card.
+	-- Small gift button + green Robux price button, used on every card. Like Break and Steal an Egg: the gift is a
+	-- plain white present on purple. Optional extras: a taller button with a small label ("50 Toys") tucked into
+	-- its bottom edge, and a rainbow face for the biggest deal.
+	type BuyExtras = { height: number?, label: string?, rainbow: boolean?, textSize: number? }
 	local function buyRow(
 		parent: Instance,
 		price: string,
 		position: UDim2,
 		width: number,
-		palette: UIKit.Palette?
+		palette: UIKit.Palette?,
+		extras: BuyExtras?
 	): { Frame }
+		local x: BuyExtras = extras or {}
+		local h = x.height or 44
+		local gw = math.min(h, 44) -- the gift stays a 44 px column even when the price button is taller
 		local giftHolder, giftFace = UIKit.block(parent, {
 			name = "Gift",
-			size = UDim2.fromOffset(44, 44),
+			size = UDim2.fromOffset(gw, h),
 			position = position,
 			palette = P.purple,
+			lip = 5,
+			gloss = true,
 		})
-		UIKit.icon(giftFace, img("Gift"), 30, center, mid)
+		UIKit.icon(giftFace, img("GiftWhite"), math.floor(gw * 0.74), center, mid, 4)
 		UIKit.clickable(giftHolder)
 		local priceHolder = UIKit.button(parent, price, {
 			palette = palette or P.green,
 			icon = img("Robux3"),
-			size = UDim2.fromOffset(width - 50, 44),
-			position = position + UDim2.fromOffset(50, 0),
-			textSize = 28,
-			iconSize = 31,
+			size = UDim2.fromOffset(width - gw - 6, h),
+			position = position + UDim2.fromOffset(gw + 6, 0),
+			textSize = x.textSize or 28,
+			iconSize = math.floor((x.textSize or 28) * 1.1),
 			iconGap = 2,
 		})
+		local face = priceHolder:FindFirstChild("Face") :: Frame
+		if x.label then
+			-- price in the top part, the label sitting on the bottom edge, both inside the button
+			local row = face:FindFirstChild("Row") :: Frame
+			row.Size = UDim2.new(1, 0, 1, -14)
+			UIKit.text(face, x.label, 15, {
+				position = UDim2.new(0.5, 0, 1, -3),
+				anchor = Vector2.new(0.5, 1),
+				stroke = 2.5,
+				z = 6,
+			})
+		end
+		if x.rainbow then
+			local g = face:FindFirstChildOfClass("UIGradient")
+			if g then
+				g.Rotation = 0
+				g.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, hex("E8202E")),
+					ColorSequenceKeypoint.new(0.3, hex("C02BE0")),
+					ColorSequenceKeypoint.new(0.55, hex("2F7BF5")),
+					ColorSequenceKeypoint.new(0.8, hex("3ED83A")),
+					ColorSequenceKeypoint.new(1, hex("FFD21E")),
+				})
+			end
+		end
 		return { giftHolder, priceHolder }
 	end
 
@@ -255,18 +289,20 @@ do
 			anchor = Vector2.new(1, 1),
 		})
 	end
-	-- price row: gift + green price, label tucked into the bottom edge of the price button
+	-- price row: gift + price with its label inside the button's bottom edge; the 50 pack is the rainbow best deal
 	for i, buy in { { "3,499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
 		local gx = 24 + (i - 1) * 168 -- 4 groups of 160 + 8 gaps = 664, inside the gold frame
-		for _, h in buyRow(card, buy[1], UDim2.fromOffset(gx, 252), 160) do
+		local row = buyRow(
+			card,
+			buy[1],
+			UDim2.fromOffset(gx, 252),
+			160,
+			nil,
+			{ height = 56, label = buy[2], rainbow = i == 1, textSize = 24 }
+		)
+		for _, h in row do
 			h.ZIndex = 10
 		end
-		UIKit.text(card, buy[2], 15, {
-			stroke = 2.5,
-			position = UDim2.fromOffset(gx + 105, 302),
-			anchor = Vector2.new(0.5, 0),
-			z = 12,
-		})
 	end
 
 	-- Game passes, like Break and Steal an Egg: a colour card with rays bursting from behind a big detailed gold coin

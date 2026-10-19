@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Gift icon</title>
+<!-- assets/ui/GiftWhite.png (256 px): the gift-to-a-friend icon on the purple button beside every price, copied from
+     Break and Steal an Egg: a plain white present with a bold dark outline, the ribbon drawn as outlined bands and
+     a two-loop bow. Drawn in on-screen units (viewBox 32 = the icon's size on the button). -->
+<style>html,body{margin:0;background:transparent}svg{display:block}</style></head><body>
+<svg width="256" height="256" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F4F2FA"/><stop offset="1" stop-color="#D6D0E6"/></linearGradient>
+<g id="shape">
+<path d="M16 10.5 C13.5 5.5 9 4.5 8.6 7.2 C8.3 9.4 12 10.4 16 10.5 Z"/>
+<path d="M16 10.5 C18.5 5.5 23 4.5 23.4 7.2 C23.7 9.4 20 10.4 16 10.5 Z"/>
+<rect x="4.5" y="10.5" width="23" height="5.5" rx="1.4"/>
+<rect x="6.5" y="16" width="19" height="11.5" rx="1.4"/>
+</g>
+</defs>
+<!-- dark outline: the whole present drawn fat underneath -->
+<use href="#shape" fill="#141018" stroke="#141018" stroke-width="5" stroke-linejoin="round"/>
+<use href="#shape" fill="url(#w)"/>
+<!-- ribbon bands and the line under the lid -->
+<g fill="none" stroke="#141018" stroke-width="1.6" stroke-linejoin="round">
+<rect x="14" y="10.5" width="4" height="17"/>
+<line x1="6.5" y1="16" x2="25.5" y2="16"/>
+<path d="M16 10.5 C13.5 5.5 9 4.5 8.6 7.2 C8.3 9.4 12 10.4 16 10.5 Z"/>
+<path d="M16 10.5 C18.5 5.5 23 4.5 23.4 7.2 C23.7 9.4 20 10.4 16 10.5 Z"/>
+</g>
+<!-- shine on the lid -->
+<rect x="6.6" y="12" width="5" height="1.4" rx=".7" fill="#FFFFFF"/>
+</svg></body></html>

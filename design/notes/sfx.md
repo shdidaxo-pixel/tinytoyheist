@@ -49,7 +49,8 @@ All are free Creator Store audio usable in any experience. **PSE** = Pro Sound E
 | Blanket drag loop | DragLoop | 9113455185 | PSE Blanket Movement 3 | player attr `Carrying`, pitch by `CarrySize` |
 | Slow Mode | — | — | — | player attr `SlowMode` halves steps and drag |
 | Grab a toy | Grab | 9113455017, 9114883390 | PSE Blanket Handle 2, Jacket 2 | player attr `Carrying` set |
-| Hatch build-up | HatchRise | 9119816546 | PSE Synth Power Up Wind Up | `HatchPrompt` hold (and Moment `HatchHold`) |
+| Hatch build-up | HatchRise | 9119816546 | PSE Synth Power Up Wind Up | `HatchPrompt` hold (and Moment `HatchHold`), re-timed on `HatchCharge` |
+| Blanket shaking before the burst | HatchShake | 9113455185 | PSE Blanket Movement 3 | Moment `HatchCharge` |
 | Hatch pop | HatchPop | 9117841338 | PSE Pop Airy 1 | `GameRemotes.Reveal` |
 | Reveal Common | RevealCommon | 9116394545 | PSE Magic Glows chiming | Reveal `rarity` |
 | Reveal Uncommon | RevealUncommon | 9126073001 | PSE Synth Sparkle Bell Ding | |
@@ -101,8 +102,22 @@ All are free Creator Store audio usable in any experience. **PSE** = Pro Sound E
 
 ## Moments I listen to (VFX session's table in vfx.md)
 
-`HatchHold`, `HatchCancel`, `StealStart` (owner → Robbed, thief → StealStart), `StealBanked`, `Recovered`. Every one
-also has a fallback from today's signals, deduped with `Sounds.once`, so nothing plays twice.
+`HatchHold`, `HatchCancel`, `HatchCharge` (riser re-timed to end on the burst + the blanket rustling faster,
+HatchShake = 9113455185), `HatchBurst` (the reveal stingers), `StealStart` (owner → Robbed, thief → StealStart),
+`StealBanked`, `Recovered`. Every one also has a fallback from today's signals (the Reveal remote plays the stinger
+itself if no HatchBurst comes within 4.5 s), deduped with `Sounds.once`, so nothing plays twice.
+
+## Play test (19 Oct, Studio)
+
+All 75 ids load in the live group-owned experience. Checked by logging every Sound created: carpet / wood / creaky
+steps by zone (creaks on the boards), cat purr → hiss + pounce + thud, meow, whistle, toy squeaks, cash ticks, grab +
+drag loop, UI hover / click / panel open / close, a fake Secret + Gold + sizeMult 2 reveal (pop, sting, shimmer,
+big-size gliss, mutation; music ducked and came back), Kid wake (flashlight, switch, stir + snort, wake sting,
+stomps, snore stops, chase layer fades to full), wheel loop spins up and stops, lock / unlock at the padlock,
+Settings toggles take Music and SFX to 0 and back. No errors from the sound code.
+Not covered live: a real raid between two players (the notice fallbacks and Moments are wired the same way) and the
+VFX HatchCharge timing on a real hatch (banking failed in that test because of a Pens.luau error from another
+session's work in progress).
 
 ## Open / next
 

@@ -22,6 +22,9 @@
 				"$className": "Folder",
 				"BuildBedroom": {
 					"$path": "tools/build-bedroom.luau"
+				},
+				"Bedroom": {
+					"$path": "tools/bedroom"
 				}
 			}
 		}

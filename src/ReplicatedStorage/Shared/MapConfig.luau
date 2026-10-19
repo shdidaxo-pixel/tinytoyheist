@@ -39,7 +39,8 @@ MapConfig.MAX_SLOTS = 20 -- capacity at Level 7 (the VIP Hole adds 3)
 MapConfig.PEN_FRONT = 40 -- the toy pen runs from 40 deep...
 MapConfig.PEN_BACK = 158 -- ...to 158 deep
 MapConfig.PEN_WIDTH = 116
-MapConfig.SIGN = Vector3.new(-54, 0, 3) -- the owner's sign on its stick, at the front corner on your right walking in
+-- The owner's name floats over the middle of the open front, always facing you (like Steal an Egg)
+MapConfig.SIGN = { position = Vector3.new(0, 70, -6) }
 
 -- The front of each home, in home space (x across, z into the wall; walking in, -x is on your right).
 -- Unchanged from the old burrows, so game code that finds these keeps working. half = half the footprint in x and z.

@@ -39,11 +39,11 @@ Giant.heard = {} :: { { position: Vector3, points: number, at: number } }
 -- His eyes while he's up with the lights on: he never stops looking round the room. Where he's looking is a spot on
 -- the floor (GazeAt) that darts about the run, and now and then glances at where a mouse is. A mouse inside it that
 -- he can see (not behind furniture) is spotted: his eyes follow it, and if it stays in them for LOCK seconds he's
--- got it (drop, stun, sent home). Only a mouse faster than TRACK + RADIUS / LOCK (about 88) gets away; the safe ring
+-- got it (drop, stun, sent home). Only a mouse faster than TRACK + RADIUS / LOCK (about 113) gets away; the safe ring
 -- and the homes are always safe.
 Giant.GAZE = {
 	SEARCH = 60, -- how fast his eyes move round the room, studs a second
-	TRACK = 70, -- how fast they follow a mouse he's spotted
+	TRACK = 95, -- how fast they follow a mouse he's spotted
 	RADIUS = 14, -- the spot on the floor he's looking at
 	LOCK = 0.8, -- seconds in his eyes until he's got you
 	LOSE = 1, -- seconds out of his eyes until he gives up on you

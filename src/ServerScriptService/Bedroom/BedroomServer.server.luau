@@ -29,7 +29,8 @@ local PlayerData = require(script.Parent:WaitForChild("PlayerData")) :: any
 PlayerData.start()
 
 -- Studio only: ServerStorage.GameDebug (BindableFunction) lets the command bar and test tools poke the game,
--- e.g. GameDebug:Invoke("cash", player, 1e6), ("give", player, "M"), ("profile", player), ("wipe", player).
+-- e.g. GameDebug:Invoke("cash", player, 1e6), ("give", player, "M"), ("ready", player), ("profile", player),
+-- ("wipe", player).
 if game:GetService("RunService"):IsStudio() then
 	local debug = Instance.new("BindableFunction")
 	debug.Name = "GameDebug"
@@ -54,6 +55,13 @@ if game:GetService("RunService"):IsStudio() then
 			local Pens = require(script.Parent.Pens) :: any
 			Pens.reload(player)
 			Carry.refreshSpeed(player)
+		elseif command == "ready" and profile then
+			-- every blanket waiting at home can be hatched now (it's rebuilt as ready)
+			for _, b in profile.Blankets do
+				b.w = os.time()
+			end
+			local Pens = require(script.Parent.Pens) :: any
+			Pens.reload(player)
 		elseif command == "set" and profile then
 			for k, v in arg do
 				(profile :: any)[k] = v

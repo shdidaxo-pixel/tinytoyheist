@@ -146,7 +146,7 @@ local function slot(i: number, entry: any): Frame
 		Thickness = 2.5,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 	}, face)
-	UIKit.icon(face, UIKit.toy(entry.id), S - 16, UDim2.new(0.5, 0, 0.5, -5), Vector2.new(0.5, 0.5), 4)
+	UIKit.icon(face, UIKit.toy(entry.id), S - 10, UDim2.new(0.5, 0, 0.5, -4), Vector2.new(0.5, 0.5), 4)
 	UIKit.text(face, tostring(i), 15, { position = UDim2.fromOffset(5, 2), stroke = 2, z = 7 })
 	local data = ToyCatalog.get(entry.id)
 	local name = UIKit.text(face, data and data.Name or "Toy", 10, {

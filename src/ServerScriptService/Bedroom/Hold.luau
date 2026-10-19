@@ -27,8 +27,8 @@ local Knock = require(script.Parent.Knock)
 local Hold = {}
 Hold.HEIGHT = 3 -- a held toy is about this tall (a player is 5), whatever its real size
 Hold.WIDTH = 3.4 -- and no wider than this
-Hold.AHEAD = 1.1 -- studs between the chest and the toy's back
-Hold.CHEST = 0.5 -- the toy's middle, above the HumanoidRootPart's centre
+Hold.AHEAD = 1.2 -- studs between the chest and the toy's back
+Hold.CHEST = 0.1 -- the toy's middle, above the HumanoidRootPart's centre
 Hold.COOLDOWN = 0.25 -- seconds between requests
 
 type Held = { uid: string, model: Model }

@@ -1,7 +1,8 @@
 --!strict
--- How the mice move, on top of the normal Roblox animations (procedural: each R15 joint gets an extra turn after the
--- Animator has posed it, so nothing needs uploading). Every player's character is posed on every screen, from things
--- everyone can see (player attributes, the humanoid's state, toys appearing in pens):
+-- How the mice move, on top of the normal Roblox animations (procedural: each R15 joint, a Motor6D or an
+-- AnimationConstraint, gets an extra turn after the Animator has posed it, so nothing needs uploading). Every
+-- player's character is posed on every screen, from things everyone can see (player attributes, the humanoid's
+-- state, toys appearing in pens):
 --   Dragging a blanket or a stolen toy (Carrying): leaning into the pull, both arms reaching back to the load, head
 --     up, a tug with every step; heavier toys pull harder. A quick yank when you first get hold of it.
 --   Holding E (your own screen): crouching and reaching for it, tugging harder as the hold fills; a Steal is sneaky
@@ -40,14 +41,20 @@ local FALLEN = {
 	[Enum.HumanoidStateType.Ragdoll] = true,
 }
 
+-- A character joint: a Motor6D, or (with Roblox's newer avatar joints) an AnimationConstraint; both have Transform
+type Joint = any
+local function isJoint(d: Instance): boolean
+	return d:IsA("Motor6D") or d:IsA("AnimationConstraint")
+end
+
 type Rig = {
 	player: Player,
 	character: Model,
 	humanoid: Humanoid,
 	root: BasePart,
-	joints: { [string]: Motor6D },
-	written: { [Motor6D]: CFrame }, -- what we last wrote, and the extra turn in it
-	extra: { [Motor6D]: CFrame },
+	joints: { [string]: Joint },
+	written: { [Joint]: CFrame }, -- what we last wrote, and the extra turn in it
+	extra: { [Joint]: CFrame },
 	drag: number, -- pose weights, eased
 	reach: number,
 	tumble: number,
@@ -76,11 +83,11 @@ local function setup(player: Player, character: Model)
 	if not humanoid or not root or humanoid.RigType ~= Enum.HumanoidRigType.R15 then
 		return
 	end
-	local joints: { [string]: Motor6D } = {}
+	local joints: { [string]: Joint } = {}
 	for _, name in JOINTS do
-		local found: Motor6D? = nil
+		local found: Joint? = nil
 		for _, d in character:GetDescendants() do
-			if d:IsA("Motor6D") and d.Name == name then
+			if isJoint(d) and d.Name == name then
 				found = d
 				break
 			end
@@ -90,7 +97,7 @@ local function setup(player: Player, character: Model)
 			for _ = 1, 50 do
 				task.wait(0.1)
 				for _, d in character:GetDescendants() do
-					if d:IsA("Motor6D") and d.Name == name then
+					if isJoint(d) and d.Name == name then
 						found = d
 						break
 					end

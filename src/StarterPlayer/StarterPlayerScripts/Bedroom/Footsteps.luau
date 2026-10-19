@@ -115,7 +115,15 @@ function Footsteps.start(_bedroom: Model, Sounds: any)
 		walkers[p] = nil
 	end)
 
-	local maxPoints = GameConfig.SPEED_MAX_POINTS or 64
+	local maxLevel = if type(GameConfig.WHEELS) == "table" then math.max(2, #GameConfig.WHEELS) else 25
+	-- how fast you are, 0 (walk speed 16) to 1 (116 and up)
+	local function fastness(player: Player): number
+		local speed = player:GetAttribute("Speed") :: number?
+		if type(speed) ~= "number" or type(GameConfig.walkSpeed) ~= "function" then
+			return 0
+		end
+		return math.clamp((GameConfig.walkSpeed(speed) - 16) / 100, 0, 1)
+	end
 	RunService.Heartbeat:Connect(function(dt)
 		local camera = Workspace.CurrentCamera
 		for player, w in walkers do
@@ -176,8 +184,8 @@ function Footsteps.start(_bedroom: Model, Sounds: any)
 				local base = w.wheel:GetAttribute("Base") :: number
 				w.spin += ((if training then 1 else 0) - w.spin) * math.min(1, dt * (if training then 1.5 else 4))
 				local level = (player:GetAttribute("WheelLevel") :: number?) or 1
-				local points = (player:GetAttribute("SpeedPoints") :: number?) or 0
-				local pitch = 0.75 + 0.06 * (level - 1) + 0.45 * math.clamp(points / maxPoints, 0, 1)
+				local tier = math.clamp((level - 1) / (maxLevel - 1), 0, 1)
+				local pitch = 0.75 + 0.25 * tier + 0.45 * fastness(player)
 				w.wheel.PlaybackSpeed = pitch * (0.5 + 0.5 * w.spin)
 				w.wheel.Volume = base * w.spin
 				if not training and w.spin < 0.02 then

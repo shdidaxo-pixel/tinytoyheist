@@ -68,7 +68,7 @@ All are free Creator Store audio usable in any experience. **PSE** = Pro Sound E
 | Purchase | Purchase + Register | 10066947742, 9113728625 | Roblox RBLX UI Purchase, PSE Cash Register 1 | Cash down |
 | Home level-up | HomeLevelUp | 1841172671 | APM In Agreement (bells) | player attr `HomeLevel` up |
 | Wheel level-up | WheelLevelUp | 9117887138 | PSE Power Up Sweeteners 3 | player attr `WheelLevel` up |
-| Wheel running loop | WheelLoop | 9120658690 | PSE Squeaky Wheel | player attr `Training`; pitch 0.75 + wheel level + `SpeedPoints` |
+| Wheel running loop | WheelLoop | 9120658690 | PSE Squeaky Wheel | player attr `Training`; pitch 0.75 + wheel level (of 25) + `Speed` (via `GameConfig.walkSpeed`) |
 | Steal start | StealStart | 9120709480 | PSE Whoosh Fast Short | `StealPrompt` triggered / Moment `StealStart` / Notice |
 | Steal success | StealSuccess | 1848287311 | APM The Little Things - Hit | Moment `StealBanked` / Notice "You stole" |
 | You're being robbed | Robbed | 9119755443 | PSE Synth Alarms Composite 3 | Moment `StealStart` to owner / Notice "is stealing your" |

@@ -6,7 +6,7 @@
 <style>
 /* Layout: a short header, then two boxes (what's in it, questions for Dylan), then the photos in walking order, two
    across (one on a phone). One deliberate night look to match the bedroom review: navy ground, the hallway's plum walls
-   and the runner's burgundy as accents. */
+   and a burgundy as accents. */
 :root{
   --bg:#0E1226; --panel:#181B3A; --line:#2E3263; --ink:#ECEFFA; --soft:#A9AED0; --plum:#C2A9E0; --runner:#E0687A; --lamp:#FFB36B;
   --display:'Lilita One','Trebuchet MS',sans-serif; --body:'Nunito',system-ui,sans-serif;
@@ -52,40 +52,37 @@ dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Tiny Toy Heist · Room 2 · Hallway concept v1</div>
+    <div class="eyebrow">Tiny Toy Heist · Room 2 · Hallway concept v2</div>
     <h1>The Hallway</h1>
-    <p class="lede">Concept renders, not the game. Nothing is built in Studio yet. You go through the bedroom's far-wall door and keep running straight: a longer, narrower room on loud wood, with a quiet red runner down the middle that the cat patrols. Comment on any photo by its number.</p>
+    <p class="lede">Concept renders, not the game. Nothing is built in Studio yet. Round 2, with your answers folded in: you go through the bedroom's far-wall door and keep running straight into a longer, narrower, louder room with its own cat and a Roomba. Comment on any photo by its number.</p>
     <div class="facts" aria-label="Key numbers">
       <span class="fact">280 × 800, walls 320</span>
       <span class="fact">Unlocks at <b>Strength 3</b></span>
-      <span class="fact">Wood <b>x2</b> · runner <b>x1</b></span>
+      <span class="fact">Wood <b>x2</b> everywhere</span>
       <span class="fact">8 toys: 4 Small, 4 Medium</span>
-      <span class="fact">~33 s end to end in game</span>
+      <span class="fact">Grey cat + Roomba</span>
     </div>
   </header>
 
-  <section class="notes" aria-label="What's in it and questions">
+  <section class="notes" aria-label="What changed and what's still open">
     <div class="note">
-      <h2>What's in it</h2>
+      <h2>What changed from your answers</h2>
       <ul>
-        <li>Same house, new room: the bedroom wallpaper pattern recoloured plum, the same voxel wood tiles in a warmer honey oak.</li>
-        <li>A burgundy runner down the middle is quiet (x1) but it's the cat's route, so the quiet way is the dangerous way. The wood either side is x2.</li>
-        <li>Small toys in the first half, Medium after the yellow line, always off the runner, so grabbing one means stepping onto the loud wood.</li>
-        <li>Landmarks stay against the walls: shoe rack you can hide under, umbrella stand with a raincoat and scarf, key table with a toy underneath, the cat's bed and bowls. The middle stays clear.</li>
-        <li>Next rooms are teased: the Kitchen door straight ahead (Strength 6) and the Living Room door on the right (Strength 10) are ajar behind baby gates, lit from inside, with a glowing toy you can see. The attic hatch cord dangles overhead (Rebirth 1).</li>
-        <li>A baby gate in the bedroom doorway is the Strength 3 lock (photo 4). You can see in, and it swings open once you're strong enough.</li>
+        <li><b>Length stays 800.</b> Speed upgrades will cover it.</li>
+        <li><b>No runner.</b> Wood (noise x2) all the way, as in the plan.</li>
+        <li><b>A second cat.</b> The hallway has its own smoky-grey cat (the bedroom's is orange). It walks the middle end to end and turns round at its bed by the Kitchen door (photo 8).</li>
+        <li><b>A Roomba.</b> It loops the hallway sucking up any toy someone dropped and dumps it at its dock on the left wall. The pile there is a jackpot worth raiding (photo 9).</li>
+        <li><b>Baby gates stay</b> as the locks: Strength 3 (bedroom door), 6 (Kitchen), 10 (Living Room). The Living Room door stays on the side wall.</li>
+        <li><b>Bedroom door swung flat</b> against the hallway wall (photo 1), with a hiding nook behind it.</li>
+        <li><b>The Kid stays in the bedroom.</b> When he wakes, the hallway gets busier and louder instead: lights on, the cat pounces, the Roomba goes on turbo (photo 15).</li>
       </ul>
     </div>
     <div class="note">
-      <h2>Questions for you</h2>
+      <h2>Still open</h2>
       <ol>
-        <li><b>Length.</b> <span class="q">800 long is about 33 s end to end in game, on top of the bedroom's ~45 s. Keep it, or shorten to about 600?</span></li>
-        <li><b>The runner twist.</b> <span class="q">Quiet runner that the cat walks, or wood x2 everywhere like the plan?</span></li>
-        <li><b>One cat or two?</b> <span class="q">Does the bedroom cat walk out into the hallway (its main route), or does the hallway get its own cat?</span></li>
-        <li><b>Baby gates as locks.</b> <span class="q">See-through gate in each locked doorway with a Strength sign. OK for every room?</span></li>
-        <li><b>The side door.</b> <span class="q">The run stays straight to the Kitchen. Is a Living Room door on the side wall OK as a teaser, or no side doors at all?</span></li>
-        <li><b>The bedroom door.</b> <span class="q">Today it's open at 72°, which would poke into the hallway. Swing it back against the right-hand wall (photo 1) so it makes a hiding nook?</span></li>
-        <li><b>The Giant Kid.</b> <span class="q">When he wakes, does he walk out into the hallway after noise, or stay in the bedroom?</span></li>
+        <li><b>Noise while he's awake.</b> <span class="q">How much louder does the hallway get? I'd make it x3 instead of x2 while he's up.</span></li>
+        <li><b>The Roomba and players.</b> <span class="q">Does it bump you (drop your toy, like the train), or only collect toys that are already dropped?</span></li>
+        <li><b>The new cat.</b> <span class="q">Smoky grey with amber eyes OK, or another colour (black, white, calico)?</span></li>
       </ol>
     </div>
   </section>
@@ -102,19 +99,20 @@ dialog p{color:var(--ink);padding:10px 4px 0;font-weight:700}
 <script>
 const PHOTOS=[
   ['enter','From the bedroom','At the end of the bedroom, looking through the open door: the hallway runs straight on, so you just keep running. The Kitchen door is straight ahead at the far end.'],
-  ['hero','The hallway','From above the bedroom door: honey-oak wood, the red runner, Small toys then Medium after the yellow line, landmarks against the walls.'],
-  ['map','Top-down','Ceilings off, bedroom on the left, Kitchen on the right: 8 toys either side of the runner, the cat route down the middle, the Living Room off the right-hand wall.'],
+  ['hero','The hallway','From above the bedroom door: honey-oak wood all the way, Small toys then Medium after the yellow line, the grey cat down the middle, the Roomba looping round.'],
+  ['map','Top-down','Ceilings off, bedroom on the left, Kitchen on the right: 8 toys, the cat route down the middle (grey dots), the Roomba loop and dock (blue), the Living Room off the right-hand wall.'],
   ['gate','The Strength 3 gate','Before Strength 3: a baby gate in the bedroom doorway. You see the toys through it but can\'t get in. At Strength 3 it opens for you.'],
-  ['small','The Small half','Mouse height: shoe rack on the left, umbrella stand and raincoat on the right. You drag a toy home down the quiet runner.'],
+  ['small','The Small half','Mouse height: shoe rack on the left, umbrella stand and raincoat on the right. You drag a toy home down the middle; on wood every step is loud.'],
   ['shoes','The shoe rack','The bottom shelf is 18 up, so you can crawl under and hide. Rain boots at the end, a kicked-off sneaker with its lace trailing.'],
   ['coats','Coats and umbrellas','Right-hand wall: umbrella stand, a yellow raincoat on the hooks, a long striped scarf to the floor. Seen from the far end.'],
-  ['cat','The cat','Its main route is the runner, end to end. Stay on the runner and you meet the cat; step off and you\'re louder.'],
+  ['cat','The hallway cat','A second cat, smoky grey so you can tell it from the bedroom\'s orange one. It walks the middle end to end, to its bed by the Kitchen door.'],
+  ['roomba','The Roomba','It loops the hallway sucking up dropped toys and dumps them at its dock on the left wall. The pile at the dock is a jackpot to raid.'],
   ['medium','The Medium half','Past the yellow line: the key table with a toy hiding underneath, the cat\'s bed and bowls, both locked doors.'],
   ['living','The Living Room door','On the right-hand wall, ajar behind a Strength 10 gate. A TV left on lights it purple; a glowing toy sits inside.'],
   ['kitchen','The Kitchen door','Straight ahead, ajar behind a Strength 6 gate. Cool fridge light, tile floor, a glowing toy just inside.'],
   ['lookup','The attic hatch','Looking up: the hatch and its red pull ring, out of reach. Rebirth 1.'],
-  ['back','The way home','Turning round at the far end: the long run back down the runner to the bedroom door, "BACK TO HOMES" over it.'],
-  ['lightson','Lights on','When the Kid wakes the hallway lights come on too (your photo 1 lighting) and the cat pounces at the nearest mouse.']
+  ['back','The way home','Turning round at the far end: the long run back to the bedroom door, "BACK TO HOMES" over it.'],
+  ['lightson','Kid awake','He stays in the bedroom, but the hallway gets busier and louder: lights on (your photo 1 lighting), the cat pounces, the Roomba goes on turbo.']
 ];
 const grid=document.getElementById('photos'),dlg=document.getElementById('zoom');
 PHOTOS.forEach(([k,title,cap],i)=>{

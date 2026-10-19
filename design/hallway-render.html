@@ -51,7 +51,7 @@ html.shot .view{aspect-ratio:auto;height:100vh;border:0;border-radius:0}
   <header>
     <div class="eyebrow">Tiny Toy Heist · Hallway concept v1 · room 2, through the bedroom door</div>
     <h1>The Hallway</h1>
-    <p class="lede">Straight on through the bedroom's far-wall door: a corridor 280 wide and 800 long, longer and narrower than the bedroom, on loud wood (noise x2) with a quiet red runner down the middle that is the cat's route. Small toys in the first half, Medium in the second, 8 in all, either side of the runner. Landmarks against the walls: shoe rack, umbrella stand and coats, key table, the cat's bed. Straight ahead the Kitchen door, on the right the Living Room door, both ajar behind baby gates. A baby gate in the bedroom door is the Strength 3 lock. Drag to look around, or pick a view.</p>
+    <p class="lede">Straight on through the bedroom's far-wall door: a corridor 280 wide and 800 long, longer and narrower than the bedroom, on loud wood (noise x2) all the way. Small toys in the first half, Medium in the second, 8 in all. Its own grey cat walks the middle and a Roomba loops round collecting dropped toys. Landmarks against the walls: shoe rack, umbrella stand and coats, Roomba dock, key table, the cat's bed. Straight ahead the Kitchen door, on the right the Living Room door, both ajar behind baby gates. A baby gate in the bedroom door is the Strength 3 lock. Drag to look around, or pick a view.</p>
   </header>
 
   <div class="view" id="view">
@@ -73,8 +73,8 @@ html.shot .view{aspect-ratio:auto;height:100vh;border:0;border-radius:0}
       <tbody>
         <tr><td>Hallway</td><td>280 wide, 800 long, 320 tall</td><td>x -140..140, z 1708..2508, right behind the bedroom's far wall (z 1700, 8 thick)</td></tr>
         <tr><td>Floor</td><td>Honey-oak voxel wood, noise x2</td><td>Same wood tile as the bedroom, new palette</td></tr>
-        <tr><td>Runner</td><td>72 wide, z 1760–2432, noise x1</td><td>The cat's patrol route</td></tr>
-        <tr><td>Spawns</td><td>4 Small (z 1840–2065), 4 Medium (z 2160–2420)</td><td>Either side of the runner; one Medium under the key table</td></tr>
+        <tr><td>Hazards</td><td>A grey cat (the middle, end to end) and a Roomba (a loop)</td><td>The Roomba dumps dropped toys at its dock: a jackpot to raid</td></tr>
+        <tr><td>Spawns</td><td>4 Small (z 1840–2065), 4 Medium (z 2160–2420)</td><td>Off the middle line; one Medium under the key table</td></tr>
         <tr><td>Gates</td><td>Strength 3 (bedroom door), 6 (Kitchen), 10 (Living Room)</td><td>Baby gates, see-through</td></tr>
       </tbody>
     </table></div>
@@ -8710,15 +8710,15 @@ f 841/10 843/10 844/10
 <script>
 (function(){
 /* Hallway concept v1: room 2, straight on through the bedroom's far-wall door. A long corridor, narrower than the
-   bedroom run, on loud wood with a quiet carpet runner down the middle that the cat patrols. Small toys in the first
-   half, Medium in the second, either side of the runner. Landmarks against the walls, the middle clear. The Kitchen door
+   bedroom run, on loud wood all the way, with its own grey cat down the middle and a Roomba. Small toys in the first
+   half, Medium in the second, either side of the middle. Landmarks against the walls, the middle clear. The Kitchen door
    straight ahead and the Living Room door on the right are ajar behind baby gates (later rooms); a baby gate in the
    bedroom door is the Strength 3 lock. Studs, full size (the game shrinks by 0.65); x across, z down the run, y up.
    A runner facing +z has +x on their LEFT. The end of the bedroom is a simple stub for context. */
 const BHW=210, LEN=1700, WALL_H=320, T=8;            // the bedroom: run half-width, far wall inner face, walls
 const DOOR_W=130, DOOR_H=230;                          // every door: the bedroom, Kitchen and Living Room doors
 const H0=LEN+T, HLEN=800, H1=H0+HLEN, HHW=140;         // the hallway: z 1708..2508, x -140..140
-const RUN_HW=36, RUN_Z0=1760, RUN_Z1=2432, MID_Z=2100; // the runner (quiet, the cat's route); Small | Medium line
+const MID_Z=2100;                                      // the line between Small and Medium
 const LR_Z0=2200, LR_Z1=LR_Z0+DOOR_W;                  // the Living Room door in the right-hand wall (x = -140)
 let renderer,scene,camera,controls,clock,root,FOG;
 const animated=[], ripples=[], glows=[], CUT=[], XRAY=[], MAPONLY=[], DOMES=[], GATES=[];
@@ -8776,7 +8776,6 @@ function plankTex(base,line,w=1,h=1){return canvasTex((g,S)=>{g.fillStyle=base;g
 const BASE_PAL=['5A4C8E','6A5BA0','7465AA','5F5096','8A7AC2','A091D6','4A3422','8A6A48','9A7853','7C5E3F','6E5236','2E2016','6B4F35','5E442D','755839','4E3826','24180F','B8BFC8'];
 const HALL_WOOD={6:'5A3A20',7:'B07A48',8:'C48E58',9:'9A663C',10:'845832'};      // honey oak (bedroom wood is browner)
 const CREAKY_AS_WOOD={6:'24180F',7:'6B4F35',8:'755839',9:'5E442D',10:'4E3826'}; // the bedroom's creaky boards, for the stub
-const RUNNER={1:'7A2232',2:'86283A',3:'A03848',4:'93303F',5:'AC4656'};          // burgundy runner
 let GEOS=null;
 function tileGeos(){if(GEOS)return GEOS;GEOS={};const loader=new THREE.OBJLoader();
   for(const k of ['carpet','wood']){let geo=null;loader.parse(FLOOR_OBJ[k]).traverse(c=>{if(c.isMesh&&!geo)geo=c.geometry});GEOS[k]=geo}return GEOS}
@@ -8842,18 +8841,13 @@ function bedroomStub(){
 /* ---------- The hallway shell ---------- */
 let HNL=null,KIT=null,LRL=null,CEIL=null;
 function hallway(){
-  // floor: honey-oak voxel wood, a threshold under the bedroom door, and the burgundy runner down the middle
+  // floor: honey-oak voxel wood all the way (noise x2, as in the plan), a threshold under the bedroom door
   box(2*HHW,1,HLEN,M(0x6E4A2C,{r:1}),0,-1.6,(H0+H1)/2);box(DOOR_W,1.6,T+2,M(0x9A6A40,{r:.7}),0,-1,LEN+T/2);
   const l=[];for(let ix=-5;ix<=5;ix++)for(let z=H0+12;z<H1-8;z+=24)l.push([ix*24,z,((ix*3+Math.round(z/24)*5)&1)*Math.PI]);tiles('wood',HALL_WOOD,l);
-  const r=[];for(let ix=-1;ix<=1;ix++)for(let z=RUN_Z0+12;z<RUN_Z1;z+=24)r.push([ix*24,z,((ix*7+Math.round(z/24)*13)&3)*Math.PI/2]);tiles('carpet',RUNNER,r,.4);
-  const cream=M(0xF1E3C4,{r:.9}),gold=M(0xD9A441,{r:.6});
-  [-1,1].forEach(s=>{box(4,1.9,RUN_Z1-RUN_Z0+8,cream,s*(RUN_HW+2),0,(RUN_Z0+RUN_Z1)/2);box(1.4,1.95,RUN_Z1-RUN_Z0,gold,s*(RUN_HW-3),0,(RUN_Z0+RUN_Z1)/2)});
-  [RUN_Z0-2,RUN_Z1+2].forEach(z=>{box(2*RUN_HW+8,1.9,4,cream,0,0,z);for(let x=-RUN_HW;x<=RUN_HW;x+=4)box(1.1,.7,6,cream,x,0,z+(z<2000?-5:5))});
-  // the line between the halves (tape, over the runner too) and the painted labels
-  box(2*HHW,2.6,8,M(0xFFD43B,{r:.5,e:0xFFD43B,ei:.15}),0,0,MID_Z);
+  // the line between the halves (tape) and the painted labels
+  box(2*HHW,1.2,8,M(0xFFD43B,{r:.5,e:0xFFD43B,ei:.15}),0,0,MID_Z);
   floorLabel('HALLWAY · SMALL · NOISE x2',0,1736,230,'#FFE9A8');
-  floorLabel('QUIET x1',0,1790,60,'#FFE3EA',2.2);
-  floorLabel('MEDIUM · NOISE x2',0,MID_Z+40,200,'#FFE9A8',2.2);
+  floorLabel('MEDIUM · NOISE x2',0,MID_Z+40,200,'#FFE9A8');
   // walls: the bedroom wallpaper pattern recoloured plum; the right wall has the Living Room door
   wallZ(PLUM,HHW+T/2,H0,H1);
   wallZ(PLUM,-(HHW+T/2),H0,LR_Z0);wallZ(PLUM,-(HHW+T/2),LR_Z1,H1);wallZ(PLUM,-(HHW+T/2),LR_Z0,LR_Z1,DOOR_H,WALL_H);trimZ(-HHW+1,(LR_Z0+LR_Z1)/2);
@@ -8963,7 +8957,7 @@ function pictureFrames(){
   // a few big crayon drawings framed high on the walls: they mark each part of the hallway without floor clutter
   const draw=[g=>{g.fillStyle='#BFE6FF';g.fillRect(0,0,256,256);g.fillStyle='#FFD43B';g.beginPath();g.arc(200,56,30,0,7);g.fill();g.fillStyle='#E04848';g.beginPath();g.moveTo(50,140);g.lineTo(128,70);g.lineTo(206,140);g.fill();g.fillStyle='#F4E2B0';g.fillRect(70,140,116,90);g.fillStyle='#3D7BFF';g.fillRect(112,180,32,50);g.fillStyle='#3DDC97';g.fillRect(0,228,256,28)},
     g=>{g.fillStyle='#FFF6E0';g.fillRect(0,0,256,256);g.strokeStyle='#1A1430';g.lineWidth=6;[[60,120],[120,100],[180,140]].forEach(([x,y])=>{g.beginPath();g.arc(x,y-30,16,0,7);g.stroke();g.beginPath();g.moveTo(x,y-14);g.lineTo(x,y+50);g.moveTo(x-22,y+10);g.lineTo(x+22,y+10);g.moveTo(x,y+50);g.lineTo(x-16,y+86);g.moveTo(x,y+50);g.lineTo(x+16,y+86);g.stroke()});g.fillStyle='#F28C28';g.fillRect(200,200,40,24);g.beginPath();g.arc(236,196,12,0,7);g.fill()},
-    g=>{g.fillStyle='#E8F4D8';g.fillRect(0,0,256,256);g.fillStyle='#F28C28';g.beginPath();g.ellipse(128,160,80,52,0,0,7);g.fill();g.beginPath();g.arc(128,90,44,0,7);g.fill();g.beginPath();g.moveTo(92,62);g.lineTo(100,26);g.lineTo(118,52);g.moveTo(138,52);g.lineTo(156,26);g.lineTo(164,62);g.fill();g.fillStyle='#1A1430';g.beginPath();g.arc(112,86,6,0,7);g.arc(144,86,6,0,7);g.fill();g.font='900 30px Nunito, sans-serif';g.textAlign='center';g.fillText('MITTENS',128,244)}];
+    g=>{g.fillStyle='#E8F4D8';g.fillRect(0,0,256,256);g.fillStyle='#585D68';g.beginPath();g.ellipse(128,160,80,52,0,0,7);g.fill();g.beginPath();g.arc(128,90,44,0,7);g.fill();g.beginPath();g.moveTo(92,62);g.lineTo(100,26);g.lineTo(118,52);g.moveTo(138,52);g.lineTo(156,26);g.lineTo(164,62);g.fill();g.fillStyle='#FFB43C';g.beginPath();g.arc(112,86,7,0,7);g.arc(144,86,7,0,7);g.fill();g.fillStyle='#1A1430';g.font='900 30px Nunito, sans-serif';g.textAlign='center';g.fillText('SMOKEY',128,244)}];
   [[HHW,195,1890,0],[-HHW,190,1870,1],[HHW,190,2430,2]].forEach(([x,y,z,k])=>{const s=Math.sign(x),g=new THREE.Group();g.position.set(x-s*1.5,y,z);g.rotation.y=-s*Math.PI/2;root.add(g);
     box(58,72,3,M(0xF4F1E8,{r:.6}),0,-36,0,null,g);const p=new THREE.Mesh(new THREE.PlaneGeometry(50,62),M(0xffffff,{map:canvasTex(draw[k]),r:.9}));p.position.z=1.7;g.add(p)});
 }
@@ -9023,7 +9017,7 @@ const SHAPES={
   S:[B(-3,0,-3,7,4,6),B(-4.5,2,-2,1.5,2.5,4),B(.5,4,-2,4,4,4),B(4.5,5,-1,2,1,2),B(.6,8,-1.8,3.8,1.3,3.6)],
   M:[B(-3,0,-3,6,6,6),B(-3.6,6,-3,.5,6,6),B(-.75,6,-.75,1.5,3,1.5),B(-2,9,-2,4,4,4),B(-1.5,13,-1.5,3,1.5,3),B(-.75,14.5,-.75,1.5,1.5,1.5),B(3,2.7,-.3,1.2,2.2,.6)]};
 
-/* ---------- The 8 spawns: Small in the first half, Medium in the second, either side of the runner ---------- */
+/* ---------- The 8 spawns: Small in the first half, Medium in the second, off the middle (the cat's line) ---------- */
 const SPAWN_PTS=[[-78,1840,'S'],[70,1915,'S'],[-76,1990,'S'],[74,2065,'S'],[-80,2160,'M'],[114,2242,'M'],[-80,2345,'M'],[78,2420,'M']];
 function spawns(){const SC={S:1.15,M:1.4};
   SPAWN_PTS.forEach(([x,z,s],i)=>{const m=blanketMesh(SHAPES[s],{pal:PALS[(i*7+2)%PALS.length],pattern:PATS[(i*5+1)%PATS.length]});m.scale.setScalar(SC[s]);m.position.set(x,0,z);m.rotation.y=i*1.7;root.add(m);
@@ -9031,33 +9025,57 @@ function spawns(){const SC={S:1.15,M:1.4};
   SPAWN_PTS.forEach(([x,z,s])=>{const t=textSprite(s==='S'?'SMALL':'MEDIUM',{w:192,h:56,sx:40,sy:11.7,font:'900 30px Nunito, sans-serif',bg:'rgba(26,20,48,.85)'});t.position.set(x,40,z);MAPONLY.push(t)});
 }
 
-/* ---------- The cat: its main route is the runner, end to end, turning round at its bed ---------- */
+/* ---------- The hallway's own cat (a second cat, grey, so it reads apart from the bedroom's orange one): its main
+   route is down the middle of the hallway, end to end, turning round at its bed ---------- */
 let CAT_G=null,CAT_ALERT=null;
 function cat(){
-  const g=new THREE.Group();g.position.set(0,0,2150);g.rotation.y=Math.PI/2;root.add(g);CAT_G=g; // walking down the runner toward the bedroom
-  const fur=M(0xF28C28,{r:.85}),dark=M(0xC4601A,{r:.85}),cream=M(0xFFE3C2,{r:.85});
+  const g=new THREE.Group();g.position.set(0,0,2150);g.rotation.y=Math.PI/2;root.add(g);CAT_G=g; // walking down the middle toward the bedroom
+  const fur=M(0x585D68,{r:.85}),dark=M(0x3A3E47,{r:.85}),cream=M(0xF4F4F0,{r:.85});
   const body=box(70,28,32,fur,0,16,0,null,g);[-22,-6,10,26].forEach(sx=>box(6,28.4,32.4,dark,sx,16,0,null,g));
   box(40,4,26,cream,6,14,0,null,g);
   const legs=[];[[-26,-11],[-26,11],[24,-11],[24,11]].forEach(([lx,lz],k)=>{const p=new THREE.Group();p.position.set(lx,16,lz);g.add(p);box(10,16,10,fur,0,-16,0,null,p);box(11,4,11,cream,1,-16,0,null,p);legs.push(p)});
   const head=new THREE.Group();head.position.set(44,34,0);g.add(head);
   box(28,26,28,fur,0,0,0,null,head);box(10,9,16,cream,14,3,0,null,head);box(2,3,4,M(0xFF8FA8),19.2,9,0,null,head);
   [-1,1].forEach(s=>{const ear=new THREE.Mesh(new THREE.ConeGeometry(6,12,4),fur);ear.position.set(-2,30,s*8);ear.rotation.y=Math.PI/4;head.add(ear);
-    const eye=new THREE.Mesh(new THREE.BoxGeometry(1,7,6),new THREE.MeshBasicMaterial({color:0xD8FF5A}));eye.position.set(14.2,16,s*6.5);head.add(eye);
+    const eye=new THREE.Mesh(new THREE.BoxGeometry(1,7,6),new THREE.MeshBasicMaterial({color:0xFFB43C}));eye.position.set(14.2,16,s*6.5);head.add(eye);
     const pupil=new THREE.Mesh(new THREE.BoxGeometry(1.2,6,1.6),new THREE.MeshBasicMaterial({color:0x111111}));pupil.position.set(14.5,16,s*6.5);head.add(pupil);
-    const eg=glow(0xD8FF5A,9,.55,head);eg.position.set(15,16,s*6.5);
+    const eg=glow(0xFFB43C,9,.55,head);eg.position.set(15,16,s*6.5);
     for(let k=0;k<3;k++){const w=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,14),M(0xFFFFFF));w.position.set(17,8+k*1.6,s*12);w.rotation.x=s*(k-1)*.2;head.add(w)}});
-  box(4,5,34,M(0xE04848,{r:.5}),30,36,0,null,g);
-  const bell=new THREE.Mesh(new THREE.SphereGeometry(4,18,12),M(0xFFD43B,{m:.8,r:.25,e:0x5A4400,ei:.3}));bell.position.set(34,33,0);g.add(bell);const bg=glow(0xFFE07A,16,.5,g);bg.position.set(35,33,0);
+  box(4,5,34,M(0x3D7BFF,{r:.5}),30,36,0,null,g);
+  const bell=new THREE.Mesh(new THREE.SphereGeometry(4,18,12),M(0xD8DEE8,{m:.8,r:.25,e:0x303848,ei:.3}));bell.position.set(34,33,0);g.add(bell);const bg=glow(0xCFE0FF,16,.5,g);bg.position.set(35,33,0);
   const tail=new THREE.Group();tail.position.set(-35,30,0);g.add(tail);let link=tail;const links=[];
   for(let k=0;k<6;k++){const l=new THREE.Group();l.position.set(k?-7:0,k?2.5:0,0);link.add(l);box(8,6,6,k%2?dark:fur,-3,-3,0,null,l);links.push(l);link=l}
   animated.push(t=>{links.forEach((l,k)=>{l.rotation.y=Math.sin(t*2.2-k*.6)*.35;l.rotation.z=.18+Math.sin(t*1.3-k*.4)*.08});
     legs.forEach((l,k)=>{l.rotation.z=Math.sin(t*4+(k===0||k===3?0:Math.PI))*.3});
     head.rotation.y=Math.sin(t*.7)*.25;body.scale.y=1+Math.sin(t*2)*.02;bell.position.y=33+Math.sin(t*4)*.4});
-  // its route: dots down the middle of the runner, round the end to its bed and back
-  const dots=new THREE.Group();root.add(dots);const dm=new THREE.MeshBasicMaterial({color:0xF28C28,transparent:true,opacity:.45});
-  const route=new THREE.CatmullRomCurve3([[0,1785],[0,2100],[0,2380],[-30,2440],[-60,2440]].map(([x,z])=>new THREE.Vector3(x,2.4,z)));
+  // its route: dots down the middle, round the end to its bed and back
+  const dots=new THREE.Group();root.add(dots);const dm=new THREE.MeshBasicMaterial({color:0xC9CED8,transparent:true,opacity:.45});
+  const route=new THREE.CatmullRomCurve3([[0,1785],[0,2100],[0,2380],[-30,2440],[-60,2440]].map(([x,z])=>new THREE.Vector3(x,1.4,z)));
   for(let k=0;k<=70;k++){const p=route.getPointAt(k/70),d=new THREE.Mesh(new THREE.CircleGeometry(2.2,10),dm);d.rotation.x=-Math.PI/2;d.position.copy(p);dots.add(d)}
-  const tag=textSprite('CAT ROUTE',{w:256,h:56,sx:60,sy:13,font:'900 30px Nunito, sans-serif',bg:'rgba(242,140,40,.95)',color:'#1A1430'});tag.position.set(0,40,2000);MAPONLY.push(tag);
+  const tag=textSprite('CAT ROUTE',{w:256,h:56,sx:60,sy:13,font:'900 30px Nunito, sans-serif',bg:'rgba(201,206,216,.95)',color:'#1A1430'});tag.position.set(0,40,2000);MAPONLY.push(tag);
+}
+
+/* ---------- The Roomba: loops the hallway sucking up dropped toys and dumps them at its dock (a jackpot to raid) ---------- */
+let ROOMBA=null,ROOMBA_LED=null,ROOMBA_TAG=null;
+const ROOMBA_ROUTE=[[98,2128],[56,2160],[40,2220],[40,2400],[0,2428],[-40,2400],[-40,1800],[0,1772],[40,1800],[40,2060],[60,2105]];
+function roomba(){
+  const g=new THREE.Group();root.add(g);ROOMBA=g;
+  cyl(22,22,8,M(0x2E3138,{r:.45}),0,1,0,null,g);cyl(20,20,1,M(0x474B54,{r:.3,m:.3}),0,9,0,null,g);cyl(4,4,1,M(0xB8BFC8,{m:.6,r:.3}),0,10,0,null,g);
+  const bump=new THREE.Mesh(new THREE.CylinderGeometry(22.8,22.8,6,32,1,true,-Math.PI/2,Math.PI),M(0x1A1C20,{r:.6,side:THREE.DoubleSide}));bump.position.y=4;g.add(bump);
+  ROOMBA_LED=new THREE.Mesh(new THREE.TorusGeometry(15,.8,8,40),new THREE.MeshBasicMaterial({color:0x5AE0FF}));ROOMBA_LED.rotation.x=Math.PI/2;ROOMBA_LED.position.y=10.2;g.add(ROOMBA_LED);
+  const lg=glow(0x5AE0FF,40,.35,g);lg.position.y=11;ROOMBA_LED.userData.glow=lg;
+  const brush=new THREE.Group();brush.position.set(15,1,15);g.add(brush);[0,2.09,4.19].forEach(a=>{const b=box(.8,.6,10,M(0x8A9099),Math.sin(a)*5,0,Math.cos(a)*5,null,brush);b.rotation.y=a});
+  animated.push(t=>{brush.rotation.y=-t*8});
+  // its dock against the left wall, and the pile of dropped toys it has collected
+  const dk=M(0x2E3138,{r:.45});box(14,26,44,dk,133,0,2128);box(26,1.5,44,M(0x3A3E46,{r:.5}),113,0,2128);box(1,3,8,M(0x7CFF9A,{e:0x7CFF9A,ei:1.4}),125.6,20,2128);
+  [[100,2114,1],[108,2140,4],[96,2132,7]].forEach(([x,z,p],i)=>{const m=blanketMesh(SHAPES.S,{pal:PALS[p],pattern:PATS[i]});m.scale.setScalar(.85);m.position.set(x,1.5+i*2.5,z);m.rotation.set(i*.2,i*1.3,i*.15);root.add(m)});
+  glow(0xFFC23C,46,.35).position.set(102,10,2128);
+  const dt=textSprite('ROOMBA DOCK · JACKPOT',{w:448,h:56,sx:84,sy:10.5,font:'900 30px Nunito, sans-serif',bg:'rgba(90,224,255,.95)',color:'#1A1430'});dt.position.set(100,44,2128);MAPONLY.push(dt);
+  // its route: a loop round the hallway between the cat's line and the toys
+  const dots=new THREE.Group();root.add(dots);const dm=new THREE.MeshBasicMaterial({color:0x5AE0FF,transparent:true,opacity:.4});
+  const route=new THREE.CatmullRomCurve3(ROOMBA_ROUTE.map(([x,z])=>new THREE.Vector3(x,1.2,z)),true);
+  for(let k=0;k<120;k++){const p=route.getPointAt(k/120),d=new THREE.Mesh(new THREE.CircleGeometry(1.8,8),dm);d.rotation.x=-Math.PI/2;d.position.copy(p);dots.add(d)}
+  ROOMBA_TAG=textSprite('TURBO',{w:160,h:56,sx:30,sy:10.5,font:'900 34px Nunito, sans-serif',bg:'rgba(255,77,94,.95)',color:'#FFFFFF'});
 }
 
 /* ---------- Players in the photos ---------- */
@@ -9088,11 +9106,11 @@ function faceToward(g,x,z){g.rotation.y=Math.atan2(x-g.position.x,z-g.position.z
 const nameTag=(txt,x,y,z,col='rgba(20,14,44,.85)')=>{const s=textSprite(txt,{w:256,h:64,sx:14,sy:3.5,bg:col});s.position.set(x,y,z);return s};
 let TARGET=null;
 function players(){
-  // You, dragging a Small toy home along the quiet runner, back toward the bedroom door
+  // You, dragging a Small toy home down the middle, back toward the bedroom door (loud on the wood: big ripples)
   const me=avatar(-6,1872,0xE04848,{cap:0xFFC93C});faceToward(me,-6,1700);animateAvatar(me,'drag',.6);nameTag('You',-6,8.5,1872,'rgba(255,201,60,.95)');
-  const drag=blanketMesh(SHAPES.S,{pal:PALS[1],pattern:'dots',trail:[0,1],trailLen:8});drag.scale.setScalar(.75);drag.position.set(-6,1.6,1890);root.add(drag);
-  root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-6,3,1873),new THREE.Vector3(-6,4,1887)]),new THREE.LineBasicMaterial({color:0xF4E2B0})));
-  for(let i=0;i<2;i++){const r=new THREE.Mesh(new THREE.RingGeometry(.92,1,48),new THREE.MeshBasicMaterial({color:0x7FE0B0,transparent:true,opacity:.6,side:THREE.DoubleSide}));r.rotation.x=-Math.PI/2;r.position.set(-6,2,1890);root.add(r);ripples.push({r,o:i/2,big:12})}
+  const drag=blanketMesh(SHAPES.S,{pal:PALS[1],pattern:'dots',trail:[0,1],trailLen:8});drag.scale.setScalar(.75);drag.position.set(-6,0,1890);root.add(drag);
+  root.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-6,3,1873),new THREE.Vector3(-6,3,1887)]),new THREE.LineBasicMaterial({color:0xF4E2B0})));
+  for(let i=0;i<3;i++){const r=new THREE.Mesh(new THREE.RingGeometry(.92,1,48),new THREE.MeshBasicMaterial({color:0xFFD95A,transparent:true,opacity:.7,side:THREE.DoubleSide}));r.rotation.x=-Math.PI/2;r.position.set(-6,.6,1890);root.add(r);ripples.push({r,o:i/3})}
   // hiding under the shoe rack
   const hide=avatar(118,1888,0x9B7BFF,{cap:0x3DDC97});faceToward(hide,60,1880);
   // running in from the bedroom
@@ -9114,29 +9132,33 @@ function setLights(day){
   AMB.color.setHex(day?0xFFF1DC:0x26348A);AMB.intensity=day?.42:.22;
   S(MOON,day?0:.34);S(SUN,day?.6:0);CEILL.forEach(l=>S(l,day?.6:0));S(LAMP,day?3:2.4);S(NLIGHT,day?.25:.8);S(HNL,day?.25:.9);S(KIT,day?1.2:2.6);S(LRL,day?.8:2.2);
   DOMES.forEach(d=>d.material.emissiveIntensity=day?1.2:0);CEIL.color.setHex(day?0xEFE8D8:0x1B2142);
-  // with the lights on the cat stops patrolling and pounces at the nearest mouse
+  // the Kid stays in the bedroom, but while he's awake the hallway gets busier and louder: the cat stops patrolling and
+  // pounces at the nearest mouse, and the Roomba goes on turbo (red light)
   if(!CAT_ALERT)CAT_ALERT=textSprite('!',{w:64,h:64,sx:14,sy:14,bg:'rgba(255,77,94,.95)',color:'#FFFFFF',font:'900 56px Nunito, sans-serif'});
   if(day){CAT_G.position.set(18,7,2170);CAT_G.rotation.set(0,Math.atan2(2170-2112,58-18),.18);CAT_ALERT.position.set(18,66,2170)}else{CAT_G.position.set(0,0,2150);CAT_G.rotation.set(0,Math.PI/2,0)}
-  CAT_ALERT.visible=day}
+  CAT_ALERT.visible=day;
+  ROOMBA.position.set(day?-40:40,0,day?2250:1985);ROOMBA.rotation.y=day?Math.PI:0;ROOMBA_LED.material.color.setHex(day?0xFF4D5E:0x5AE0FF);ROOMBA_LED.userData.glow.material.color.setHex(day?0xFF4D5E:0x5AE0FF);
+  ROOMBA_TAG.position.set(-40,30,2250);ROOMBA_TAG.visible=day}
 function setGates(closed){GATES.forEach(({g,open,shut})=>g.rotation.y=closed?shut:open)}
 
 /* ---------- Cameras ---------- */
 function buildCams(){
   const L=[
     ['enter','From the bedroom',{pos:[8,24,1566],look:[0,60,2400],cap:'From the end of the bedroom, through the open door: the hallway runs straight on, same direction, so you just keep running. The Kitchen door is straight ahead at the far end.'}],
-    ['hero','The hallway',{pos:[0,292,1716],look:[0,20,2330],cap:'The whole hallway from above the bedroom door: honey-oak wood (noise x2), the red runner down the middle (quiet, x1, but the cat walks it), Small toys in the first half and Medium after the yellow line, landmarks against the walls.'}],
-    ['map','Top-down',{pos:[0,1060,2100],look:[.5,0,2100],top:true,xray:true,map:true,cap:'Top-down, ceilings off, the bedroom on the left and the Kitchen on the right: 8 sleeping toys either side of the runner, the cat route down the middle, the Living Room door on the right-hand wall, the Kitchen straight ahead.'}],
+    ['hero','The hallway',{pos:[0,292,1716],look:[0,20,2330],cap:'The whole hallway from above the bedroom door: honey-oak wood all the way (noise x2), Small toys in the first half and Medium after the yellow line, landmarks against the walls, the grey cat down the middle and the Roomba looping round.'}],
+    ['map','Top-down',{pos:[0,1060,2100],look:[.5,0,2100],top:true,xray:true,map:true,cap:'Top-down, ceilings off, the bedroom on the left and the Kitchen on the right: 8 sleeping toys, the cat route down the middle (grey dots), the Roomba loop and its dock (blue), the Living Room door on the right-hand wall, the Kitchen straight ahead.'}],
     ['gate','The Strength 3 gate',{pos:[34,30,1590],look:[-6,58,1712],gate:true,cap:'Before Strength 3: a baby gate in the bedroom doorway. You can see the hallway and its toys through it, but not get in. At Strength 3 it swings open for you.'}],
-    ['small','The Small half',{pos:[-24,11,1726],look:[24,22,2060],cap:'Mouse height at the start: the shoe rack on the left, the umbrella stand and the yellow raincoat on the right, Small toys either side of the runner. You drag one home down the runner, where it\'s quiet.'}],
+    ['small','The Small half',{pos:[-24,11,1726],look:[24,22,2060],cap:'Mouse height at the start: the shoe rack on the left, the umbrella stand and the yellow raincoat on the right, Small toys either side. You drag one home down the middle; on wood every step is loud.'}],
     ['shoes','Under the shoe rack',{pos:[26,62,1790],look:[116,18,1890],cap:'A hiding spot: the bottom shelf is 18 up, so you can crawl underneath. A sneaker lies kicked off in front with its green lace trailing.'}],
     ['coats','Coats and umbrellas',{pos:[90,110,1890],look:[-140,160,2015],cap:'The right-hand wall: an umbrella stand under coat hooks, a yellow raincoat and a long striped scarf down to the floor. A landmark you can see from the far end.'}],
-    ['cat','The cat',{pos:[-12,12,1985],look:[0,24,2150],cap:'The cat\'s main route is the runner, end to end. The quiet lane is also the dangerous one: step off onto the wood and you\'re louder, stay on it and you meet the cat.'}],
+    ['cat','The cat',{pos:[-12,12,1985],look:[0,24,2150],cap:'The hallway has its own cat, smoky grey so you can tell it from the bedroom\'s orange one. Its main route is down the middle, end to end, to its bed by the Kitchen door.'}],
+    ['roomba','The Roomba',{pos:[-70,70,1960],look:[85,0,2085],cap:'The Roomba loops the hallway and sucks up any toy someone dropped, then dumps it at its dock on the left wall. The pile at the dock is a jackpot worth raiding.'}],
     ['medium','The Medium half',{pos:[0,190,2110],look:[0,10,2470],cap:'Past the yellow line: Medium toys, the key table on the left with a toy hidden underneath, the Living Room door on the right, the cat\'s bed and bowls in the far corner, the Kitchen door straight ahead.'}],
     ['living','The Living Room door',{pos:[44,26,2186],look:[-150,70,2270],cap:'On the right-hand wall, the Living Room door is ajar behind a baby gate (Strength 10). A TV left on lights it purple, and a glowing toy sits just inside.'}],
     ['kitchen','The Kitchen door',{pos:[12,18,2356],look:[-12,62,2600],cap:'Straight ahead at the end: the Kitchen door ajar behind a baby gate (Strength 6). Cool fridge light spills out over the floor, and you can see a glowing toy and the tile floor inside.'}],
     ['lookup','The attic hatch',{pos:[12,6,1928],look:[0,320,2010],up:true,cap:'Looking up: the attic hatch in the ceiling, its red pull ring dangling out of reach. Rebirth 1.'}],
-    ['back','The way home',{pos:[10,36,2470],look:[0,70,1600],cap:'Turning round at the far end: the long way back down the runner to the bedroom door, the lamp glowing through it. "BACK TO HOMES" over the door.'}],
-    ['lightson','Lights on',{pos:[0,292,1716],look:[0,20,2330],day:true,cap:'When the Kid wakes, the hallway lights come on too (photo 1 lighting) and the cat stops patrolling and pounces at the nearest mouse.'}]
+    ['back','The way home',{pos:[10,36,2470],look:[0,70,1600],cap:'Turning round at the far end: the long way back down the middle to the bedroom door, the lamp glowing through it. "BACK TO HOMES" over the door.'}],
+    ['lightson','Lights on',{pos:[0,292,1716],look:[0,20,2330],day:true,cap:'When the Kid wakes he stays in the bedroom, but the hallway gets busier and louder: the lights come on (photo 1 lighting), the cat pounces at the nearest mouse and the Roomba goes on turbo.'}]
   ];
   L.forEach(([k,label,c])=>{c.label=label;CAMS[k]=c});
   return L.map(x=>x[0]);
@@ -9162,7 +9184,7 @@ function init(){
   MOON=new THREE.DirectionalLight(0x9DB4FF,.34);MOON.position.set(500,900,2400);MOON.target.position.set(0,0,2050);scene.add(MOON.target);sh(MOON);scene.add(MOON);
   SUN=new THREE.DirectionalLight(0xFFE6C4,0);SUN.position.set(450,1000,1800);SUN.target.position.set(0,0,2050);scene.add(SUN.target);sh(SUN);scene.add(SUN);
   [1860,2300].forEach(z=>{const l=new THREE.PointLight(0xFFE9C8,0,900,1.2);l.position.set(0,290,z);scene.add(l);CEILL.push(l)});
-  bedroomStub();hallway();nextRooms();shoeRack();coatsAndUmbrellas();keyTable();pictureFrames();catStation();spawns();cat();players();
+  bedroomStub();hallway();nextRooms();shoeRack();coatsAndUmbrellas();keyTable();pictureFrames();catStation();spawns();cat();roomba();players();
   const bdoor=door(-DOOR_W/2,LEN+2,-2.06);
   GATES.push({g:babyGate(DOOR_W/2-1,LEN-6,Math.PI,'3'),shut:Math.PI,open:0});
   [['BEDROOM',0,60,1520]].forEach(([t,x,y,z])=>{const s=textSprite(t,{w:384,h:80,sx:110,sy:23,font:'400 52px "Lilita One", sans-serif'});s.position.set(x,y,z);MAPONLY.push(s)});

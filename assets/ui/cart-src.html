@@ -1,0 +1,68 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Shop cart icon</title>
+<!-- assets/ui/Cart.png (256 px): a chunky shopping cart heaped with toys (rubber duck, teddy, gift, gold coins),
+     chrome basket with a grid, red handle grip, black wheels with hubcaps, thick outlines and sparkles. -->
+<style>html,body{margin:0;background:transparent}svg{display:block}</style></head><body>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#D3DCE8"/><stop offset="1" stop-color="#8D9AB0"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6A8"/><stop offset=".5" stop-color="#FFC83A"/><stop offset="1" stop-color="#E08A10"/></linearGradient>
+<linearGradient id="red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF7A80"/><stop offset="1" stop-color="#C8101E"/></linearGradient>
+<linearGradient id="duck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF08A"/><stop offset="1" stop-color="#F2B21E"/></linearGradient>
+<linearGradient id="bear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D99A5C"/><stop offset="1" stop-color="#9A5E2C"/></linearGradient>
+<linearGradient id="gift" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD8FF"/><stop offset="1" stop-color="#2C84E8"/></linearGradient>
+<clipPath id="basket"><path d="M46 112 L226 112 L206 182 L66 182 Z"/></clipPath>
+</defs>
+<g stroke="#141018" stroke-linejoin="round" stroke-linecap="round">
+<!-- toys heaped in the basket (drawn first so the basket front overlaps them) -->
+<!-- gift box -->
+<g transform="rotate(-10 176 92)">
+<rect x="150" y="66" width="56" height="50" rx="5" fill="url(#gift)" stroke-width="6"/>
+<rect x="146" y="58" width="64" height="14" rx="4" fill="#7FCBFF" stroke-width="6"/>
+<rect x="172" y="58" width="12" height="58" fill="url(#gold)" stroke-width="5"/>
+<path d="M178 58c-6-14-22-14-20-4 2 6 12 6 20 4zM178 58c6-14 22-14 20-4-2 6-12 6-20 4z" fill="url(#gold)" stroke-width="5"/>
+</g>
+<!-- teddy -->
+<circle cx="116" cy="66" r="11" fill="url(#bear)" stroke-width="6"/>
+<circle cx="150" cy="66" r="11" fill="url(#bear)" stroke-width="6"/>
+<circle cx="133" cy="86" r="28" fill="url(#bear)" stroke-width="7"/>
+<ellipse cx="133" cy="96" rx="12" ry="9" fill="#F3D2A8" stroke-width="4"/>
+<circle cx="123" cy="82" r="3.5" fill="#141018" stroke="none"/><circle cx="143" cy="82" r="3.5" fill="#141018" stroke="none"/>
+<ellipse cx="133" cy="93" rx="4" ry="3" fill="#141018" stroke="none"/>
+<path d="M114 72c4-6 10-9 16-9" fill="none" stroke="#FFFFFF" stroke-width="4" opacity=".6"/>
+<!-- duck -->
+<path d="M58 112c-2-18 10-28 26-26 4-14 22-18 30-6 6 10 0 20-8 24 10 2 16 6 16 8z" fill="url(#duck)" stroke-width="6"/>
+<path d="M112 88l14-2-12 9z" fill="#FF8A1F" stroke-width="4"/>
+<circle cx="102" cy="82" r="3.5" fill="#141018" stroke="none"/>
+<path d="M90 86c2-4 6-6 10-6" fill="none" stroke="#FFFFFF" stroke-width="3.5" opacity=".8"/>
+<!-- gold coins -->
+<ellipse cx="200" cy="114" rx="14" ry="8" fill="url(#gold)" stroke-width="5"/>
+<ellipse cx="78" cy="114" rx="13" ry="7" fill="url(#gold)" stroke-width="5"/>
+<ellipse cx="156" cy="116" rx="12" ry="7" fill="url(#gold)" stroke-width="5"/>
+<!-- handle: frame bar + red grip -->
+<path d="M18 52 L40 52 L72 190" fill="none" stroke="#141018" stroke-width="18"/>
+<path d="M18 52 L40 52 L72 190" fill="none" stroke="url(#chrome)" stroke-width="9"/>
+<rect x="6" y="40" width="34" height="22" rx="10" fill="url(#red)" stroke-width="6"/>
+<path d="M12 46h18" stroke="#FFFFFF" stroke-width="4" opacity=".7"/>
+<!-- basket -->
+<path d="M46 112 L226 112 L206 182 L66 182 Z" fill="url(#chrome)" stroke-width="8"/>
+<g clip-path="url(#basket)" stroke="#8D9AB0" stroke-width="5">
+<path d="M82 112 L94 182M118 112 L124 182M154 112 L154 182M190 112 L184 182"/>
+<path d="M40 136 H230M40 160 H230"/>
+</g>
+<path d="M46 112 L226 112 L206 182 L66 182 Z" fill="none" stroke-width="8"/>
+<path d="M42 110 H230" stroke="#141018" stroke-width="14"/>
+<path d="M42 110 H230" stroke="#FFFFFF" stroke-width="6"/>
+<path d="M60 122 L72 172" stroke="#FFFFFF" stroke-width="5" opacity=".9"/>
+<!-- base rail and wheels -->
+<path d="M70 198 H212" stroke="#141018" stroke-width="14"/>
+<path d="M70 198 H212" stroke="url(#chrome)" stroke-width="6"/>
+<path d="M84 182 V198M196 182 V198" stroke="#141018" stroke-width="10"/>
+<circle cx="92" cy="220" r="17" fill="#2A2D36" stroke-width="7"/><circle cx="92" cy="220" r="7" fill="url(#chrome)" stroke-width="4"/>
+<circle cx="192" cy="220" r="17" fill="#2A2D36" stroke-width="7"/><circle cx="192" cy="220" r="7" fill="url(#chrome)" stroke-width="4"/>
+</g>
+<!-- sparkles -->
+<g fill="#FFFFFF" stroke="#141018" stroke-width="3" stroke-linejoin="round">
+<path transform="translate(226 44)" d="M0 -16C1.6 -4 4 -1.6 16 0C4 1.6 1.6 4 0 16C-1.6 4 -4 1.6 -16 0C-4 -1.6 -1.6 -4 0 -16Z"/>
+<path transform="translate(86 34) scale(.7)" d="M0 -16C1.6 -4 4 -1.6 16 0C4 1.6 1.6 4 0 16C-1.6 4 -4 1.6 -16 0C-4 -1.6 -1.6 -4 0 -16Z"/>
+</g>
+</svg></body></html>

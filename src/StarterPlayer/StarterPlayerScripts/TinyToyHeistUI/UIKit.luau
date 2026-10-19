@@ -304,7 +304,7 @@ export type ButtonOptions = {
 	layoutOrder: number?,
 	onClick: (() -> ())?,
 }
--- Outlined text with a hard dark shadow 3 px below it (the "depth" on button labels). The text box is exactly the
+-- Outlined button label. The text box is exactly the
 -- text's height, so it sits dead centre in a list row.
 function UIKit.shadowText(parent: Instance, text: string, textSize: number, layoutOrder: number?): Frame
 	local box = new("Frame", {
@@ -315,7 +315,8 @@ function UIKit.shadowText(parent: Instance, text: string, textSize: number, layo
 		LayoutOrder = layoutOrder or 0,
 		ZIndex = 5,
 	}, parent)
-	for _, layer in { { "Shadow", UIKit.Ink, 3, 5 }, { "Text", UIKit.White, 0, 6 } } do
+	-- one white label with a thick outline, the same look as the panel titles (the offset shadow read as doubled)
+	for _, layer in { { "Text", UIKit.White, 0, 6 } } do
 		local l = new("TextLabel", {
 			Name = layer[1],
 			BackgroundTransparency = 1,
@@ -351,7 +352,7 @@ function UIKit.button(parent: Instance, label: string, o: ButtonOptions): Frame
 	local row = new("Frame", {
 		Name = "Row",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 1, -3), -- leave room for the text shadow so the label looks centred
+		Size = UDim2.fromScale(1, 1),
 		ZIndex = 4,
 	}, face)
 	new("UIListLayout", {

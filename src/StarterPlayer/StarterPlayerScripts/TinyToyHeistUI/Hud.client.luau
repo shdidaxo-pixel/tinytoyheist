@@ -107,7 +107,7 @@ do
 		UIKit.clickable(giftHolder)
 		local priceHolder = UIKit.button(parent, price, {
 			palette = palette or P.green,
-			icon = img("RobuxBold2"),
+			icon = img("Robux3"),
 			size = UDim2.fromOffset(width - 50, 44),
 			position = position + UDim2.fromOffset(50, 0),
 			textSize = 28,
@@ -1006,7 +1006,7 @@ do
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, only)
 	UIKit.text(only, "ONLY", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 1
-	UIKit.icon(only, img("RobuxBold2"), 26).LayoutOrder = 2
+	UIKit.icon(only, img("Robux3"), 26).LayoutOrder = 2
 	UIKit.text(only, "3", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 3
 	UIKit.clickable(promoHolder, function()
 		open("Shop")

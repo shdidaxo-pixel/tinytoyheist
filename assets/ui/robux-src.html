@@ -1,9 +1,11 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Robux icon</title>
-<!-- assets/ui/RobuxBold.png (128 px): white Robux hexagon with a thick, rounded black outline, matching the
-     bubbly outline of the price text (Montserrat Black + 4 px UIStroke) at button size. -->
+<!-- assets/ui/RobuxBold.png (128 px): white Robux hexagon with a dark rounded-square hole.
+     Drawn in on-screen units (viewBox 31 = the icon's size beside 28 px price text) so that, once shown,
+     the black outline is 4 px like the text's UIStroke and the white ring is as thick as a digit stroke. -->
 <style>html,body{margin:0;background:transparent}svg{display:block}</style></head><body>
-<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-<path d="M64 16 L106 40 V88 L64 112 L22 88 V40 Z" fill="#141018" stroke="#141018" stroke-width="30" stroke-linejoin="round"/>
-<path d="M64 16 L106 40 V88 L64 112 L22 88 V40 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="8" stroke-linejoin="round"/>
-<rect x="47" y="47" width="34" height="34" rx="8" fill="#141018"/>
+<svg width="128" height="128" viewBox="0 0 31 31" xmlns="http://www.w3.org/2000/svg">
+<defs><path id="hex" d="M15.5 4.7 L24.853 10.1 V20.9 L15.5 26.3 L6.147 20.9 V10.1 Z"/></defs>
+<use href="#hex" fill="#141018" stroke="#141018" stroke-width="9.4" stroke-linejoin="round"/>
+<use href="#hex" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"/>
+<rect x="11.05" y="11.05" width="8.9" height="8.9" rx="2" fill="#141018"/>
 </svg></body></html>

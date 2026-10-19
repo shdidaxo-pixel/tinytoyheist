@@ -1,0 +1,464 @@
+<title>Home Fences Render</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap">
+<style>
+/* The live 3D view of the 8 homes with fences instead of walls, camera buttons, and the upgrade player. Same look and
+   still mode (?shot=1&cam=<name>) as the v6 bedroom render page. */
+:root{
+  --bg:#ECEEF6; --panel:#FFFFFF; --ink:#16182A; --soft:#5A5F7A; --line:#D2D6E6; --accent:#FFC93C; --night:#141230;
+  --display:'Lilita One','Trebuchet MS',sans-serif; --body:'Nunito',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D0F1A; --panel:#161A2B; --ink:#E9ECF8; --soft:#9EA5C2; --line:#272C44; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D0F1A; --panel:#161A2B; --ink:#E9ECF8; --soft:#9EA5C2; --line:#272C44; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:grid;gap:16px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.4vw,44px);line-height:1.04;margin:0}
+p{margin:0;max-width:72ch;color:var(--soft)}
+.view{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:16px;overflow:hidden;background:var(--night);border:1px solid var(--line)}
+#c{display:block;width:100%;height:100%}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.cam{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:800 14px var(--body);padding:7px 13px;border-radius:999px;cursor:pointer}
+.cam[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.cam.play{background:var(--accent);color:#22140A;border-color:var(--accent)}
+.cam:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.caption{font-size:14px;color:var(--soft);min-height:3em}
+.err{position:absolute;inset:0;display:grid;place-items:center;color:#C9D2FF;padding:24px;text-align:center}
+/* the on-screen bits of the upgrade moment */
+.ui{position:absolute;inset:0;pointer-events:none;font-family:var(--display)}
+.banner{position:absolute;left:50%;top:12%;transform:translateX(-50%) scale(var(--pop,1));text-align:center;opacity:0;transition:none}
+.banner .big{font-size:clamp(34px,8.5vw,118px);line-height:.95;color:#FFE066;-webkit-text-stroke:.07em #3A1E00;paint-order:stroke fill;
+  text-shadow:0 .08em 0 #B4540A,0 .16em 0 rgba(0,0,0,.35);letter-spacing:.02em}
+.banner .sub{margin-top:.3em;font-size:clamp(16px,3.2vw,44px);color:#FFFFFF;-webkit-text-stroke:.09em #1A1430;paint-order:stroke fill}
+.chips{display:flex;gap:.5em;justify-content:center;margin-top:.5em;font-family:var(--body);font-weight:900;font-size:clamp(11px,1.7vw,24px)}
+.chips span{background:#1A1430;color:#FFE066;border:3px solid #FFE066;border-radius:999px;padding:.15em .8em}
+.prompt{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);display:flex;align-items:center;gap:.6em;opacity:0;
+  background:rgba(20,16,44,.88);border:3px solid #FFFFFF;border-radius:16px;padding:.45em .9em;color:#fff;font-size:clamp(14px,2.2vw,30px)}
+.prompt kbd{font-family:var(--body);font-weight:900;background:#fff;color:#1A1430;border-radius:8px;padding:0 .45em}
+.prompt small{display:block;font-family:var(--body);font-weight:800;font-size:.6em;color:#FFE066}
+html.shot body{padding:0}
+html.shot .wrap{max-width:none;gap:0}
+html.shot .wrap>:not(#view){display:none}
+html.shot .view{aspect-ratio:auto;height:100vh;border:0;border-radius:0}
+</style>
+<script>if(new URLSearchParams(location.search).has('shot'))document.documentElement.classList.add('shot')</script>
+
+<div class="wrap">
+  <header>
+    <h1>Homes with toy fences</h1>
+    <p>The 8 homes stay in the curved row with open fronts; the walls between them are gone and each home has its own toy fence. Concept render, not the game.</p>
+  </header>
+  <div class="view" id="view">
+    <canvas id="c" aria-label="3D render of the homes with toy fences"></canvas>
+    <div class="ui" aria-hidden="true">
+      <div class="banner" id="banner"><div class="big">LEVEL UP!</div><div class="sub">Home Lv 4 · Pencil Palisade</div>
+        <div class="chips"><span>+2 pen slots</span><span>New fence</span></div></div>
+      <div class="prompt" id="prompt"><kbd>E</kbd><div>Upgrade Home<small>Lv 4 · $50K</small></div></div>
+    </div>
+  </div>
+  <div class="controls" role="group" aria-label="Camera" id="controls"></div>
+  <p class="caption" id="caption"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+/* Full-size map numbers (the game shrinks everything by 0.65), same as the v6 render: homes on a half circle of radius
+   380 round (0, 380), 22.5 degrees apart. A home's plot is now its whole wedge, from the curve to the back wall, with a
+   toy fence along each side. Home space (MapConfig): x across, y up, z deep from the open front. */
+const HW=210, WALL_H=320, BW=130, BD=170, N=8, CR=380, CZ0=380, STEP=22.5, SAFE_R=240, SH_Z=510;
+const RB=CR+BD+4; // the curved back wall
+const FS=1.6; // fences are drawn at this scale (chunky enough to read from the run)
+const HOLE_A=i=>270+(i-3.5)*STEP;
+const deg=d=>d*Math.PI/180, HALF=deg(STEP/2);
+const PC=(r,a)=>[r*Math.cos(deg(a)),CZ0+r*Math.sin(deg(a))];
+const HOME=i=>{const a=deg(HOLE_A(i));return {c:PC(CR,HOLE_A(i)),n:[-Math.cos(a),-Math.sin(a)],X:[-Math.sin(a),Math.cos(a)]}};
+// world point in home i's space (x across, y up, z deep)
+const BP=(i,x,y,z)=>{const {c,n,X}=HOME(i);return [c[0]-x*X[0]-z*n[0],y,c[1]-x*X[1]-z*n[1]]};
+
+/* ---------- the level ladder ---------- */
+const LV=[null,
+  {theme:'Cardboard',  fence:'Popsicle sticks',        h:14, slots:6,  cost:'free', fairy:0xFFD27A, pen:0xC49A6C},
+  {theme:'Sock-lined', fence:'Clothes pegs and socks',  h:16, slots:8,  cost:'$500', fairy:0xFFB0C8, pen:0xF28DB2},
+  {theme:'Toy bricks', fence:'Toy-brick wall',          h:17, slots:10, cost:'$5K',  fairy:0xFFE08A, pen:0x3DA5FF},
+  {theme:'Cosy cabin', fence:'Pencil palisade',         h:20, slots:12, cost:'$50K', fairy:0xFF9A4A, pen:0xC89A62},
+  {theme:'Candy land', fence:'Candy canes',             h:22, slots:15, cost:'$500K',fairy:0xFF8FC8, pen:0xFF8FC8},
+  {theme:'Arcade neon',fence:'Glow sticks',             h:24, slots:18, cost:'$5M',  fairy:0x7AE8FF, pen:0x2A1F55},
+  {theme:'Golden vault',fence:'Coin stacks and gold rulers',h:27,slots:20,cost:'$50M',fairy:0xFFE07A, pen:0xFFC93C},
+];
+const LAYOUTS={
+  mixed:[3,1,5,2,7,4,1,6],       // like the Studio showcase
+  ladder:[1,2,3,4,5,6,7,1],      // left to right from the run: Lv 1 ... Lv 7, then an empty home
+  upgrade:[2,5,1,3,6,1,4,2],     // home 4 (index 3) is the one that levels up 3 -> 4
+};
+const NAMES=['kayla_rbx','Bloxer99','zzz_ninja','mia.ttv','sneakyPete','samrtly','toyhunter','EMPTY HOME'];
+
+let renderer,scene,camera,controls,clock,root,FOG,CEIL,TOPPLATE;
+const animated=[];const CAMS={};
+let seed=1019;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+function M(c,o={}){return new THREE.MeshStandardMaterial({color:c,roughness:o.r??.75,metalness:o.m??0,emissive:o.e??0,emissiveIntensity:o.ei??1,transparent:!!o.t,opacity:o.t??1,side:o.side??THREE.FrontSide,map:o.map??null})}
+function mesh(geo,mat,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat.isMaterial?mat:M(mat));m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;(parent||root).add(m);return m}
+// a box with its bottom at y
+function box(w,h,d,c,x,y,z,parent,o){return mesh(new THREE.BoxGeometry(w,h,d),c.isMaterial?c:M(c,o),parent,x,y+h/2,z)}
+function cyl(r,h,c,x,y,z,parent,o={}){return mesh(new THREE.CylinderGeometry(o.rt??r,r,h,o.seg??16),c.isMaterial?c:M(c,o),parent,x,y+h/2,z)}
+function canvasTex(draw,S=256,rep=[1,1]){const c=document.createElement('canvas');c.width=c.height=S;draw(c.getContext('2d'),S);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...rep);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t}
+function glowTex(){if(glowTex.t)return glowTex.t;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.25,'rgba(255,255,255,.55)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);glowTex.t=new THREE.CanvasTexture(c);return glowTex.t}
+function glow(color,size,opacity=.6,parent){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));s.scale.set(size,size,1);(parent||root).add(s);return s}
+function starTex(){if(starTex.t)return starTex.t;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#fff';g.beginPath();for(let k=0;k<10;k++){const r=k%2?11:28,a=-Math.PI/2+k*Math.PI/5;g.lineTo(32+Math.cos(a)*r,32+Math.sin(a)*r)}g.fill();starTex.t=new THREE.CanvasTexture(c);return starTex.t}
+function studTex(col,rep){const c=new THREE.Color(col),hi=c.clone().lerp(new THREE.Color(1,1,1),.35),lo=c.clone().multiplyScalar(.72);
+  return canvasTex((g,S)=>{g.fillStyle='#'+c.getHexString();g.fillRect(0,0,S,S);
+    g.fillStyle='#'+lo.getHexString();g.beginPath();g.arc(S*.52,S*.54,S*.3,0,7);g.fill();
+    g.fillStyle='#'+c.getHexString();g.beginPath();g.arc(S*.5,S*.5,S*.28,0,7);g.fill();
+    g.fillStyle='#'+hi.getHexString();g.beginPath();g.arc(S*.44,S*.42,S*.12,0,7);g.fill()},128,[rep,rep])}
+function stripeTex(cols,n=8,angle=0){return canvasTex((g,S)=>{const w=S/n;for(let k=0;k<n;k++){g.fillStyle=cols[k%cols.length];g.fillRect(k*w,0,w+1,S)}},128)}
+// floating sign over a home: white outlined text, no board (like the game)
+function signSprite(l1,l2,gold){const cv=document.createElement('canvas');cv.width=512;cv.height=170;const g=cv.getContext('2d');
+  g.textAlign='center';g.lineJoin='round';
+  g.font='400 78px "Lilita One", sans-serif';g.lineWidth=14;g.strokeStyle='#1A1430';g.strokeText(l1,256,70,490);g.fillStyle=gold?'#FFD43B':'#FFFFFF';g.fillText(l1,256,70,490);
+  g.font='900 46px Nunito, sans-serif';g.lineWidth=10;g.strokeText(l2,256,140,490);g.fillStyle='#FFE58A';g.fillText(l2,256,140,490);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));s.scale.set(60,20,1);return s}
+
+/* ---------- floors ---------- */
+const FLOOR_TEX=[null,
+  ()=>canvasTex((g,S)=>{g.fillStyle='#C9A06A';g.fillRect(0,0,S,S);g.fillStyle='rgba(120,80,40,.18)';for(let x=0;x<S;x+=8)g.fillRect(x,0,3,S);
+    g.fillStyle='rgba(255,240,200,.55)';g.fillRect(0,S*.44,S,S*.12);g.strokeStyle='rgba(90,50,20,.6)';g.lineWidth=5;g.beginPath();g.moveTo(S*.2,S*.86);g.lineTo(S*.2,S*.66);g.lineTo(S*.14,S*.72);g.moveTo(S*.2,S*.66);g.lineTo(S*.26,S*.72);g.stroke();
+    g.fillStyle='rgba(90,50,20,.55)';g.font='800 20px Nunito';g.fillText('THIS SIDE UP',S*.3,S*.8)},256,[1/70,1/70]),
+  ()=>canvasTex((g,S)=>{const C=['#F28DB2','#FFFFFF','#7FD6E8','#FFFFFF'];for(let y=0;y<S;y+=32){g.fillStyle=C[(y/32)%4];g.fillRect(0,y,S,32);
+    g.strokeStyle='rgba(0,0,0,.08)';g.lineWidth=2;for(let x=0;x<S;x+=16){g.beginPath();g.moveTo(x,y+4);g.lineTo(x+8,y+28);g.lineTo(x+16,y+4);g.stroke()}}},256,[1/60,1/60]),
+  ()=>studTex(0x3DA5FF,1/6),
+  ()=>canvasTex((g,S)=>{g.fillStyle='#B98A58';g.fillRect(0,0,S,S);for(let y=0;y<S;y+=32){g.fillStyle=['#C89A62','#B07E4C','#BE915C','#A9784A'][(y/32)%4];g.fillRect(0,y,S,30);
+    g.fillStyle='rgba(60,30,10,.5)';g.fillRect(((y*7)%S),y,3,30);g.fillRect(((y*13+90)%S),y,3,30)}},256,[1/60,1/60]),
+  ()=>canvasTex((g,S)=>{g.fillStyle='#FFB3D1';g.fillRect(0,0,S,S);const C=['#FFFFFF','#7AE8FF','#FFD95A','#9B7BFF','#3DDC97','#FF5FA8'];
+    for(let k=0;k<160;k++){g.save();g.translate((k*97)%S,(k*61)%S);g.rotate(k);g.fillStyle=C[k%6];g.fillRect(-7,-2,14,4);g.restore()}},256,[1/50,1/50]),
+  ()=>canvasTex((g,S)=>{g.fillStyle='#1E1840';g.fillRect(0,0,S,S);const C=['#22D3EE','#FF5FA8','#9B7BFF','#B9F64A'];g.lineWidth=5;
+    for(let k=0;k<14;k++){g.strokeStyle=C[k%4];g.beginPath();const x=(k*83)%S,y=(k*59)%S;if(k%3===0){g.arc(x,y,10,0,7)}else if(k%3===1){g.moveTo(x,y);g.lineTo(x+16,y+8);g.lineTo(x,y+16);g.closePath()}else{g.moveTo(x,y);for(let j=1;j<5;j++)g.lineTo(x+j*8,y+(j%2)*10)}g.stroke()}},256,[1/55,1/55]),
+  ()=>canvasTex((g,S)=>{for(let y=0;y<4;y++)for(let x=0;x<4;x++){g.fillStyle=(x+y)%2?'#FFD54A':'#E8A92A';g.fillRect(x*S/4,y*S/4,S/4,S/4)}
+    g.fillStyle='rgba(255,255,255,.35)';for(let k=0;k<4;k++){g.beginPath();g.arc(S*(.125+k*.25),S*(.125+((k*2)%4)*.25),5,0,7);g.fill()}},256,[1/48,1/48]),
+];
+const floorMats={};function floorMat(l){if(!floorMats[l])floorMats[l]=M(0xffffff,{map:FLOOR_TEX[l](),r:l===7?.35:.85,m:l===7?.35:0});return floorMats[l]}
+// a flat wedge round the curve's centre (world space), radius r0..r1, angles a0..a1 (degrees)
+function sectorGeo(r0,r1,a0,a1,seg=16){const pts=[];for(let k=0;k<=seg;k++)pts.push(PC(r1,a0+(a1-a0)*k/seg));for(let k=seg;k>=0;k--)pts.push(PC(r0,a0+(a1-a0)*k/seg));
+  const s=new THREE.Shape(pts.map(([x,z])=>new THREE.Vector2(x,-z)));const g=new THREE.ShapeGeometry(s);g.rotateX(-Math.PI/2);return g}
+
+/* ---------- fences ----------
+   A fence is built in its own space: z runs from the home's front (0) to the back wall (L), x across, y up; `ins` is
+   the side facing into its home. Every piece is tagged with u (0 at the front, 1 at the back) so the upgrade can pop
+   and drop them in a wave. The corner post at the front carries the level's topper. */
+function tag(m,u){m.userData.u=u;return m}
+const ease=p=>1-Math.pow(1-p,3);
+function bounce(p){const n=7.5625,d=2.75;if(p<1/d)return n*p*p;if(p<2/d)return n*(p-=1.5/d)*p+.75;if(p<2.5/d)return n*(p-=2.25/d)*p+.9375;return n*(p-=2.625/d)*p+.984375}
+function rail(g,L,y,h,w,mat,x){const m=box(w,h,L-6,mat,x,y,L/2+2,g);tag(m,.5);return m}
+function newel(g,lv,ins,style){
+  // the big corner post at the front of the fence, taller each level, with the level's topper
+  const P=new THREE.Group();P.position.set(ins*1.2,0,1.5);g.add(P);tag(P,1.08);P.userData.newel=true;
+  const H=LV[lv].h+6+lv*1.2;
+  const body={1:0xE8C890,2:0xF28DB2,3:0xE04848,4:0xF2C230,5:0xFFFFFF,6:0x1A1430,7:0xFFC93C}[lv];
+  if(style==='crayon'){const c=[0,0xE04848,0x4DA8FF,0x3DDC97,0xFF9A2E,0x9B7BFF,0x22D3EE,0xFFC93C][lv];cyl(2.6,H,c,0,0,0,P,{seg:12});cyl(2.6,4,0x1A1430,0,H*.7,0,P,{seg:12});cyl(.4,5,c,0,H,0,P,{rt:.4,seg:12}).geometry=new THREE.ConeGeometry(2.6,5,12);P.children[P.children.length-1].position.y=H+2.5;return P}
+  if(style==='brick'){for(let k=0;k*4.8<H;k++)box(6.4,4.8,6.4,[0xE04848,0xFFC93C,0x4DA8FF,0x3DDC97][(k+lv)%4],0,k*4.8,0,P,{r:.35});return P}
+  if(lv===5){cyl(1.6,H,M(0xffffff,{map:stripeTex(['#FF3B6B','#FFFFFF'],6)}),0,0,0,P);}
+  else if(lv===7){for(let k=0;k*1.6<H;k++)cyl(3.2,1.5,M(0xFFC93C,{m:.7,r:.3,e:0x6A4A00,ei:.4}),((k*7)%3-1)*.25,k*1.6,((k*5)%3-1)*.25,P,{seg:18})}
+  else if(lv===6){box(4,H,4,0x1A1430,0,0,0,P);box(4.4,1,4.4,M(0x22D3EE,{e:0x22D3EE,ei:1.2}),0,H*.55,0,P);box(4.4,1,4.4,M(0xFF5FA8,{e:0xFF5FA8,ei:1.2}),0,H*.3,0,P)}
+  else if(lv===4){cyl(3,H-6,0xF2C230,0,0,0,P,{seg:6});mesh(new THREE.ConeGeometry(3,7,6),M(0xF1D2A0,{r:.8}),P,0,H-2.5,0);mesh(new THREE.ConeGeometry(1.1,2.6,6),M(0x2A2A34,{r:.5}),P,0,H+1.6,0);cyl(3.05,2,M(0xC0C6D0,{m:.8,r:.3}),0,0,0,P,{seg:6});return P}
+  else if(lv===3){for(let k=0;k*4.8<H;k++)box(6.4,4.8,6.4,[0xE04848,0xFFC93C,0x4DA8FF,0x3DDC97][k%4],0,k*4.8,0,P,{r:.35})}
+  else box(4.2,H,4.2,body,0,0,0,P,{r:.6});
+  const top=new THREE.Group();top.position.y=lv===3?Math.ceil(H/4.8)*4.8:H;P.add(top);
+  if(lv===1){cyl(3.6,1.6,0xE04848,0,0,0,top,{m:.4,r:.35,seg:20});}                                    // a bottle cap
+  if(lv===2){mesh(new THREE.SphereGeometry(3.4,14,10),M(0xFFD95A,{r:1}),top,0,3,0);}                     // a pom-pom
+  if(lv===3){for(let x of [-1.6,1.6])for(let z of [-1.6,1.6])cyl(1.2,1,0x3DDC97,x,0,z,top,{r:.35});}     // studs
+  if(lv===4){box(6,6,6,0x6B4A2E,0,0,0,top);box(4,4,6.4,M(0xFFC070,{e:0xFF9A4A,ei:1.4}),0,1,0,top);const l=new THREE.PointLight(0xFF9A4A,.6,60,2);l.position.y=4;top.add(l)} // a lantern
+  if(lv===5){const d=mesh(new THREE.CylinderGeometry(6,6,1.6,28),M(0xffffff,{map:canvasTex((g,S)=>{const C=['#FF5FA8','#FFFFFF','#7AE8FF','#FFD95A'];for(let k=0;k<4;k++){g.fillStyle=C[k];g.beginPath();g.moveTo(S/2,S/2);g.arc(S/2,S/2,S/2,k*Math.PI/2,(k+1)*Math.PI/2);g.fill()}})}),top,0,6,0);d.rotation.x=Math.PI/2;cyl(.6,6,0xFFFFFF,0,0,0,top)} // a lollipop
+  if(lv===6){const s=new THREE.Mesh(new THREE.PlaneGeometry(12,12),new THREE.MeshBasicMaterial({map:starTex(),color:0xFFE066,transparent:true,side:THREE.DoubleSide,depthWrite:false}));s.position.y=6;top.add(s);s.userData.face=true;glow(0xFFE066,26,.55,top).position.y=6}
+  if(lv===7){cyl(3.6,2.4,M(0xFFD43B,{m:.8,r:.25,e:0x7A5A00,ei:.5}),0,0,0,top,{seg:20});for(let k=0;k<6;k++){const a=k/6*Math.PI*2;const sp=mesh(new THREE.ConeGeometry(.9,3.4,6),M(0xFFD43B,{m:.8,r:.25}),top,Math.cos(a)*3,4,Math.sin(a)*3);
+      const gm=mesh(new THREE.OctahedronGeometry(.8),M([0xFF4D5E,0x7AE8FF,0x5BE36A][k%3],{e:[0xFF4D5E,0x7AE8FF,0x5BE36A][k%3],ei:.5}),top,Math.cos(a)*3.7,1.2,Math.sin(a)*3.7)}glow(0xFFE07A,30,.5,top).position.y=3}
+  return P}
+function fence(g,L,lv,ins,style='ladder'){
+  if(style==='crayon')return fenceCrayon(g,L,lv,ins);
+  if(style==='brick')return fenceBrick(g,L,lv,ins,true);
+  const H=LV[lv].h;
+  if(lv===1){ // popsicle sticks: round-topped pickets on two cross sticks, a strip of tape
+    const stick=M(0xE8C890,{r:.8}),stick2=M(0xDDBB80,{r:.8});
+    for(let z=6,k=0;z<L-2;z+=4.4,k++){const p=box(3.2,H-1.6,.8,k%3?stick:stick2,0,0,z,g);p.rotation.y=Math.PI/2;tag(p,z/L);const cap=cyl(1.6,.8,k%3?stick:stick2,0,H-1.6,z,g,{seg:12});cap.rotation.z=Math.PI/2;cap.position.y=H-1.6;tag(cap,z/L)}
+    rail(g,L,3.5,2.6,.8,stick2,ins*.9);rail(g,L,H-6,2.6,.8,stick2,ins*.9);
+    for(let z=20;z<L;z+=46)tag(box(1,7,4,M(0xE8E2CC,{r:.4,t:.85}),ins*1.5,H-8.5,z,g),z/L);
+  }
+  if(lv===2){ // clothes pegs standing up, alternate plastic colours, with a line of odd socks along the top
+    const C=[0xF28DB2,0x7FD6E8,0xFFD95A,0xFFFFFF];
+    for(let z=5,k=0;z<L-2;z+=3.4,k++){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);const c=M(C[k%4],{r:.45});
+      box(.9,H,1.4,c,-.55,0,0,q);box(.9,H,1.4,c,.55,0,0,q);box(2.4,1.4,1.8,M(0xC0C6D0,{m:.8,r:.3}),0,H*.45,0,q)}
+    const line=box(.3,.3,L-4,0xFFFFFF,ins*.6,H+1,L/2,g);tag(line,.5);
+    for(let z=14,k=0;z<L-10;z+=19,k++){const s=new THREE.Group();s.position.set(ins*1.2,H-5,z);s.rotation.z=ins*.05;g.add(s);tag(s,z/L);const c=[0xF28DB2,0x7FD6E8,0xFFD95A,0x9B7BFF][k%4];
+      box(.7,6,3.2,M(0xffffff,{map:stripeTex(['#'+new THREE.Color(c).getHexString(),'#FFFFFF'],4)}),0,0,0,s).rotation.x=Math.PI/2*0;box(.7,2.4,5,c,0,-1,1.2,s)}
+    rail(g,L,4,2,1,0xFFFFFF,0);
+  }
+  if(lv===3||style==='brickA')return fenceBrick(g,L,3,ins,false);
+  if(lv===4){ // a pencil palisade: sharpened pencils, points up, a wooden ruler as the rail
+    const C=[0xF2C230,0xF2C230,0xF2C230,0xE04848,0x3A6FD8,0x3DDC97];
+    for(let z=5,k=0;z<L-1;z+=3.3,k++){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);const h=H-3+((k*7)%3);
+      cyl(.9,1.6,0xFF8FA8,0,0,0,q,{seg:6});cyl(.95,1.2,M(0xC0C6D0,{m:.8,r:.3}),0,1.6,0,q,{seg:6});cyl(1.6,h-2.8-4,C[(k*5)%6],0,2.8,0,q,{seg:6,r:.55});
+      const cone=mesh(new THREE.ConeGeometry(1.6,4,6),M(0xF1D2A0,{r:.8}),q,0,h-4+2,0);const tip=mesh(new THREE.ConeGeometry(.55,1.4,6),M(0x2A2A34,{r:.5}),q,0,h-.1+.4-.4,0);tip.position.y=h-.7+.4}
+    const ruler=M(0xffffff,{map:canvasTex((g2,S)=>{g2.fillStyle='#F4E3B2';g2.fillRect(0,0,S,S);g2.fillStyle='#5A3A1A';for(let x=0;x<S;x+=8)g2.fillRect(x,0,2,x%32?S*.3:S*.55)},128,[L/30,1])});
+    const r=box(.8,4,L-4,ruler,ins*1.9,8,L/2,g);tag(r,.5);
+  }
+  if(lv===5){ // candy canes with striped candy rails and gumdrops on top
+    const cane=M(0xffffff,{map:stripeTex(['#FF3B6B','#FFFFFF'],6)});
+    for(let z=6,k=0;z<L-2;z+=13,k++){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);cyl(1.3,H,cane,0,0,0,q);
+      const hook=mesh(new THREE.TorusGeometry(2.6,1.3,8,14,Math.PI),cane,q,0,H,2.6*(k%2?1:-1));hook.rotation.y=Math.PI/2;
+      mesh(new THREE.SphereGeometry(2.2,12,8),M([0x3DDC97,0xFFD95A,0x9B7BFF,0x7AE8FF][k%4],{r:.3,t:.92}),q,0,H*.55,0).scale.y=.8}
+    rail(g,L,5,2.4,1.6,M(0xffffff,{map:stripeTex(['#FF8FC8','#FFFFFF','#7AE8FF','#FFFFFF'],8)}),0);
+    rail(g,L,H-7,2.4,1.6,M(0xffffff,{map:stripeTex(['#FF8FC8','#FFFFFF','#7AE8FF','#FFFFFF'],8)}),0);
+    for(let z=12;z<L-6;z+=13){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);for(let k=0;k<2;k++)mesh(new THREE.SphereGeometry(1.6,10,8),M([0xFF5FA8,0xFFD95A,0x3DDC97][(z+k)%3],{r:.3}),q,0,9+k*5,0)}
+  }
+  if(lv===6){ // glow sticks in a dark frame with an LED strip along the top
+    const C=[0x22D3EE,0xFF5FA8,0x9B7BFF,0xB9F64A];
+    for(let z=4,k=0;z<L-2;z+=3,k++){const c=C[k%4];const s=cyl(.75,H-3,M(c,{e:c,ei:1.1,r:.3}),0,1.2,z,g,{seg:8});s.rotation.x=((k%3)-1)*.06;tag(s,z/L)}
+    rail(g,L,0,1.6,2.6,0x1A1430,0);rail(g,L,H-1.6,1.6,2.6,0x1A1430,0);rail(g,L,H,.9,1.2,M(0xFFE066,{e:0xFFE066,ei:1.4}),0);
+    for(let z=8;z<L;z+=40){const l=new THREE.PointLight(C[(z/40|0)%4],.5,45,2);l.position.set(ins*4,H*.6,z);g.add(l)}
+  }
+  if(lv===7){ // the vault: coin-stack posts, gold ruler rails, gold bars between and gems
+    const gold=M(0xFFC93C,{m:.75,r:.28,e:0x5A3A00,ei:.35}),bar=M(0xFFD86A,{m:.8,r:.22,e:0x5A3A00,ei:.3});
+    for(let z=6;z<L-2;z+=16){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);for(let k=0;k*1.5<H;k++)cyl(2.8,1.4,gold,((k*7)%3-1)*.2,k*1.5,0,q,{seg:18})}
+    for(let z=6;z<L-8;z+=16)for(let j=1;j<5;j++){const b=box(1.2,H-4,1.2,bar,0,1,z+j*3.2,g);tag(b,(z+j*3.2)/L)}
+    const ruler=M(0xffffff,{map:canvasTex((g2,S)=>{g2.fillStyle='#FFD54A';g2.fillRect(0,0,S,S);g2.fillStyle='#8A5A00';for(let x=0;x<S;x+=8)g2.fillRect(x,0,2,x%32?S*.3:S*.55)},128,[L/30,1]),m:.6,r:.3});
+    rail(g,L,4,3,1.6,ruler,0);rail(g,L,H-6,3,1.6,ruler,0);
+    for(let z=14;z<L-6;z+=16){const gm=mesh(new THREE.OctahedronGeometry(1.5),M([0xFF4D5E,0x7AE8FF,0x5BE36A,0xB45CFF][(z/16|0)%4],{e:[0xFF4D5E,0x7AE8FF,0x5BE36A,0xB45CFF][(z/16|0)%4],ei:.45,r:.2}),g,ins*1.2,H-4.5,z);tag(gm,z/L)}
+  }
+  newel(g,lv,ins,'ladder');
+}
+// option B: one fence, crayons; more colours, taller and finally gold as you level
+function fenceCrayon(g,L,lv,ins){const H=12+lv*2;
+  const PAL=[[0xE04848,0x4DA8FF,0xFFD43B],[0xE04848,0x4DA8FF,0xFFD43B,0x3DDC97],[0xE04848,0xFF9A2E,0xFFD43B,0x3DDC97,0x4DA8FF],[0xE04848,0xFF9A2E,0xFFD43B,0x3DDC97,0x4DA8FF,0x9B7BFF],
+    [0xFF5FA8,0xFF9A2E,0xFFD43B,0x3DDC97,0x4DA8FF,0x9B7BFF,0x7AE8FF],[0x22D3EE,0xFF5FA8,0x9B7BFF,0xB9F64A],[0xFFC93C,0xFFE07A,0xE8B030]][lv-1];
+  for(let z=5,k=0;z<L-1;z+=3.6,k++){const q=new THREE.Group();q.position.set(0,0,z);g.add(q);tag(q,z/L);const c=PAL[k%PAL.length];const o=lv===6?{e:c,ei:.9,r:.4}:lv===7?{m:.7,r:.3,e:0x4A3000,ei:.3}:{r:.55};const h=H-((k*5)%3);
+    cyl(1.5,h-3,M(c,o),0,0,0,q,{seg:10});cyl(1.55,h*.5,M(lv===7?0x3A2A10:0x1A1430,{r:.8}),0,h*.18,0,q,{seg:10});const cone=mesh(new THREE.ConeGeometry(1.5,3.4,10),M(c,o),q,0,h-3+1.7,0)}
+  rail(g,L,5,2,1,lv>=6?0x1A1430:0xF1EBDD,ins*1.7);
+  newel(g,lv,ins,'crayon')}
+// option C (and ladder level 3): a low toy-brick wall; more courses and brighter bricks as you level
+function fenceBrick(g,L,lv,ins,optionC){const courses=optionC?2+Math.ceil(lv/2):3;const C=optionC&&lv===7?[0xFFC93C,0xFFE07A]:optionC&&lv===6?[0x22D3EE,0xFF5FA8,0x9B7BFF]:[0xE04848,0xFFC93C,0x4DA8FF,0x3DDC97];
+  const o=optionC&&lv>=6?(c=>({e:c,ei:lv===6?.7:.25,m:lv===7?.6:0,r:.3})):(()=>({r:.35}));
+  for(let row=0;row<courses;row++){for(let z=(row%2?4:0)+2,k=0;z<L-2;z+=8,k++){const c=C[(k+row*3)%C.length];const b=box(4,4.8,7.8,M(c,o(c)),0,row*4.8,z+4,g);tag(b,(z+4)/L);
+    if(row===courses-1)for(const dz of [-2,2]){const s=cyl(1.2,1,M(c,o(c)),0,courses*4.8,z+4+dz,g,{seg:12});tag(s,(z+4)/L)}}}
+  newel(g,optionC?lv:3,ins,optionC?'brick':'ladder')}
+
+/* ---------- a home ---------- */
+const HOMES=[];  // {i, lv, g (home space group), fences:[], floor, dressing, toys, sign}
+function homeGroup(i){const {c,n,X}=HOME(i);const g=new THREE.Group();const m=new THREE.Matrix4().makeBasis(new THREE.Vector3(-X[0],0,-X[1]),new THREE.Vector3(0,1,0),new THREE.Vector3(-n[0],0,-n[1]));
+  g.quaternion.setFromRotationMatrix(m);g.position.set(c[0],0,c[1]);return g}
+// the fences along both sides of home i, in home space
+function buildFences(h,lv,style){const g=new THREE.Group();h.g.add(g);
+  for(const side of [-1,1]){const b=HALF;const r0=(CR+1)/Math.cos(b),r1=RB-4;const L=r1-r0;
+    const f=new THREE.Group();const ins=-side;
+    f.position.set(side*r0*Math.sin(b)+ins*Math.cos(b)*3.6,.5,r0*Math.cos(b)-CR+side*0+(-ins)*0);f.rotation.y=side*b;f.scale.setScalar(FS);g.add(f);fence(f,L/FS,lv,ins,style)}
+  return g}
+function buildDressing(h,lv){const g=new THREE.Group();h.g.add(g);const z0=164;
+  const bays=[[-47,26],[0,52],[47,26]];
+  if(lv===1||lv===3){const C=lv===1?[0xA88A62,0x8E7350,0x9C7E58]:[0xF2A6B8,0xE58BA1,0xEC98AD];bays.forEach(([x,w],b)=>{for(let y=0,r=0;y<140;y+=20,r++){const d=4+((r*7+b*3)%4);box(w,20,d,M(C[r%3],{r:1}),x,y,z0-d/2+3,g)}})}
+  if(lv===2){const C=[0xF28DB2,0x7FD6E8,0xFFD95A];bays.forEach(([x,w],b)=>{for(let k=0;k<10;k++)box(w-2,11,1.5,k%2?0xFFFFFF:C[b],x,2+k*11,z0,g,{r:1})})}
+  if(lv===4){for(let x=-62;x<=62;x+=3.4){if(Math.abs(Math.abs(x)-30)<5)continue;box(2.6,100,1,0xE8C890,x,0,z0,g);box(2.8,2.6,1.4,0xC0392B,x,100,z0-.2,g)}}
+  if(lv===5){const W=[0xFF5FA8,0x7AE8FF,0xFFD95A,0x9B7BFF,0x3DDC97];for(let k=0;k<26;k++){const m=box(12,8,.6,M(W[k%5],{m:.5,r:.3}),56-((k*37)%112),4+((k*29)%150),z0+1,g);m.rotation.z=((k%5)-2)*.25}}
+  if(lv===6){[[0x7AE8FF,90],[0xFF5FA8,50],[0x9B7BFF,130]].forEach(([c,y])=>box(126,1.2,1,M(c,{e:c,ei:1.4}),0,y,z0-2,g))}
+  if(lv===7){box(128,150,1,M(0xFFC93C,{m:.7,r:.3}),0,0,z0+1,g)}
+  // the pen rug and the fairy light
+  for(let k=0;k<=8;k++){const x=50-k*12.5,y=62-Math.sin(k/8*Math.PI)*1.5;const b=mesh(new THREE.SphereGeometry(1.4,10,8),M(k%2?LV[lv].fairy:0xFFF1C8,{e:k%2?LV[lv].fairy:0xFFF1C8,ei:1.3}),g,x,y,z0-3)}
+  const fl=new THREE.PointLight(LV[lv].fairy,.8,170,1.6);fl.position.set(0,58,140);g.add(fl);
+  // props that grow with the level, in the back corners outside the pen
+  const corners=[[-82,150],[82,150]];
+  if(lv===1){mesh(new THREE.IcosahedronGeometry(5,0),M(0xF4F1E8,{r:1}),g,-82,4,146)}
+  if(lv===2){corners.forEach(([x,z])=>{cyl(8,10,M(0xD9B27C,{r:.9}),x,0,z,g,{rt:9,seg:14});for(let k=0;k<3;k++)box(3,6,7,[0xF28DB2,0x7FD6E8,0xFFD95A][k],x-4+k*4,8,z,g,{r:1}).rotation.z=(k-1)*.4})}
+  if(lv===3){corners.forEach(([x,z],s)=>{for(let k=0;k<7;k++)box(12,6,12,[0xE04848,0xFFC93C,0x4DA8FF,0x3DDC97][(k+s)%4],x+((k*3)%3-1),k*6,z,g,{r:.35})})}
+  if(lv===4){corners.forEach(([x,z])=>{box(14,16,10,M(0xD8B07A,{r:.8}),x,0,z,g);box(16,3,12,0xC0392B,x,16,z,g);const w=box(5,5,.5,M(0xFFC070,{e:0xFF9A4A,ei:1}),x,6,z-5.3,g)});const r=box(40,.4,26,M(0xffffff,{map:stripeTex(['#C0392B','#E8C890','#2B4E9E'],6)}),0,1.2,30,g)}
+  if(lv===5){corners.forEach(([x,z],s)=>{cyl(1,34,0xFFFFFF,x,0,z,g);const d=mesh(new THREE.CylinderGeometry(11,11,2,28),M(0xffffff,{map:canvasTex((g2,S)=>{const C=['#FF5FA8','#FFFFFF','#7AE8FF','#FFD95A','#9B7BFF','#FFFFFF'];for(let k=0;k<6;k++){g2.fillStyle=C[k];g2.beginPath();g2.moveTo(S/2,S/2);g2.arc(S/2,S/2,S/2,k*Math.PI/3,(k+1)*Math.PI/3);g2.fill()}})}),g,x,44,z);d.rotation.x=Math.PI/2;
+    for(let k=0;k<4;k++)mesh(new THREE.SphereGeometry(3,10,8),M([0x3DDC97,0xFFD95A,0x9B7BFF,0xFF5FA8][k],{r:.3,t:.9}),g,x+((k%2)*2-1)*9,2.4,z-10+k*4).scale.y=.7})}
+  if(lv===6){const arch=new THREE.Mesh(new THREE.TorusGeometry(46,1.6,8,40,Math.PI),M(0xFF5FA8,{e:0xFF5FA8,ei:1.4}));arch.position.set(0,66,z0-6);g.add(arch);
+    const a2=new THREE.Mesh(new THREE.TorusGeometry(42,1.1,8,40,Math.PI),M(0x22D3EE,{e:0x22D3EE,ei:1.4}));a2.position.set(0,66,z0-6);g.add(a2);
+    corners.forEach(([x,z])=>{box(14,26,12,0x2A1F55,x,0,z,g);box(10,8,.6,M(0x22D3EE,{e:0x22D3EE,ei:.8}),x,14,z-6.2,g);cyl(1,6,0x1A1430,x,26,z,g);mesh(new THREE.SphereGeometry(2,10,8),M(0xFF4D5E,{e:0xFF4D5E,ei:.6}),g,x,32,z)})}
+  if(lv===7){corners.forEach(([x,z])=>{for(let k=0;k<20;k++){const a=k*2.4,r=(k%5)*1.8;cyl(3,1.2,M(0xFFC93C,{m:.8,r:.25,e:0x5A3A00,ei:.3}),x+Math.cos(a)*r,(k/5|0)*1.2,z+Math.sin(a)*r,g,{seg:16})}});
+    const t=new THREE.Group();t.position.set(0,0,150);g.add(t);cyl(6,4,0x7A4A10,0,0,0,t);cyl(2,12,M(0xFFD43B,{m:.8,r:.2}),0,4,0,t);const cup=mesh(new THREE.CylinderGeometry(9,4,14,20),M(0xFFD43B,{m:.85,r:.2,e:0x6A4A00,ei:.4}),t,0,23,0);glow(0xFFE07A,60,.45,t).position.y=26}
+  return g}
+// small voxel toys that wander the pen
+const TOY_C=[0xFFD23F,0xFF7AA8,0x3DDC97,0x4DA8FF,0xB45CFF,0xFF9A2E,0x7AE8FF,0xE04848];
+const roamers=[];
+function toy(h,k){const t=new THREE.Group();const c=TOY_C[(h.i*3+k)%8],sz=[1,1.3,1.7][(h.i+k)%3];
+  box(6,5,8,c,0,1.6,0,t,{r:.6});box(5,5,5,c,0,5.2,3.6,t,{r:.6});box(1.4,2.4,1.4,c,-1.6,10,3.6,t);box(1.4,2.4,1.4,c,1.6,10,3.6,t);
+  [-1.2,1.2].forEach(x=>box(.8,1,.4,0x1A1430,x,7.4,6.2,t));[[-2,-2.5],[2,-2.5],[-2,2.5],[2,2.5]].forEach(([x,z])=>box(1.6,1.6,1.6,new THREE.Color(c).multiplyScalar(.7).getHex(),x,0,z,t));
+  t.scale.setScalar(sz*1.15);const x=-40+((k*37+h.i*11)%80),z=55+((k*29+h.i*7)%85);t.position.set(x,.9,z);h.g.add(t);
+  const r={t,h,tx:x,tz:z,wait:k*.7,ph:k};roamers.push(r);return t}
+function roam(dt,t){roamers.forEach(r=>{const p=r.t.position;const hop=r.h.hop?r.h.hop(t):0;
+  if(r.wait>0){r.wait-=dt;p.y=.9+hop;return}
+  const dx=r.tx-p.x,dz=r.tz-p.z,d=Math.hypot(dx,dz);if(d<.8){r.wait=1+rnd()*3;r.tx=-48+rnd()*96;r.tz=48+rnd()*100;return}
+  const s=Math.min(d,5*dt);p.x+=dx/d*s;p.z+=dz/d*s;p.y=.9+Math.abs(Math.sin(t*9+r.ph))*.8+hop;r.t.rotation.y=Math.atan2(dx,dz)})}
+function wheel(h,lv){const g=new THREE.Group();g.position.set(50,0,22);g.rotation.y=Math.PI/2;h.g.add(g);
+  const C=[0,0xD9B27C,0xF28DB2,0xE04848,0xB07A48,0xFF5FA8,0x22B8E8,0xFFC93C][lv];const R=(6.5+.55*lv)*1.25;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(R,1.1,8,28),M(C,{e:lv>=6?C:0,ei:.6}));ring.position.y=R+2;g.add(ring);
+  for(let k=0;k<3;k++){const s=box(.8,2*R,.8,C,0,R+2-R,0,g);s.position.y=R+2;s.rotation.z=k*Math.PI/3}
+  [-1,1].forEach(s=>{const l=box(1.2,R+2,1.2,0x6B4A2E,s*R*.5,0,0,g);l.rotation.z=s*.35});
+  animated.push(t=>{ring.rotation.z=t*1.6})}
+function props(h){const g=h.g;
+  const lock=new THREE.Group();lock.position.set(-30,0,12);lock.rotation.y=-Math.PI/4;g.add(lock);box(8,7,4,0xFF4D5E,0,0,0,lock,{r:.4});box(6,5,.4,0xFFC93C,0,1,-2.1,lock);
+  box(1.6,5,1.6,0x4DA8FF,-2.6,6,0,lock);box(1.6,5,1.6,0x4DA8FF,2.6,6,0,lock);box(6.8,1.6,1.6,0x4DA8FF,0,11,0,lock);
+  const idx=new THREE.Group();idx.position.set(-52,0,30);idx.rotation.y=-Math.PI/4;g.add(idx);box(9,5,6,0x3A6FD8,0,0,0,idx,{r:.4});box(9.4,.8,6.4,0xFFC93C,0,4.4,0,idx);
+  const bk=box(8.6,.5,6.2,0xE04848,0,6,.6,idx);bk.rotation.x=-.5;}
+function buildHome(i,lv,style){
+  const h={i,lv,style,g:homeGroup(i)};root.add(h.g);HOMES[i]=h;
+  h.floor=mesh(sectorGeo(CR+2,RB-1,HOLE_A(i)-STEP/2,HOLE_A(i)+STEP/2),floorMat(lv),root,0,.35,0);h.floor.castShadow=false;
+  h.fences=buildFences(h,lv,style);h.dressing=buildDressing(h,lv);props(h);wheel(h,lv);
+  const nt=2+Math.min(4,Math.floor(LV[lv].slots/4));if(NAMES[i]!=='EMPTY HOME'||lv>1)for(let k=0;k<nt;k++)toy(h,k);
+  h.sign=signSprite(NAMES[i],NAMES[i]==='EMPTY HOME'?'Lv '+lv:`Lv ${lv} · $${[0,12,85,420,1900,8800,41000,190000][lv].toLocaleString()}/s`,NAMES[i]==='samrtly');
+  h.sign.position.set(...BP(i,0,74,-6));root.add(h.sign);
+  return h}
+function clearHomes(){HOMES.forEach(h=>{if(!h)return;root.remove(h.g);root.remove(h.floor);root.remove(h.sign)});HOMES.length=0;roamers.length=0}
+
+/* ---------- the room around the homes ---------- */
+function buildRoom(){
+  const carpet=canvasTex((g,S)=>{const C=['#5A4C8E','#6A5BA0','#7465AA','#5F5096','#4F4284'];for(let y=0;y<S;y+=8)for(let x=0;x<S;x+=8){g.fillStyle=C[(x*7+y*13+((x*y)>>5))%5];g.fillRect(x,y,8,8)}},256,[1,1]);
+  carpet.repeat.set(1/48,1/48);carpet.magFilter=THREE.NearestFilter;
+  const out=[];for(let k=0;k<=48;k++)out.push(PC(CR+10,180+k*180/48));out.push([CR+10,CZ0],[HW,SH_Z],[HW,1400],[-HW,1400],[-HW,SH_Z],[-(CR+10),CZ0]);
+  const fs=new THREE.Shape(out.map(([x,z])=>new THREE.Vector2(x,-z)));const fg=new THREE.ShapeGeometry(fs,48);fg.rotateX(-Math.PI/2);
+  const floor=new THREE.Mesh(fg,M(0xffffff,{map:carpet,r:1}));floor.position.y=-.2;floor.receiveShadow=true;root.add(floor);
+  const st=studTex(0x4FC6A8,1);st.repeat.set(2*CR/6,CR/6);
+  const safe=new THREE.Mesh(new THREE.RingGeometry(SAFE_R,CR+12,72,1,0,Math.PI),M(0xffffff,{map:st,r:.5}));safe.rotation.x=-Math.PI/2;safe.position.set(0,.1,CZ0);safe.receiveShadow=true;root.add(safe);
+  const edge=new THREE.Mesh(new THREE.RingGeometry(SAFE_R-5,SAFE_R,72,1,0,Math.PI),M(0xFFFFFF,{e:0xFFFFFF,ei:.15}));edge.rotation.x=-Math.PI/2;edge.position.set(0,.3,CZ0);root.add(edge);
+  // the curved back wall: OSB sheathing with pine studs and blocking (one wall behind all 8 homes now)
+  const osb=canvasTex((g,S)=>{g.fillStyle='#C9A46A';g.fillRect(0,0,S,S);const C=['#B8915A','#D8B57C','#A9824E','#E2C48E'];for(let k=0;k<420;k++){g.fillStyle=C[k%4];g.save();g.translate((k*97)%S,(k*61)%S);g.rotate(k);g.fillRect(-9,-3,18,6);g.restore()}},256,[30,5]);
+  const back=new THREE.Mesh(new THREE.CylinderGeometry(RB,RB,WALL_H,96,1,true,deg(90-360),deg(180)),M(0xffffff,{map:osb,side:THREE.BackSide,r:.9}));back.position.set(0,WALL_H/2,CZ0);back.receiveShadow=true;root.add(back);
+  const pine=M(0xF2D3A4,{r:.8}),pine2=M(0xD8B07A,{r:.8});
+  for(let k=0;k<=N*3;k++){const a=180+k*STEP/3;const [x,z]=PC(RB-5,a);const s=box(8,WALL_H,10,pine,x,0,z);s.rotation.y=-deg(a)-Math.PI/2}
+  for(let k=0;k<N*3;k++){const a=180+(k+.5)*STEP/3;const [x,z]=PC(RB-5,a);for(const y of [120,240]){const b=box(2*(RB-5)*Math.sin(deg(STEP/6))-8,8,10,pine2,x,y+(k%3===1?6:0),z);b.rotation.y=-deg(a)-Math.PI/2}}
+  // the top plate across the top of the alcove, and the end walls out to the shoulders (sage wallpaper)
+  const top=new THREE.Mesh(new THREE.RingGeometry(CR,RB,64,1,0,Math.PI),M(0xD8B07A,{r:.85,side:THREE.DoubleSide}));top.rotation.x=-Math.PI/2;top.position.set(0,WALL_H-8,CZ0);root.add(top);TOPPLATE=top;
+  const sage=M(0x9DB08A,{r:.92,e:0x2A3326,ei:.6});
+  [-1,1].forEach(s=>{box(RB-CR+20,WALL_H,10,sage,s*(CR+(RB-CR+20)/2),0,CZ0+5);
+    const a=[s*(CR+10),CZ0],b=[s*HW,SH_Z],L=Math.hypot(b[0]-a[0],b[1]-a[1]);const w=box(8,WALL_H,L,sage,(a[0]+b[0])/2+s*4,0,(a[1]+b[1])/2);w.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);
+    box(8,WALL_H,1400-SH_Z,sage,s*(HW+4),0,(SH_Z+1400)/2)});
+  CEIL=new THREE.Mesh(new THREE.PlaneGeometry(2*(RB+40),1800),M(0x1B2142,{r:1}));CEIL.rotation.x=Math.PI/2;CEIL.position.set(0,WALL_H,500);root.add(CEIL);
+}
+function faceDecal(){if(faceDecal.t)return faceDecal.t;faceDecal.t=canvasTex((g,S)=>{g.clearRect(0,0,S,S);g.fillStyle='#1A1430';[[.36,.38],[.68,.38]].forEach(([x,y])=>{g.beginPath();g.ellipse(S*x,S*y,S*.07,S*.1,0,0,7);g.fill()});
+  g.strokeStyle='#1A1430';g.lineWidth=S*.05;g.lineCap='round';g.beginPath();g.arc(S*.5,S*.58,S*.17,.15*Math.PI,.85*Math.PI);g.stroke()},128);return faceDecal.t}
+function avatar(x,z,color,face=0,cap=0xE04848){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(1.4);root.add(g);
+  const part=(w,h,d,c,px,py,pz,p=g)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M(c,{r:.65}));m.position.set(px,py,pz);m.castShadow=true;p.add(m);return m};
+  part(.98,2,1,0x2B3A67,-.5,1,0);part(.98,2,1,0x2B3A67,.5,1,0);part(2,2,1,color,0,3,0);part(.96,2,.96,color,-1.5,3,0);part(.96,2,.96,color,1.5,3,0);
+  const head=new THREE.Mesh(new THREE.CylinderGeometry(.62,.62,1.2,20),M(0xF5CDA0,{r:.6}));head.position.y=4.62;g.add(head);
+  const dec=new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05),new THREE.MeshBasicMaterial({map:faceDecal(),transparent:true}));dec.position.set(0,4.6,.63);g.add(dec);
+  const c=new THREE.Mesh(new THREE.SphereGeometry(.7,20,8,0,Math.PI*2,0,Math.PI/2),M(cap,{r:.5}));c.position.y=5.1;c.scale.y=.75;g.add(c);g.rotation.y=face;return g}
+let PEOPLE=[];
+function players(layout){PEOPLE.forEach(p=>root.remove(p));PEOPLE=[];
+  const put=(i,x,z,col,cap)=>{const [wx,,wz]=BP(i,x,0,z);const a=avatar(wx,wz,col,0,cap);const [tx,,tz]=BP(i,x,0,z-50);a.rotation.y=Math.atan2(tx-wx,tz-wz)+Math.PI;PEOPLE.push(a);return a};
+  if(layout==='upgrade'){const a=put(3,8,16,0x4DA8FF,0xFFC93C);a.rotation.y+=Math.PI}
+  else{put(1,10,40,0x3DDC97,0xE04848);put(4,-20,70,0xFF7AA8,0x4DA8FF);put(6,0,-30,0xFFD23F,0x1A1430);put(3,30,20,0x9B7BFF,0xFFC93C)}}
+
+/* ---------- the upgrade moment (home index 3, Level 3 -> 4) ----------
+   0.0-0.6 s  the old fence pops up piece by piece from the front and tumbles away; the old dressing shrinks away
+   0.45-1.3 s the new fence drops in from the front to the back with a bounce; the new floor rolls out from the back
+   1.25 s     the corner post lands last with its topper; a gold ring sweeps out, confetti, the banner, toys hop */
+const UP={i:3,from:3,to:4,t:null,old:null,neu:null};
+let CONF=null,RINGM=null,ROLL=null,NEWFLOOR=null;
+function setupUpgrade(){const h=HOMES[UP.i];UP.old={fences:h.fences,dressing:h.dressing,floor:h.floor};
+  h.lv=UP.to;UP.neu={fences:buildFences(h,UP.to,'ladder'),dressing:buildDressing(h,UP.to)};
+  [UP.old.fences,UP.neu.fences].forEach(fg=>fg.children.forEach(f=>f.children.forEach(p=>{p.userData.base={p:p.position.clone(),r:p.rotation.clone(),s:p.scale.clone()};p.userData.spin=[rnd()-.5,rnd()-.5,rnd()-.5]})));
+  NEWFLOOR=mesh(sectorGeo(RB-2,RB-1,HOLE_A(UP.i)-STEP/2,HOLE_A(UP.i)+STEP/2),floorMat(UP.to),root,0,.45,0);NEWFLOOR.castShadow=false;
+  ROLL=new THREE.Mesh(new THREE.TorusGeometry(1,1,8,28,deg(STEP)),M(LV[UP.to].pen,{r:.8}));ROLL.rotation.x=Math.PI/2;root.add(ROLL);
+  RINGM=new THREE.Mesh(new THREE.RingGeometry(.92,1,64),new THREE.MeshBasicMaterial({color:0xFFE066,transparent:true,side:THREE.DoubleSide,depthWrite:false}));RINGM.rotation.x=-Math.PI/2;root.add(RINGM);
+  const [cx,,cz]=BP(UP.i,0,0,60);RINGM.position.set(cx,1.2,cz);
+  CONF=[];const C=[0xFFE066,0xFF5FA8,0x7AE8FF,0x3DDC97,0x9B7BFF,0xFFFFFF];for(let k=0;k<220;k++){const m=new THREE.Mesh(new THREE.BoxGeometry(3.6,.5,2.2),new THREE.MeshBasicMaterial({color:C[k%6],side:THREE.DoubleSide}));root.add(m);
+    const a=rnd()*Math.PI*2,sp=20+rnd()*55;CONF.push({m,v:[Math.cos(a)*sp*.7,60+rnd()*70,Math.sin(a)*sp*.7],s:[rnd()*9,rnd()*9]})}
+  const sign=h.sign;UP.sign=[sign,signSprite(NAMES[UP.i],`Lv ${UP.to} · $1,900/s`)];UP.sign[1].position.copy(sign.position);root.add(UP.sign[1]);
+  h.hop=t=>{const k=UP.t-1.3;return k>0&&k<1.6?Math.abs(Math.sin(k*9))*6*(1-k/1.6):0};
+  // stars over the toys while they cheer
+  UP.stars=[];for(let k=0;k<6;k++){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:starTex(),color:0xFFE066,transparent:true,depthWrite:false}));s.scale.set(6,6,1);root.add(s);UP.stars.push(s)}
+  setUpgrade(0)}
+function pieceAt(p,t,kind){const b=p.userData.base;if(!b)return;const u=p.userData.u??.5;
+  if(kind==='old'){const d=.3*u,k=Math.min(1,Math.max(0,(t-d)/.38));p.visible=k<1;if(!p.visible)return;
+    p.position.set(b.p.x+p.userData.spin[0]*14*k,b.p.y+Math.sin(k*Math.PI*.9)*20+k*6,b.p.z+p.userData.spin[2]*10*k);
+    p.rotation.set(b.r.x+p.userData.spin[0]*6*k,b.r.y+p.userData.spin[1]*6*k,b.r.z+p.userData.spin[2]*6*k);p.scale.copy(b.s).multiplyScalar(Math.max(.001,1-k*k*k))}
+  else{const d=u>1?.92:.4+.5*u,k=Math.min(1,Math.max(0,(t-d)/(u>1?.33:.28)));p.visible=k>0;if(!p.visible)return;
+    p.position.set(b.p.x,b.p.y+(1-bounce(k))*(u>1?70:42),b.p.z);p.rotation.copy(b.r);p.scale.copy(b.s).multiplyScalar(.55+.45*ease(k))}}
+function setUpgrade(t){if(!UP.old)return;UP.t=t;const h=HOMES[UP.i];
+  UP.old.fences.children.forEach(f=>f.children.forEach(p=>pieceAt(p,t,'old')));UP.neu.fences.children.forEach(f=>f.children.forEach(p=>pieceAt(p,t,'new')));
+  const kd=Math.min(1,Math.max(0,(t-.15)/.35));UP.old.dressing.visible=kd<1;UP.old.dressing.scale.setScalar(Math.max(.001,1-kd*kd));
+  const kn=Math.min(1,Math.max(0,(t-1.0)/.3));UP.neu.dressing.visible=kn>0;UP.neu.dressing.scale.setScalar(.001+bounce(kn)*.999);
+  // the rug rolls from the back wall to the front
+  const kr=ease(Math.min(1,Math.max(0,(t-.4)/.8)));const rin=RB-1-(RB-1-(CR+2))*kr;NEWFLOOR.geometry.dispose();NEWFLOOR.geometry=sectorGeo(Math.min(rin,RB-2),RB-1,HOLE_A(UP.i)-STEP/2,HOLE_A(UP.i)+STEP/2);
+  NEWFLOOR.visible=kr>0;ROLL.visible=kr>0&&kr<1;ROLL.geometry.dispose();ROLL.geometry=new THREE.TorusGeometry(rin,3.2*(1-kr*.6),8,28,deg(STEP));ROLL.position.set(0,3.4*(1-kr*.6)+.4,CZ0);ROLL.rotation.set(Math.PI/2,0,deg(HOLE_A(UP.i)-STEP/2));
+  const kg=(t-1.25)/.9;RINGM.visible=kg>0&&kg<1;if(RINGM.visible){RINGM.scale.setScalar(20+kg*240);RINGM.material.opacity=1-kg}
+  const [cx,,cz]=BP(UP.i,0,0,70);CONF.forEach(c=>{const k=t-1.28;c.m.visible=k>0&&k<3;if(!c.m.visible)return;const y=Math.max(.4,40+c.v[1]*k-60*k*k);c.m.position.set(cx+c.v[0]*k,y,cz+c.v[2]*k);c.m.rotation.set(c.s[0]*k,c.s[1]*k,0)});
+  UP.sign[0].visible=t<1.25;UP.sign[1].visible=t>=2.6;
+  const tc=t-1.3;UP.stars.forEach((s,k)=>{const r=roamers.filter(r=>r.h===h)[k%Math.max(1,roamers.filter(r=>r.h===h).length)];s.visible=tc>0&&tc<1.8&&!!r;if(!s.visible)return;const w=new THREE.Vector3();r.t.getWorldPosition(w);s.position.set(w.x+(k%2?3:-3),w.y+18+tc*6,w.z);s.material.opacity=1-tc/1.8});
+  // on-screen bits
+  const bn=document.getElementById('banner'),kb=(t-1.25)/.2;bn.style.opacity=t>=1.25?1:0;bn.style.setProperty('--pop',t>=1.25?(kb<1?1.45-.45*ease(kb):1):1);
+  document.getElementById('prompt').style.opacity=t<=.05&&CUR&&CAMS[CUR].prompt?1:0}
+
+/* ---------- cameras ---------- */
+let CUR=null,LAYOUT=null,STYLE=null;
+function buildCams(){
+  const bAng=k=>(HOLE_A(k)+HOLE_A(k+1))/2;
+  const L=[
+    ['rowA','Row: a new fence each level',{layout:'mixed',style:'ladder',pos:[250,190,320],look:[-110,0,-70],cap:'Recommended. The walls between homes are gone; each home has its own toy fence along both sides, and the fence is its level: popsicle sticks, clothes pegs, toy bricks, pencils, candy canes, glow sticks, gold.'}],
+    ['rowB','Row: crayon fences',{layout:'mixed',style:'crayon',pos:[250,190,320],look:[-110,0,-70],cap:'Option B: every home has a crayon fence. Higher levels get taller fences and more colours, neon at Lv 6 and gold at Lv 7.'}],
+    ['rowC','Row: toy-brick walls',{layout:'mixed',style:'brick',pos:[250,190,320],look:[-110,0,-70],cap:'Option C: every home has a low toy-brick wall. Each level adds a row of bricks; neon bricks at Lv 6, gold at Lv 7.'}],
+    ['along','Along the row',{layout:'mixed',style:'ladder',pos:BP(5,-20,22,-95),look:BP(2,0,16,70),cap:'At mouse height along the row (option A): you see over the fences into every home, and each fence tells you that home\'s level before you read the sign.'}],
+    ['ladder','Level 1 to 7',{layout:'ladder',style:'ladder',pos:[0,600,560],look:[0,0,40],top:true,cap:'The whole ladder, left to right: Lv 1 popsicle sticks to Lv 7 gold vault, then an empty home. The fences get taller, the corner-post topper gets bigger, and the floor and back wall change with them.'}],
+    ['lv1','Lv 1 · Cardboard',{layout:'ladder',style:'ladder',home:0}],
+    ['lv2','Lv 2 · Sock-lined',{layout:'ladder',style:'ladder',home:1}],
+    ['lv3','Lv 3 · Toy bricks',{layout:'ladder',style:'ladder',home:2}],
+    ['lv4','Lv 4 · Cosy cabin',{layout:'ladder',style:'ladder',home:3}],
+    ['lv5','Lv 5 · Candy land',{layout:'ladder',style:'ladder',home:4}],
+    ['lv6','Lv 6 · Arcade neon',{layout:'ladder',style:'ladder',home:5}],
+    ['lv7','Lv 7 · Golden vault',{layout:'ladder',style:'ladder',home:6}],
+    ['fence','Two fences back to back',{layout:'mixed',style:'ladder',pos:BP(5,0,26,24),look:BP(5,92,10,112),cap:'Where two homes meet: two fences back to back, each in its own home\'s style (here a Lv 7 vault and a Lv 4 pencil palisade), so a neighbour\'s level never changes yours.'}],
+    ['up0','Upgrade 1: press E',{layout:'upgrade',style:'ladder',ut:0,prompt:true,upcam:true,cap:'The upgrade moment, 1 of 4: your home is Lv 3 (toy bricks). You press E at the corner post (or Upgrade in the panel).'}],
+    ['up1','Upgrade 2: the old fence pops off',{layout:'upgrade',style:'ladder',ut:.42,upcam:true,cap:'2 of 4, 0.4 s: the bricks pop up and tumble away one after another, front to back, and the old dressing shrinks away.'}],
+    ['up2','Upgrade 3: the new fence drops in',{layout:'upgrade',style:'ladder',ut:.92,upcam:true,cap:'3 of 4, 0.9 s: pencils drop in from the front to the back with a bounce while the new floor rolls out from the back wall like a rug.'}],
+    ['up3','Upgrade 4: the reveal',{layout:'upgrade',style:'ladder',ut:1.62,upcam:true,cap:'4 of 4, 1.6 s: the corner post lands last with its lantern, a gold ring sweeps out, confetti, LEVEL UP! with what you got, and your toys hop and cheer.'}],
+  ];
+  L.forEach(([k,label,c])=>{c.label=label;
+    if(c.home!==undefined){const lv=LAYOUTS.ladder[c.home];c.pos=BP(c.home,26,52,-112);c.look=BP(c.home,0,12,78);c.cap=c.cap||`Lv ${lv}: ${LV[lv].fence} (fence ${LV[lv].h} tall), ${LV[lv].slots} pen slots, ${LV[lv].cost==='free'?'where everyone starts':'costs '+LV[lv].cost}.`}
+    if(c.upcam){c.pos=BP(3,-30,58,-120);c.look=BP(3,10,14,62)}
+    CAMS[k]=c});
+  return L.map(x=>x[0]);
+}
+let camAnim=null;
+function goCam(k,instant){const c=CAMS[k];CUR=k;
+  if(LAYOUT!==c.layout||STYLE!==c.style){clearHomes();if(UP.old){[NEWFLOOR,ROLL,RINGM,...CONF.map(c=>c.m),UP.sign[1],...UP.stars].forEach(m=>root.remove(m));UP.old=null}
+    LAYOUTS[c.layout].forEach((lv,i)=>buildHome(i,lv,c.style));players(c.layout);LAYOUT=c.layout;STYLE=c.style;if(c.layout==='upgrade')setupUpgrade()}
+  if(UP.old)setUpgrade(c.ut??0);PLAYING=false;
+  CEIL.visible=!c.top;TOPPLATE.visible=!c.top;scene.fog=c.top?null:FOG;document.getElementById('caption').textContent=c.cap;
+  document.querySelectorAll('.cam[data-cam]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cam===k));
+  const to={p:new THREE.Vector3(...c.pos),t:new THREE.Vector3(...c.look)};
+  if(instant||matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(to.p);controls.target.copy(to.t);controls.update();return}
+  camAnim={from:{p:camera.position.clone(),t:controls.target.clone()},to,t0:performance.now(),dur:1000}}
+let PLAYING=false,PLAY0=0;
+function init(){
+  const cv=document.getElementById('c');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x10163A);FOG=new THREE.Fog(0x10163A,1400,3600);scene.fog=FOG;
+  root=new THREE.Group();scene.add(root);
+  camera=new THREE.PerspectiveCamera(55,16/9,.5,6000);
+  scene.add(new THREE.HemisphereLight(0x5060D8,0x15132E,.48),new THREE.AmbientLight(0x26348A,.16));
+  const moon=new THREE.DirectionalLight(0xA8BEFF,.42);moon.position.set(300,700,1100);moon.target.position.set(0,0,350);scene.add(moon.target);moon.castShadow=true;moon.shadow.mapSize.set(4096,4096);
+  Object.assign(moon.shadow.camera,{left:-700,right:700,top:700,bottom:-700,near:50,far:2600});moon.shadow.bias=-.0006;scene.add(moon);
+  const fill=new THREE.PointLight(0xFFE2B8,.4,900,1.2);fill.position.set(0,200,300);scene.add(fill);
+  buildRoom();const order=buildCams();
+  controls=new THREE.OrbitControls(camera,cv);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.495;controls.addEventListener('start',()=>{camAnim=null});
+  clock=new THREE.Clock();new ResizeObserver(resize).observe(document.getElementById('view'));resize();
+  const ctr=document.getElementById('controls');
+  order.forEach(k=>{const b=document.createElement('button');b.className='cam';b.dataset.cam=k;b.setAttribute('aria-pressed','false');b.textContent=CAMS[k].label;ctr.appendChild(b)});
+  const pb=document.createElement('button');pb.className='cam play';pb.textContent='▶ Play the upgrade';ctr.appendChild(pb);
+  pb.addEventListener('click',()=>{goCam('up0');PLAYING=true;PLAY0=performance.now()});
+  ctr.addEventListener('click',e=>{const b=e.target.closest('button[data-cam]');if(b)goCam(b.dataset.cam)});
+  const start=new URLSearchParams(location.search).get('cam');goCam(CAMS[start]?start:'rowA',true);
+}
+function resize(){const b=document.getElementById('view').getBoundingClientRect();renderer.setSize(b.width,b.height,false);camera.aspect=b.width/b.height;camera.updateProjectionMatrix()}
+let frames=0;
+function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime(),dt=Math.min(.05,t-(loop.pt??t));loop.pt=t;
+  if(PLAYING){const k=(performance.now()-PLAY0)/1000-.6;setUpgrade(Math.max(0,k));if(k>3.6){PLAY0=performance.now()}}
+  roam(dt,t);animated.forEach(f=>f(t));
+  if(camAnim){const k=Math.min(1,(performance.now()-camAnim.t0)/camAnim.dur),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;camera.position.lerpVectors(camAnim.from.p,camAnim.to.p,e);controls.target.lerpVectors(camAnim.from.t,camAnim.to.t,e);if(k>=1)camAnim=null}
+  controls.update();renderer.render(scene,camera);if(++frames===40)document.title='ready'}
+Promise.all([document.fonts.load('400 60px "Lilita One"'),document.fonts.load('900 30px Nunito')]).catch(()=>{}).then(()=>{
+  try{init();loop()}catch(e){document.getElementById('view').insertAdjacentHTML('beforeend','<div class="err">This render needs WebGL, which is turned off in this browser.</div>');console.error(e)}});
+})();
+</script>

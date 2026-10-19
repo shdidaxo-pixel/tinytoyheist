@@ -394,7 +394,8 @@ end
 local function rewardSounds(remotes: Instance)
 	local streak: number? = nil
 	local claimed: number? = nil
-	(remotes:WaitForChild("Data") :: RemoteEvent).OnClientEvent:Connect(function(p: any, m: any)
+	local data = remotes:WaitForChild("Data") :: RemoteEvent
+	data.OnClientEvent:Connect(function(p: any, m: any)
 		local s = type(p) == "table" and type(p.Daily) == "table" and tonumber(p.Daily.Streak) or nil
 		local c = type(m) == "table" and type(m.playtimeClaimed) == "table" and #m.playtimeClaimed or nil
 		if s and streak and s > streak then
@@ -540,22 +541,24 @@ function Sounds.start(bedroom: Model)
 			end)
 		end
 	end)
-	ProximityPromptService.PromptTriggered
-		:Connect(function(prompt)
-			if prompt.Name == "HatchPrompt" then
-				hatchedAt = os.clock()
-			elseif prompt.Name == "StealPrompt" then
-				stealStart()
-			end
-		end)(gameRemotes:WaitForChild("Reveal") :: RemoteEvent).OnClientEvent
-		:Connect(reveal)
+	ProximityPromptService.PromptTriggered:Connect(function(prompt)
+		if prompt.Name == "HatchPrompt" then
+			hatchedAt = os.clock()
+		elseif prompt.Name == "StealPrompt" then
+			stealStart()
+		end
+	end)
+	local revealRemote = gameRemotes:WaitForChild("Reveal") :: RemoteEvent
+	revealRemote.OnClientEvent:Connect(reveal)
 	player:GetAttributeChangedSignal("Carrying"):Connect(function()
 		if player:GetAttribute("Carrying") then
 			Sounds.play("Grab")
 		end
-	end);
-	(remotes:WaitForChild("Notice") :: RemoteEvent).OnClientEvent:Connect(notice);
-	(remotes:WaitForChild("Knocked") :: RemoteEvent).OnClientEvent:Connect(function(_push, _stun, message)
+	end)
+	local noticeRemote = remotes:WaitForChild("Notice") :: RemoteEvent
+	noticeRemote.OnClientEvent:Connect(notice)
+	local knocked = remotes:WaitForChild("Knocked") :: RemoteEvent
+	knocked.OnClientEvent:Connect(function(_push, _stun, message)
 		if type(message) == "string" and message:find("Giant", 1, true) then
 			Sounds.play("KidGrab")
 		end

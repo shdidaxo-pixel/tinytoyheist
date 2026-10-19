@@ -11,10 +11,9 @@ and the reason behind it, every piece of Dylan's feedback in order, and a step-b
 
 ## START HERE (next chat): bring in all the models and build the real game
 
-Updated 19 Oct 2026, ~12:00. The Kid's Bedroom is built, scaled and playable in Studio. The toy session has all 105
-voxel toys as models. The next chat's job is to **use those models everywhere and build the actual game mechanics**
-(economy, wake-up reveal, raids, saving, upgrades), working from Dylan's instructions. Wait for his first message
-before starting.
+Updated 19 Oct 2026, afternoon. The Kid's Bedroom is built, scaled and playable, and the game systems now exist:
+saving, the wake-up reveal, auto-collect money, upgrades, Speed training, raids, rewards and real panels (below).
+Raids and saving still need a two-player test and a published place.
 
 ### Where the game is right now
 - **Map**: `Workspace.Bedroom`, rebuilt by `tools/build-bedroom.luau` (+ `tools/bedroom/*`). It is built full size and
@@ -36,21 +35,41 @@ before starting.
   Workspace and `TinyToyHeistToys/ToyClient` animates it. `Mutations.roll/apply`, `ToyVFX.revealBurst/popIn`,
   `ToyVFX.addGlowTell`. Data: `ReplicatedStorage.Shared.Toys.ToyCatalog` (Id, Name, Set, Rarity, Money, Size, ...).
 
-### What's not built yet (the likely next jobs; confirm order with Dylan)
-1. **Economy**: money per second from each toy in your pen (`toy.Money` × mutation multiplier), the cash pile filling
-   up and walk-over collect, the HUD's cash and quest (the HUD still runs a demo loop for those:
-   `TinyToyHeistUI/Hud.client.luau`, bottom "Demo loop" block).
-2. **Wake-up reveal**: banked toys currently appear awake at once. The plan: a wake timer over the toy (Small 5 s,
-   Medium 20 s, Large 60 s), then `revealBurst`, rarity and a mutation roll.
-3. **Home levels**: costs from the plan (L2 $500 ... L7 $50M + Rebirth), capacity already in `MapConfig.HOLE_LEVELS`;
-   setting a home's `Level` attribute already rebuilds its look and wheel (`Homes.relevel`).
-4. **Stats and the Speed wheel**: training on the wheel (`Hole#.TrainingWheel.Wheel` prompt "Train Speed",
-   `RunPoint`), Speed/Strength/Sneak/Grip from the plan.
-5. **Raids**: steal from other pens (hold 2 s on a roaming toy; `PenRoam.pose(seed, serverTime, ...)` tells the server
-   where a toy is), the lock button already works.
-6. **Saving** (DataStore): toys, cash, levels, stats; when a player leaves, clear their pen.
-7. **The Index** and rewards/shop hookups (UI exists, not wired).
-8. Other rooms (the hallway door is blocked 150 studs in) and Giant/Large toys.
+### The game systems (built 19 Oct 2026, afternoon; play-tested solo in Studio)
+Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `src/ServerScriptService/Bedroom/`.
+- **Saving** (`PlayerData.luau`): one profile per player (cash, toys `{u, id, m}`, home level, stats, Speed points,
+  Index, sets done, rebirths, daily streak, x2 boost), key `p_<UserId>` in the DataStore
+  `TinyToyHeist_v1`, loaded on join, saved, every 60 s and on leave, with a session lock. **The place is unpublished
+  (PlaceId 0), so in Studio it plays on a fresh profile and saves nothing** (Player attribute `DataOffline`). To test
+  saving: publish the place and turn on Game Settings > Security > Enable Studio Access to API Services.
+- **Pens** (`Pens.luau`): your saved toys are put in your pen when you join and cleared when you leave. Banking: the
+  blanket lies in your pen with a countdown (S 5 s, M 20 s, L 60 s), then the toy pops out with the reveal card.
+  The mutation is rolled at banking (no re-rolls by rejoining). Your first toy ever is the Plush Bunny.
+- **Money** (`Economy.luau`): toys pay into your cash every second (auto collect, Dylan's call). x rebirth bonus, x2
+  while a boost runs. The thimble shows "+$X/s"; the sign shows "Lv N · $X/s".
+- **Upgrades** (`Upgrades.luau`, Upgrades panel): home levels ($500 ... $50M + Rebirth 1), Strength (Large toys need
+  5), Sneak, Grip (x1.6 per level), Rebirth, Sell. **Speed is trained on your wheel** (press E on it, jump to stop).
+- **Spawn**: each home's bed is right behind its cash thimble (Dylan's ask).
+- **Raids** (`Raids.luau` + `Carry.luau`): hold Steal 2 s on a toy in someone's pen, drag it home; dropped stolen toys
+  glow red and slide home after 15 s; owner grabbing one sends it home. Anti-grief: under 3 toys, the 10-min new-player
+  shield (unless 5+ toys), 90 s per-victim cooldown, can't steal with a full pen. **Not play-tested yet: needs two
+  players** (Studio: Test > Clients and Servers, 2 players).
+- **Rewards** (`Rewards.luau`): 7-day streak and 10 playtime gifts; rewards are cash, x2 money boosts or a mystery toy
+  delivered to your pen (gadgets don't exist yet, so they were swapped out of the reward lists).
+- **UI** (`TinyToyHeistUI/GameUI.luau`): cash and $/s, the quest banner, the reveal card, and real Upgrades, Your Toys
+  (Sell), Index (all 105 with silhouettes and mutation dots), Daily and Playtime panels. Toy icons come from
+  `design/toy-icons/` copied into Studio's `content/textures/TTH2/toys/` (local only, like the other UI pictures:
+  upload before publishing). In-world bits are in `Bedroom/GameView.luau`.
+- **Studio test hook**: `ServerStorage.GameDebug` (BindableFunction, Studio only): `("cash", player, n)`,
+  `("give", player, "S"|"M"|"L")`, `("set", player, {field = value})`, `("profile", player)`.
+- Gotcha: BillboardGuis with `AlwaysOnTop` don't show up in Studio screen captures.
+
+### Still to do
+1. Two-player raid test; publish and test saving.
+2. Shop: passes and products need IDs made on the Roblox site (the shop UI isn't wired).
+3. Gadgets (Flashlight, Decoy, ...), the Pencil Bonk, door lock upgrades, alarm bell.
+4. The wheel's solid sides hide you while you train (see-through sides or a cut-away would fix it).
+5. Other rooms (the hallway door is blocked 150 studs in) and Giant toys: renders first, as always.
 
 ### How to work here (the rules that bit this session)
 - CLAUDE.md: StyLua + Selene before every commit; small commits with explicit paths; push to origin main.

@@ -557,7 +557,27 @@ function UIKit.animScale(gui: GuiObject): UIScale
 end
 
 -- Gentle repeating pulse (RUN! banner, badges, featured pictures).
+-- UIScale grows a thing from its AnchorPoint, so re-pin it at its centre (same spot on screen) to make it zoom in
+-- and out from the middle instead of stretching from a corner. Skipped for auto-sized text, which has no fixed size.
+local function pinCentre(gui: GuiObject)
+	local a = gui.AnchorPoint
+	if (a.X == 0.5 and a.Y == 0.5) or gui.AutomaticSize ~= Enum.AutomaticSize.None then
+		return
+	end
+	local s = gui.Size
+	gui.Position = gui.Position
+		+ UDim2.new(
+			s.X.Scale * (0.5 - a.X),
+			s.X.Offset * (0.5 - a.X),
+			s.Y.Scale * (0.5 - a.Y),
+			s.Y.Offset * (0.5 - a.Y)
+		)
+	gui.AnchorPoint = Vector2.new(0.5, 0.5)
+end
+UIKit.pinCentre = pinCentre
+
 function UIKit.pulse(gui: GuiObject, amount: number, seconds: number)
+	pinCentre(gui)
 	local s = UIKit.animScale(gui)
 	TweenService:Create(
 		s,
@@ -588,6 +608,7 @@ end
 
 -- A quick "boing" when something changes (quest text, counters).
 function UIKit.bump(gui: GuiObject)
+	pinCentre(gui)
 	local s = UIKit.animScale(gui)
 	s.Scale = 1.18
 	tween(s, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)

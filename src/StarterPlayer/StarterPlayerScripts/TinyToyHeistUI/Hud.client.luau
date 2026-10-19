@@ -709,7 +709,7 @@ do
 		strokeWidth = 4,
 	})
 	UIKit.text(runFace, "RUN!", 52, { position = center, anchor = mid, stroke = 5 })
-	UIKit.pulse(runFace, 0.07, 0.35)
+	UIKit.pulse(runHolder, 0.07, 0.35) -- the whole block (lip too) zooms in and out from its centre
 	runHolder.Visible = false
 	hud.run = runHolder
 

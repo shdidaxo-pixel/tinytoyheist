@@ -20,7 +20,7 @@ PlayerData.STORE = "TinyToyHeist_v1"
 PlayerData.AUTOSAVE = 60
 PlayerData.LOCK_STALE = 150 -- a lock older than this (seconds) belongs to a server that died
 
-export type Toy = { u: string, id: string, m: string? }
+export type Toy = { u: string, id: string, m: string?, s: string? } -- s: the blanket size it woke up at
 export type Profile = {
 	Version: number,
 	Cash: number,

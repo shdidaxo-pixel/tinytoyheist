@@ -389,7 +389,7 @@ local function buildToys(ctx: Ctx)
 		local list = {}
 		for _, entry in profile.Toys do
 			local data = ToyCatalog.get(entry.id)
-			local size = data and SIZE_NAME[data.Size]
+			local size = SIZE_NAME[entry.s or (data and data.Size) or ""]
 			if filter == "All" or size == filter then
 				table.insert(list, entry)
 			end

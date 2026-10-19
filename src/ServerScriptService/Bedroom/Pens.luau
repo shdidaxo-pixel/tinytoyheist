@@ -18,6 +18,7 @@ local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local Toys = Shared:WaitForChild("Toys")
 local ToyCatalog = require(Toys:WaitForChild("ToyCatalog")) :: any
 local Mutations = require(Toys:WaitForChild("Mutations")) :: any
+local SIZE_TARGET = (require(Toys:WaitForChild("ToyBuilder")) :: any).SIZE_TARGET :: { [string]: number }
 local PlayerData = require(script.Parent.PlayerData)
 local Homes = require(script.Parent.Homes)
 
@@ -150,6 +151,18 @@ function Pens.buildToy(entry: Toy): Model?
 	if entry.m then
 		pcall(Mutations.apply, toy, entry.m)
 	end
+	-- it wakes up at the size of the blanket it came out of (a Large blanket gives a big one); money stays the toy's
+	local natural = toy:GetAttribute("Size") :: string?
+	local target = SIZE_TARGET[entry.s or ""]
+	if entry.s and natural and entry.s ~= natural and target and SIZE_TARGET[natural] then
+		local k = target / SIZE_TARGET[natural]
+		toy:ScaleTo(toy:GetScale() * k)
+		toy:SetAttribute("Size", entry.s)
+		local height = toy:GetAttribute("Height") :: number?
+		if height then
+			toy:SetAttribute("Height", height * k)
+		end
+	end
 	toy:SetAttribute("Uid", entry.u)
 	toy:SetAttribute("RoamSeed", hash(entry.u))
 	toy:SetAttribute("PerSecond", Pens.perSecond(entry))
@@ -274,7 +287,7 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?): To
 	local mutation = if p.Banked == 0
 		then nil
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
-	local entry: Toy = { u = PlayerData.newUid(), id = data.Id, m = mutation }
+	local entry: Toy = { u = PlayerData.newUid(), id = data.Id, m = mutation, s = size }
 	table.insert(p.Toys, entry)
 	p.Banked += 1
 	discover(player, entry)
@@ -367,7 +380,7 @@ function Pens.give(player: Player, entry: Toy): boolean
 	if not p or not states[player] then
 		return false
 	end
-	local copy: Toy = { u = PlayerData.newUid(), id = entry.id, m = entry.m }
+	local copy: Toy = { u = PlayerData.newUid(), id = entry.id, m = entry.m, s = entry.s }
 	table.insert(p.Toys, copy)
 	discover(player, copy)
 	local toy = show(player, copy)

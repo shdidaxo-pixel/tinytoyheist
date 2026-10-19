@@ -424,7 +424,13 @@ function KidView.start(bedroom: Model)
 			if best >= 90 then
 				wantYaw = math.sin(t * 0.9) * 0.5 -- searching
 			end
-			headYaw += (wantYaw - headYaw) * math.min(1, dt * 4)
+			-- lights on: his head follows his eyes round the room (Giant.GAZE, drawn by LightsOnView)
+			local gazeAt = kid:GetAttribute("GazeAt")
+			if kid:GetAttribute("Gaze") == true and typeof(gazeAt) == "Vector3" then
+				local seen = walkerCurrent:PointToObjectSpace(gazeAt)
+				wantYaw = math.clamp(math.atan2(-seen.X, -seen.Z), -1.2, 1.2)
+			end
+			headYaw += (wantYaw - headYaw) * math.min(1, dt * (if kid:GetAttribute("Gaze") then 8 else 4))
 
 			walkerRoot.CFrame = walkerCurrent
 			local hipCf = CFrame.new(0, HIP_Y, 0)

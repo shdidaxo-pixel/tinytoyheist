@@ -14,7 +14,7 @@ BedroomLighting.apply(BedroomLighting.Night, 0)
 -- Game systems first (they hook into PlayerData), then the hazards; PlayerData starts last so every system is
 -- listening before the first profile loads.
 for _, name in
-	{ "Homes", "Pens", "Carry", "Economy", "Upgrades", "Raids", "Rewards", "Giant", "Train", "Cat", "Hazards" }
+	{ "Homes", "Pens", "Carry", "Economy", "Upgrades", "Raids", "Rewards", "Giant", "Train", "Cat", "RCCar", "Hazards" }
 do
 	local ok, err = pcall(function()
 		local system = require(script.Parent:WaitForChild(name)) :: any

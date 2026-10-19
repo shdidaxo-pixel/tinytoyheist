@@ -16,10 +16,13 @@ local Knock = require(script.Parent.Knock)
 local Cat = {}
 local S = MapConfig.SCALE -- the room (and the cat) are shrunk; distances that come from its size shrink too
 Cat.CALM = { sight = 70, stalk = 9, patrol = 8, pounceFrom = 26 * S }
--- lights on: it hunts everyone in the run, anywhere, and runs nearly as fast as a mouse (Dylan, 19 Oct)
-Cat.ANGRY = { sight = 3000, stalk = 26, patrol = 18, pounceFrom = 48 * S }
+-- lights on: it hunts everyone in the run, anywhere, and runs faster than all but a late-game mouse (lights-on
+-- session: was 26; Dylan to OK). It also cuts you off: it runs at where you're going, not where you are.
+Cat.ANGRY = { sight = 3000, stalk = 60, patrol = 30, pounceFrom = 48 * S }
+Cat.LEAD = 0.8 -- lights on: aims up to this many seconds ahead of the mouse
 Cat.CARRY_SIGHT = 1.6 -- a mouse dragging a toy is noticed from further away
 Cat.LEAP_SPEED = 75 * S
+Cat.ANGRY_LEAP_SPEED = 130 * S -- lights on, the pounce is longer and quicker too
 Cat.LEAP_TIME = 0.45
 Cat.HIT_RADIUS = 16 * S + 2
 Cat.REST = 2.5 -- seconds it sits after a pounce
@@ -87,6 +90,7 @@ function Cat.start(bedroom: Model)
 		end
 	end)
 	local leapFrom, leapDir, leapAt = position, facing, 0
+	local leapSpeed = Cat.LEAP_SPEED
 	local restUntil = 0
 	local groomUntil, nextGroom = 0, os.clock() + 15
 
@@ -157,10 +161,17 @@ function Cat.start(bedroom: Model)
 					state = "Stalk"
 					local root = Knock.root(target) :: BasePart
 					local goal = Vector3.new(root.Position.X, 0, root.Position.Z)
+					if aggressive then
+						-- cut it off: where it'll be by the time the cat gets there
+						local v = root.AssemblyLinearVelocity
+						local lead = math.min(Cat.LEAD, bestDistance / tune.stalk)
+						goal += Vector3.new(v.X, 0, v.Z) * lead
+					end
 					if bestDistance <= tune.pounceFrom then
 						state = "Pounce"
 						leapFrom, leapAt = position, os.clock()
 						leapDir = (goal - position).Unit
+						leapSpeed = if aggressive then Cat.ANGRY_LEAP_SPEED else Cat.LEAP_SPEED
 						facing = leapDir
 					else
 						local running = (alerted[target :: Player] or 0) > os.clock()
@@ -192,7 +203,7 @@ function Cat.start(bedroom: Model)
 				end
 			elseif state == "Pounce" then
 				local u = (os.clock() - leapAt) / Cat.LEAP_TIME
-				position = allowed(leapFrom + leapDir * Cat.LEAP_SPEED * Cat.LEAP_TIME * math.min(u, 1))
+				position = allowed(leapFrom + leapDir * leapSpeed * Cat.LEAP_TIME * math.min(u, 1))
 				hop = math.sin(math.min(u, 1) * math.pi) * 12 * S
 				tilt = 0.18 * math.sin(math.min(u, 1) * math.pi)
 				-- anyone under the cat as it lands gets knocked over
@@ -211,7 +222,7 @@ function Cat.start(bedroom: Model)
 				end
 				if u >= 1 then
 					state = "Rest"
-					restUntil = os.clock() + (if aggressive then Cat.REST * 0.5 else Cat.REST)
+					restUntil = os.clock() + (if aggressive then Cat.REST * 0.3 else Cat.REST)
 					target = nil
 				end
 			elseif state == "Rest" then

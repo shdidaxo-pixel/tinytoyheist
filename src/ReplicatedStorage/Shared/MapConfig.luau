@@ -151,6 +151,9 @@ local function build(S: number): any
 	}
 	MapConfig.MONITOR = Vector3.new(-152, 84, 1670) * S -- the baby monitor on the nightstand
 	MapConfig.MONITOR_ZONE = { center = Vector3.new(40, 0, 1420) * S, radius = 105 * S, noise = 2 }
+	-- The RC car's charger against the right-hand wall past the desk; it parks there facing into the room (-x) and
+	-- drives out while the lights are on (ServerScriptService.Bedroom.RCCar)
+	MapConfig.RC_CAR = { dock = Vector3.new(176, 0, 1585) * S, turn = math.pi / 2 }
 
 	-- Where the Kid's flashlight points at time t (seconds) while he sits up: a sweep back down the run.
 	function MapConfig.flashlightTarget(t: number): Vector3

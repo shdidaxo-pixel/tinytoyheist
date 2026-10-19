@@ -1,10 +1,148 @@
 --!strict
 -- Hazards on the run: the cat (a big voxel orange tabby; game code walks it), mouse traps by the walls, loose boards
--- on the creaky band, squeaky ducks, loose toy bricks and the baby monitor's noise zone. Game code finds these by
--- name and attribute (MapConfig has their positions).
+-- on the creaky band, squeaky ducks, loose toy bricks, the baby monitor's noise zone and the RC car on its charger.
+-- Game code finds these by name and attribute (MapConfig has their positions).
+-- Build only the RC car and its charger into the built room (Edit mode, command bar), without rebuilding the map:
+--   local T = game.ServerStorage.TinyToyHeistTools.Bedroom
+--   local MC = require(game.ReplicatedStorage.Shared.MapConfig:Clone())
+--   require(T.Hazards:Clone())(require(T.Kit:Clone()), MC.unscaled, workspace.Bedroom, { only = "RCCar", scale = MC.SCALE })
 
-return function(Kit: any, MapConfig: any, bedroom: Model)
+-- The RC car (Hazards.RCCar) and its charger (Hazards.RCDock): a red voxel buggy with big black wheels, a yellow
+-- spoiler and a whip antenna, parked facing into the room. Local -Z is the front. Root (invisible, on the floor) is
+-- the pivot game code moves; Wheel/Hub parts spin and the front ones steer, Headlight/Taillight glow while it drives.
+local function buildRCCar(Kit: any, MapConfig: any, hazards: Instance): Model
 	local part, block = Kit.part, Kit.block
+	local at = CFrame.new(MapConfig.RC_CAR.dock) * CFrame.Angles(0, MapConfig.RC_CAR.turn, 0)
+	local loose = { collide = false }
+
+	-- the charger: a grey pad with yellow edges, a box against the wall with a charge light, a cable to the outlet
+	local dock = Kit.model(hazards, "RCDock")
+	local pad = block(dock, "Pad", 30, 1.2, 46, at, 0, 0, 0, 0x5A5668, loose)
+	dock.PrimaryPart = pad
+	for _, s in { -1, 1 } do
+		block(dock, "Edge", 1.6, 1.4, 46, at, s * 15, 0, 0, 0xFFD43B, loose)
+	end
+	for k = 0, 3 do
+		block(dock, "Chevron", 10, 1.3, 2, at, 0, 0, -16 + k * 6, 0xFFD43B, loose)
+	end
+	block(dock, "Charger", 12, 9, 6, at, 0, 0, 27, 0x2B2B33, loose)
+	local light = block(dock, "ChargeLight", 4, 3, 0.6, at, 0, 4, 23.7, 0x3DFF7A, {
+		material = Enum.Material.Neon,
+		collide = false,
+	})
+	Kit.light(light, "PointLight", 0x3DFF7A, 0.8, 14)
+	Kit.rod(
+		dock,
+		"Cable",
+		(at * CFrame.new(0, 2, 30)).Position,
+		(at * CFrame.new(0, 2, 34)).Position,
+		0.5,
+		0x1A1430,
+		loose
+	)
+
+	-- the car
+	local car = Kit.model(hazards, "RCCar", { State = "Docked" })
+	local root = part(car, "Root", Vector3.new(4, 1, 4), at * CFrame.new(0, 0.5, 0), 0xFFFFFF, {
+		collide = false,
+		transparency = 1,
+	})
+	car.PrimaryPart = root
+	local RED, DARK, BLACK, YELLOW, SILVER = 0xE8202E, 0x2B2B33, 0x1A1A1F, 0xFFD43B, 0xC8CCD6
+	block(car, "Chassis", 20, 3, 34, at, 0, 4.5, 0, DARK, loose)
+	block(car, "Body", 18, 6, 26, at, 0, 7.5, 0, RED, loose)
+	block(car, "Hood", 16, 2, 9, at, 0, 13.5, -8, RED, loose)
+	block(car, "Stripe", 4, 0.4, 9.2, at, 0, 15.5, -8, 0xFFFFFF, loose)
+	block(car, "Stripe", 4, 0.4, 12, at, 0, 13.5, 6.5, 0xFFFFFF, loose)
+	block(car, "Cabin", 14, 6, 10, at, 0, 13.5, 1.5, BLACK, loose)
+	block(car, "Windshield", 12.4, 4.4, 0.6, at, 0, 14.3, -3.6, 0x7FD6FF, {
+		material = Enum.Material.Glass,
+		transparency = 0.15,
+		collide = false,
+	})
+	-- roll bar and spoiler
+	for _, s in { -1, 1 } do
+		block(car, "RollBar", 1.4, 3, 1.4, at, s * 6.3, 19.5, 2, SILVER, loose)
+		block(car, "SpoilerPost", 1.2, 4.5, 1.2, at, s * 6, 13.5, 12, BLACK, loose)
+	end
+	block(car, "RollBar", 14, 1.4, 1.4, at, 0, 22.3, 2, SILVER, loose)
+	block(car, "Spoiler", 21, 1.4, 6, at, 0, 18, 12.5, YELLOW, loose)
+	for _, s in { -1, 1 } do
+		block(car, "SpoilerFin", 0.8, 4, 6, at, s * 10.5, 16.5, 12.5, YELLOW, loose)
+	end
+	-- bumpers, lights
+	block(car, "Bumper", 22, 2.5, 2.5, at, 0, 4, -17.5, SILVER, loose)
+	block(car, "Bumper", 22, 2.5, 2.5, at, 0, 4, 17.5, SILVER, loose)
+	for _, s in { -1, 1 } do
+		block(car, "Headlight", 3.5, 2.4, 0.6, at, s * 5.5, 9.5, -13.3, 0xFFF3B0, {
+			material = Enum.Material.Neon,
+			collide = false,
+		})
+		block(car, "Taillight", 3.5, 2, 0.6, at, s * 5.5, 10, 13.3, 0xFF3344, {
+			material = Enum.Material.Neon,
+			collide = false,
+		})
+	end
+	local glow = part(car, "HeadlightGlow", Vector3.one, at * CFrame.new(0, 10, -14), 0xFFFFFF, {
+		collide = false,
+		transparency = 1,
+	})
+	Kit.light(glow, "SpotLight", 0xFFF3B0, 0, 50, { Angle = 70, Face = Enum.NormalId.Front })
+	-- the racing number on each side
+	for _, s in { -1, 1 } do
+		local plate = block(car, "Number", 0.4, 5, 5, at, s * 9.2, 8, 2, 0xFFFFFF, loose)
+		Kit.text(plate, "7", {
+			face = if s < 0 then Enum.NormalId.Left else Enum.NormalId.Right,
+			color = Color3.fromRGB(26, 20, 48),
+			pixelsPerStud = 12,
+		})
+	end
+	-- the whip antenna with a red tip
+	local tip = (at * CFrame.new(-6.5, 32, 15)).Position
+	Kit.rod(car, "Antenna", (at * CFrame.new(-6.5, 13.5, 10)).Position, tip, 0.35, BLACK, loose)
+	Kit.ball(car, "AntennaTip", 1.1, tip, RED, loose)
+	-- big chunky wheels (cylinders run along X: across the car) with yellow hubs and voxel treads
+	for _, w in { { -1, -11 }, { 1, -11 }, { -1, 11 }, { 1, 11 } } do
+		local cf = at * CFrame.new(w[1] * 12.5, 6.5, w[2])
+		part(car, "Wheel", Vector3.new(5.5, 13, 13), cf, BLACK, { shape = Enum.PartType.Cylinder, collide = false })
+		part(car, "Hub", Vector3.new(6, 5.5, 5.5), cf, YELLOW, { shape = Enum.PartType.Cylinder, collide = false })
+		for k = 0, 7 do
+			local a = k / 8 * 2 * math.pi
+			part(
+				car,
+				"Tread",
+				Vector3.new(5.7, 1.4, 3),
+				cf * CFrame.Angles(a, 0, 0) * CFrame.new(0, 6.2, 0),
+				0x34343C,
+				loose
+			)
+		end
+	end
+	return car
+end
+
+return function(Kit: any, MapConfig: any, bedroom: Model, build: { only: string?, scale: number? }?)
+	local part, block = Kit.part, Kit.block
+	if build and build.only == "RCCar" then
+		-- just the RC car and its charger, into the room as it stands (built full size, then shrunk about the
+		-- origin like the whole room)
+		local folder = bedroom:WaitForChild("Hazards")
+		for _, name in { "RCCar", "RCDock" } do
+			local old = folder:FindFirstChild(name)
+			if old then
+				old:Destroy()
+			end
+		end
+		local holder = Instance.new("Model")
+		local car = buildRCCar(Kit, MapConfig, holder)
+		holder.WorldPivot = CFrame.new()
+		holder:ScaleTo(build.scale or 1)
+		for _, child in holder:GetChildren() do
+			child.Parent = folder
+		end
+		holder:Destroy()
+		return car
+	end
 	local hazards = Kit.folder(bedroom, "Hazards")
 
 	---------------------------------------------------------------------------------------------------------------
@@ -294,6 +432,8 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 		pixelsPerStud = 8,
 		glow = true,
 	})
+
+	buildRCCar(Kit, MapConfig, hazards)
 
 	return catModel
 end

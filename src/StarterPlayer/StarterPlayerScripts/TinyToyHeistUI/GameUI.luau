@@ -221,10 +221,16 @@ local function buildUpgrades(ctx: Ctx)
 			bottom = hex("1A2C44"),
 		})
 		label(wh, "SPEED WHEEL", 24, 16, 12, { color = hex("7FD8FF") })
-		label(wh, `Level {wheel} · trains x{GameConfig.trainRate(wheel)}`, 20, 16, 44)
+		label(wh, `Lv {wheel} · {GameConfig.wheelName(wheel)}`, 20, 16, 44)
+		label(wh, `+{GameConfig.speedText(GameConfig.wheelGain(wheel))} Speed a second`, 15, 16, 70, {
+			font = UIKit.Fonts.body,
+			stroke = 0,
+			color = hex("7FD8FF"),
+		})
 		local wheelCost = GameConfig.WHEEL_COST[wheel + 1]
 		if wheelCost then
-			label(wh, `Next: x{GameConfig.trainRate(wheel + 1)} training, a fancier wheel`, 14, 16, 72, {
+			local nextGain = GameConfig.speedText(GameConfig.wheelGain(wheel + 1))
+			label(wh, `Next: {GameConfig.wheelName(wheel + 1)} · +{nextGain}/s`, 14, 16, 92, {
 				font = UIKit.Fonts.body,
 				stroke = 0,
 				color = GREY_TEXT,
@@ -242,9 +248,7 @@ local function buildUpgrades(ctx: Ctx)
 			label(wh, "MAX LEVEL!", 26, 16, 124, { color = UIKit.Yellow })
 		end
 
-		-- Speed
-		local points = profile.SpeedPoints
-		local maxed = points >= GameConfig.SPEED_MAX_POINTS
+		-- Speed: the big number, ticking up live while you train
 		local _, sp = UIKit.tile(c, {
 			name = "Speed",
 			size = UDim2.fromOffset(352, 372),
@@ -255,29 +259,25 @@ local function buildUpgrades(ctx: Ctx)
 		UIKit.burst(sp, UDim2.fromOffset(176, 108), 220, 0.18)
 		UIKit.icon(sp, img("Shoe"), 96, UDim2.fromOffset(176, 70), mid, 5)
 		UIKit.text(sp, "SPEED", 22, { position = UDim2.fromOffset(176, 124), anchor = Vector2.new(0.5, 0), z = 6 })
-		UIKit.text(sp, tostring(GameConfig.SPEED_BASE + points), 64, {
+		local speedLabel = UIKit.text(sp, "", 56, {
 			font = UIKit.Fonts.number,
 			position = UDim2.fromOffset(176, 148),
 			anchor = Vector2.new(0.5, 0),
 			stroke = 4,
 			z = 6,
 		})
-		local frac = if maxed then 1 else attr("TrainProgress")
-		label(sp, if maxed then "MAX SPEED!" else "Next +1", 15, 24, 236, { font = UIKit.Fonts.body, stroke = 2 })
-		bar(sp, frac, Vector2.new(304, 22), UDim2.fromOffset(24, 260), hex("3DC8FF"))
-		label(sp, "Hop on the wheel in your home and run!", 15, 24, 296, { font = UIKit.Fonts.body, stroke = 0 })
-		label(
-			sp,
-			`Up to {GameConfig.SPEED_BASE + GameConfig.SPEED_MAX_POINTS} · a better wheel trains faster`,
-			13,
-			24,
-			322,
-			{
-				font = UIKit.Fonts.body,
-				stroke = 0,
-				color = GREY_TEXT,
-			}
-		)
+		tick(p.body, function()
+			speedLabel.Text = GameConfig.speedText(attr("Speed"))
+		end)
+		label(sp, `+{GameConfig.speedText(GameConfig.wheelGain(wheel))} Speed a second`, 20, 24, 236, {
+			color = hex("7FD8FF"),
+		})
+		label(sp, "Hop on the wheel in your home and run!", 15, 24, 276, { font = UIKit.Fonts.body, stroke = 0 })
+		label(sp, "No limit! A better wheel trains faster.", 13, 24, 302, {
+			font = UIKit.Fonts.body,
+			stroke = 0,
+			color = GREY_TEXT,
+		})
 	end
 	draw()
 	-- redraw when a price becomes affordable (or not) or the training bar moves
@@ -291,7 +291,6 @@ local function buildUpgrades(ctx: Ctx)
 		return table.concat({
 			tostring(cost ~= nil and cash >= cost),
 			tostring(wheelCost ~= nil and cash >= wheelCost),
-			tostring(math.floor(attr("TrainProgress") * 20)),
 		}, ",")
 	end
 	return p, draw, sig
@@ -1490,9 +1489,9 @@ function GameUI.start(ctx: Ctx)
 	me:GetAttributeChangedSignal("BoostUntil"):Connect(rate)
 	rate()
 	local function speed()
-		hud.speed.Text = tostring(GameConfig.SPEED_BASE + attr("SpeedPoints"))
+		hud.speed.Text = GameConfig.speedText(attr("Speed"))
 	end
-	me:GetAttributeChangedSignal("SpeedPoints"):Connect(speed)
+	me:GetAttributeChangedSignal("Speed"):Connect(speed)
 	speed()
 	hud.mult.Visible = false
 	hud.zone.Visible = false

@@ -33,8 +33,7 @@ export type Profile = {
 	HomeLevel: number,
 	WheelLevel: number, -- the Speed wheel's own level (bought separately from the home)
 	Stats: { [string]: number },
-	SpeedPoints: number,
-	SpeedProgress: number,
+	Speed: number, -- the big Speed number (GameConfig.walkSpeed turns it into a real walk speed)
 	Toys: { Toy },
 	Blankets: { Blanket },
 	Index: { [string]: { [string]: boolean } },
@@ -56,8 +55,7 @@ local function defaults(): Profile
 		HomeLevel = 1,
 		WheelLevel = 1,
 		Stats = { Strength = 0, Sneak = 0, Grip = 0 },
-		SpeedPoints = 0,
-		SpeedProgress = 0,
+		Speed = GameConfig.SPEED_START,
 		Toys = {},
 		Blankets = {},
 		Index = {},
@@ -75,6 +73,11 @@ PlayerData.defaults = defaults
 
 -- fill in any field a profile saved by an older version is missing
 local function reconcile(data: any): Profile
+	-- Speed points (walk 16 + points, before 19 Oct) become the big Speed number at the same walk speed
+	if data.Speed == nil and data.SpeedPoints ~= nil then
+		data.Speed = GameConfig.speedFromPoints(data.SpeedPoints)
+	end
+	data.SpeedPoints, data.SpeedProgress = nil, nil
 	local base = defaults() :: any
 	for k, v in base do
 		if data[k] == nil then
@@ -170,7 +173,7 @@ local function mirror(player: Player, p: Profile)
 	player:SetAttribute("HomeLevel", p.HomeLevel)
 	player:SetAttribute("WheelLevel", p.WheelLevel)
 	player:SetAttribute("Blankets", #p.Blankets)
-	player:SetAttribute("SpeedPoints", p.SpeedPoints)
+	player:SetAttribute("Speed", p.Speed)
 	player:SetAttribute("Rebirths", p.Rebirths)
 	player:SetAttribute("ToyCount", #p.Toys)
 	for stat, level in p.Stats do

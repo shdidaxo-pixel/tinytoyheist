@@ -3,7 +3,7 @@
 -- your home and your Speed wheel (separate upgrades), ("Sell", uid or {uids}), ("Equip" | "Unequip", uid),
 -- ("EquipBest"), ("Lock" | "Unlock", uid), and ("Rebirth") while rebirths are switched on (GameConfig.SHOW_REBIRTH).
 -- Speed is trained on your home's wheel: press Train Speed and you run in it (anchored on its RunPoint) gaining
--- Speed points, faster on a better wheel, until you jump off or move (GameRemotes.StopTraining).
+-- Speed (GameConfig.wheelGain a second, more on a better wheel), until you jump off or move (GameRemotes.StopTraining).
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -20,12 +20,15 @@ local Knock = require(script.Parent.Knock)
 local Upgrades = {}
 
 local notice: RemoteEvent
+local ticks: { [Player]: number } = {} -- training ticks so far this run
 
 local function stopTraining(player: Player)
 	if not player:GetAttribute("Training") then
 		return
 	end
 	player:SetAttribute("Training", nil)
+	ticks[player] = nil
+	PlayerData.changed(player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if root then
 		root.Anchored = false
@@ -43,10 +46,6 @@ local function startTraining(player: Player, hole: Model)
 	local root = Knock.root(player)
 	local p = PlayerData.get(player)
 	if not runPoint or not root or not p then
-		return
-	end
-	if p.SpeedPoints >= GameConfig.SPEED_MAX_POINTS then
-		notice:FireClient(player, "Your Speed is maxed out!", "good")
 		return
 	end
 	player:SetAttribute("Training", true)
@@ -92,7 +91,8 @@ local function buy(player: Player, what: string, arg: any): (boolean, string)
 		p.WheelLevel = nextLevel
 		Pens.setWheel(player, nextLevel)
 		PlayerData.changed(player)
-		return true, `Speed wheel level {nextLevel}! Trains x{GameConfig.trainRate(nextLevel)} as fast`
+		return true,
+			`{GameConfig.wheelName(nextLevel)} wheel! +{GameConfig.speedText(GameConfig.wheelGain(nextLevel))} Speed a second`
 	elseif what == "Rebirth" then
 		if not GameConfig.SHOW_REBIRTH then
 			return false, "Rebirths aren't open yet"
@@ -108,8 +108,7 @@ local function buy(player: Player, what: string, arg: any): (boolean, string)
 		stopTraining(player)
 		p.Rebirths = n
 		p.Cash = 0
-		p.SpeedPoints = 0
-		p.SpeedProgress = 0
+		p.Speed = GameConfig.SPEED_START
 		p.HomeLevel = 1
 		p.WheelLevel = 1
 		Pens.setLevel(player, 1)
@@ -206,6 +205,7 @@ function Upgrades.start(_bedroom: Model)
 
 	Players.PlayerRemoving:Connect(function(player)
 		busy[player] = nil
+		ticks[player] = nil
 	end)
 
 	-- training ticks
@@ -222,26 +222,13 @@ function Upgrades.start(_bedroom: Model)
 					stopTraining(player)
 					continue
 				end
-				p.SpeedProgress += 0.5 * GameConfig.trainRate(p.WheelLevel)
-				local gained = false
-				while
-					p.SpeedPoints < GameConfig.SPEED_MAX_POINTS
-					and p.SpeedProgress >= GameConfig.trainSeconds(p.SpeedPoints)
-				do
-					p.SpeedProgress -= GameConfig.trainSeconds(p.SpeedPoints)
-					p.SpeedPoints += 1
-					gained = true
-				end
-				player:SetAttribute(
-					"TrainProgress",
-					p.SpeedProgress / GameConfig.trainSeconds(math.min(p.SpeedPoints, GameConfig.SPEED_MAX_POINTS - 1))
-				)
-				if gained then
+				-- the Speed number climbs every half second (the HUD reads the Speed attribute; the full profile goes
+				-- to the client now and then, not every tick)
+				p.Speed += GameConfig.wheelGain(p.WheelLevel) * 0.5
+				player:SetAttribute("Speed", p.Speed)
+				ticks[player] = (ticks[player] or 0) + 1
+				if ticks[player] % 10 == 0 then
 					PlayerData.changed(player)
-					if p.SpeedPoints >= GameConfig.SPEED_MAX_POINTS then
-						notice:FireClient(player, "Speed maxed out!", "good")
-						stopTraining(player)
-					end
 				end
 			end
 		end

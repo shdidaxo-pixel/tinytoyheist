@@ -41,17 +41,86 @@ GameConfig.SIZE = {
 }
 
 -- Speed --------------------------------------------------------------------------------------------------------------
--- The one stat (Dylan, 19 Oct: "you really just need speed"; Strength, Sneak and Grip are gone). Your walk speed is
--- BASE plus the points trained on your home's Speed wheel. Each point takes a bit longer; a better wheel trains
--- faster. The wheel has its own levels, bought separately from the home, so either can come first.
-GameConfig.SPEED_BASE = 16
-GameConfig.SPEED_MAX_POINTS = 64 -- walk speed 80
-function GameConfig.trainSeconds(points: number): number -- seconds of running for the next point, at x1
-	return 2 + 0.5 * points
+-- The one stat (Dylan, 19 Oct: "you really just need speed"; Strength, Sneak and Grip are gone). Speed is a big
+-- number trained on your home's Speed wheel ("the bigger the number the better people will want to get it higher"):
+-- 1,000 Speed = 1 walk speed, so you start at 16,000 and today's old max (walk 80) is 80,000. Past that the number
+-- keeps flying (no cap) while your real walk speed keeps rising slower and slower (Dylan, 19 Oct: "no speed cap rn,
+-- just make it look bigger than it is"). The wheel has its own levels, bought separately from the home; a better
+-- wheel just trains faster (no top per wheel).
+GameConfig.SPEED_START = 16_000 -- Speed you start with (walk 16)
+GameConfig.SPEED_PER_WALK = 1_000 -- Speed per 1 walk speed, up to SPEED_SOFT
+GameConfig.SPEED_SOFT = 80_000 -- walk 80; past it walk = 80 + SPEED_LOG * ln(Speed / SPEED_SOFT)
+GameConfig.SPEED_LOG = 9.4 -- 1M Speed walks 104, 100M 147, 10B 190
+GameConfig.SPEED_SAFETY = 400 -- a physics safety limit on real walk speed, never reached in normal play
+function GameConfig.walkSpeed(speed: number): number -- real Humanoid walk speed for a Speed number
+	if speed <= GameConfig.SPEED_SOFT then
+		return speed / GameConfig.SPEED_PER_WALK
+	end
+	local walk = GameConfig.SPEED_SOFT / GameConfig.SPEED_PER_WALK
+		+ GameConfig.SPEED_LOG * math.log(speed / GameConfig.SPEED_SOFT)
+	return math.min(walk, GameConfig.SPEED_SAFETY)
 end
-GameConfig.WHEEL_COST = { [2] = 300, [3] = 2_500, [4] = 20_000, [5] = 150_000, [6] = 1_000_000, [7] = 8_000_000 }
-function GameConfig.trainRate(wheelLevel: number): number -- how much faster than x1 a wheel trains
-	return 1 + 0.5 * (wheelLevel - 1)
+
+-- The Speed wheel's levels: the name of its look, its price and the Speed it trains each second you run in it
+-- (about 1.6x the level before; each costs about 2.6x). Looks: tools/bedroom/Homes.luau WHEEL_LOOK.
+GameConfig.WHEELS = {
+	{ name = "Cardboard Spool", cost = 0, gain = 100 },
+	{ name = "Sock Stripes", cost = 200, gain = 160 },
+	{ name = "Toy Bricks", cost = 550, gain = 260 },
+	{ name = "Ship's Wheel", cost = 1_500, gain = 410 },
+	{ name = "Candy Cane", cost = 4_000, gain = 660 },
+	{ name = "Arcade Neon", cost = 10_000, gain = 1_000 },
+	{ name = "Golden Vault", cost = 25_000, gain = 1_700 },
+	{ name = "Dino Bones", cost = 70_000, gain = 2_700 },
+	{ name = "Bubble Pop", cost = 180_000, gain = 4_300 },
+	{ name = "Frosty Ice", cost = 500_000, gain = 6_900 },
+	{ name = "Robot Gears", cost = 1_200_000, gain = 11_000 },
+	{ name = "Rocket", cost = 3_300_000, gain = 18_000 },
+	{ name = "Lava", cost = 9_000_000, gain = 28_000 },
+	{ name = "Rainbow", cost = 23_000_000, gain = 45_000 },
+	{ name = "Thunderstorm", cost = 60_000_000, gain = 72_000 },
+	{ name = "Haunted", cost = 160_000_000, gain = 120_000 },
+	{ name = "Diamond", cost = 420_000_000, gain = 180_000 },
+	{ name = "Dragon", cost = 1_100_000_000, gain = 300_000 },
+	{ name = "Ringed Planet", cost = 3_000_000_000, gain = 470_000 },
+	{ name = "Galaxy", cost = 8_000_000_000, gain = 760_000 },
+	{ name = "Black Hole", cost = 20_000_000_000, gain = 1_200_000 },
+	{ name = "Supernova", cost = 55_000_000_000, gain = 1_900_000 },
+	{ name = "Angel Wings", cost = 140_000_000_000, gain = 3_100_000 },
+	{ name = "Royal Crown", cost = 380_000_000_000, gain = 5_000_000 },
+	{ name = "Infinity", cost = 1_000_000_000_000, gain = 7_900_000 },
+} :: { { name: string, cost: number, gain: number } }
+GameConfig.WHEEL_COST = {} :: { [number]: number } -- cost to reach each level (level 1 is free)
+for level, wheel in GameConfig.WHEELS do
+	if level > 1 then
+		GameConfig.WHEEL_COST[level] = wheel.cost
+	end
+end
+function GameConfig.wheelGain(level: number): number -- Speed a second on a wheel of this level
+	local wheel = GameConfig.WHEELS[math.clamp(level, 1, #GameConfig.WHEELS)]
+	return wheel.gain
+end
+function GameConfig.wheelName(level: number): string
+	return GameConfig.WHEELS[math.clamp(level, 1, #GameConfig.WHEELS)].name
+end
+-- Speed as shown: in full with commas below a million (16,000; 845,300), then short (1.25M, 3.4B)
+function GameConfig.speedText(speed: number): string
+	speed = math.floor(speed)
+	if speed >= 1_000_000 then
+		return GameConfig.short(speed)
+	end
+	local text = tostring(speed)
+	while true do
+		local done
+		text, done = string.gsub(text, "^(%d+)(%d%d%d)", "%1,%2")
+		if done == 0 then
+			return text
+		end
+	end
+end
+-- A saved game from before 19 Oct had SpeedPoints (walk = 16 + points): the same walk speed in Speed
+function GameConfig.speedFromPoints(points: number): number
+	return GameConfig.SPEED_START + points * GameConfig.SPEED_PER_WALK
 end
 
 -- Carrying (these were in Carry.luau)

@@ -65,7 +65,7 @@ function Homes.rewheel(hole: Model, level: number)
 	if old then
 		old:Destroy()
 	end
-	level = math.clamp(level, 1, #MapConfig.HOLE_LEVELS)
+	level = math.clamp(level, 1, #HomeLook.WHEEL_LOOK)
 	scaledBuild(hole, function()
 		local index = hole:GetAttribute("HoleIndex") :: number
 		HomeLook.buildWheel(Kit, MapConfig.unscaled, hole, MapConfig.unscaled.homeFrame(index), level)

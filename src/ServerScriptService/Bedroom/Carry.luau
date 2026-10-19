@@ -123,14 +123,14 @@ function Carry.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
 
--- Walk speed: the base plus trained Speed, slowed while dragging; Slow Mode (a HUD switch) halves it and the noise
+-- Walk speed: from your Speed number (GameConfig.walkSpeed), slowed while dragging; Slow Mode (a HUD switch) halves it and the noise
 function Carry.refreshSpeed(player: Player)
 	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
 		return
 	end
 	local p = PlayerData.get(player)
-	local speed = GameConfig.SPEED_BASE + (if p then p.SpeedPoints else 0)
+	local speed = GameConfig.walkSpeed(if p then p.Speed else GameConfig.SPEED_START)
 	local c = carrying[player]
 	if c then
 		speed *= Carry.SPEED[c.size] or 1

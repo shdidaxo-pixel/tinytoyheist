@@ -1,6 +1,6 @@
 --!strict
 -- Studio EDIT mode only. A model showcase far from the bedroom (Workspace.Showcase, around x = 4000), so Dylan can
--- look over every model in one place: all 7 Speed wheel levels, every blanket (3 sizes x 10 colours), all 105 toys
+-- look over every model in one place: all 25 Speed wheel levels, every blanket (3 sizes x 10 colours), all 105 toys
 -- plain (a row per set) and the 10 mutations on the 14 Bedroom toys. Plain baseplate, labelled rows, game sizes.
 -- In Play mode the toys animate on their own (ToyAnimator) and the showcase teleport button (Studio, or the place's
 -- owner) takes you there and back and spins the wheels (StarterPlayerScripts.Bedroom.ShowcaseTeleport).
@@ -41,6 +41,7 @@ function Showcase.build(): { [string]: any }
 	local Homes = fresh(pieces:WaitForChild("Homes"))
 	local Blanket = fresh(pieces:WaitForChild("Blanket"))
 	local MapConfig = fresh(Shared:WaitForChild("MapConfig"))
+	local GameConfig = fresh(Shared:WaitForChild("GameConfig"))
 	local ToyCatalog = require(Toys:WaitForChild("ToyCatalog")) :: any
 	local Mutations = require(Toys:WaitForChild("Mutations")) :: any
 	local MutationData = require(Toys:WaitForChild("MutationData")) :: any
@@ -86,24 +87,26 @@ function Showcase.build(): { [string]: any }
 		label(root, text, x, z, width or 70, true)
 	end
 
-	-- 1. Speed wheels, Lv 1 to 7, side on, at game size
+	-- 1. Speed wheels, every level, side on, at game size: rows of 9
 	local z = 0
 	sign("SPEED WHEELS", 0, z - 12)
 	local wheels = Kit.folder(root, "Wheels")
 	local p = MapConfig.unscaled.BURROW_LAYOUT.TrainingWheel.position
-	for level = 1, 7 do
-		local x = (level - 4) * 26
+	for level = 1, #Homes.WHEEL_LOOK do
+		local col, row = (level - 1) % 9, (level - 1) // 9
+		local x = (col - 4) * 30
+		z = row * 40
 		local holder = Kit.model(wheels, "Wheel" .. level, { Level = level })
 		holder.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- streams in whole, so it spins as one
 		local target = at(x, z + 10) * CFrame.Angles(0, math.pi / 2, 0)
 		Homes.buildWheel(Kit, MapConfig.unscaled, holder, target * CFrame.new(-p.X, 0, -p.Z), level)
 		holder.WorldPivot = target
 		holder:ScaleTo(MapConfig.SCALE)
-		label(root, "Lv " .. level, x, z - 2, 12)
+		label(root, "Lv " .. level .. " · " .. GameConfig.wheelName(level), x, z - 2, 26)
 	end
 
 	-- 2. Blankets: a row per size, a column per colour
-	z = 60
+	z = 140
 	sign("BLANKETS", 0, z - 14)
 	local blankets = Kit.folder(root, "Blankets")
 	for row, size in { "S", "M", "L" } do
@@ -119,7 +122,7 @@ function Showcase.build(): { [string]: any }
 	end
 
 	-- 3. Every toy, plain, a row per set
-	z = 170
+	z = 250
 	sign("ALL 105 TOYS", 0, z - 16)
 	local toyFolder = Kit.folder(root, "Toys")
 	local count = 0

@@ -1083,7 +1083,7 @@ do
 		local t = UIKit.text(row, value, textPx, { font = UIKit.Fonts.number, color = color, stroke = 3.5 })
 		return ic, t
 	end
-	local shoe, speedText = stat(1, img("Shoe"), "16", UIKit.White, 46, 36)
+	local shoe, speedText = stat(1, img("Shoe"), "16,000", UIKit.White, 46, 36)
 	local _, cashText = stat(2, img("Cash"), "$150", UIKit.CashGreen, 54, 42)
 	-- earning rate and speed multiplier sit beside the numbers, like "$147 +$14" and "200 (x2)"
 	local rate =

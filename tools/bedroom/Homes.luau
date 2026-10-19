@@ -26,9 +26,15 @@ Homes.LEVEL_LOOK = {
 	{ fairy = 0xFFE07A, pen = 0xFFC93C }, -- 7 Golden vault
 }
 
--- How each Speed wheel level looks, plainest to grandest: the ring's segments (colours cycle round it), spokes, rungs
--- (colours cycle), the stand, the tag, and the extras (studs, ship's-wheel handles, a lollipop or vault hub, neon,
--- gems, a light)
+-- How each Speed wheel level looks, plainest to craziest (names and prices: GameConfig.WHEELS). The ring's segments
+-- (colours cycle round it), spokes, rungs (colours cycle), the stand, the tag, and the extras:
+--   studs, handles, lollipop / vault / skull / diamond / planet hubs, gems, neon ring / spokes / rungs, a light;
+--   clear = see-through ring and spokes; spikes = blocks sticking out of the ring (plates, icicles, gear teeth,
+--   crystals, rays); bones / bolts = bone or lightning spokes; pips = bubbles round the ring; moons on the spokes;
+--   inner = extra neon rings inside the ring; on the stand: wings, crown (on an arch), halo, clouds, boosters, horns,
+--   torches; trail = light streaks off the ring as it spins; particles (presets in buildWheel).
+-- The wheel stops growing at level 7 (it has to fit the home); past that the looks get wilder instead.
+local RAINBOW = { 0xFF4D5E, 0xFF9A3C, 0xFFE14D, 0x5BE36A, 0x3DC8FF, 0x6B7BFF, 0xB45CFF }
 Homes.WHEEL_LOOK = {
 	{ -- 1 a plain cardboard spool
 		ring = { 0xD9B27C, 0xC49A6C },
@@ -114,6 +120,303 @@ Homes.WHEEL_LOOK = {
 		vault = true,
 		neon = 0xFFE07A,
 		light = 0xFFE07A,
+	},
+	{ -- 8 dino bones: a fossil ring, bone spokes and stegosaurus plates
+		ring = { 0xF2E8D0, 0xE0D2B0 },
+		segments = 14,
+		spokes = 6,
+		spoke = 0xF7F0DC,
+		rungs = { 0xC8B890 },
+		frame = 0x4E8A3A,
+		tag = 0x9BE36A,
+		material = Enum.Material.SmoothPlastic,
+		bones = true,
+		spikes = { colors = { 0x6BBF3A, 0xF0A030 }, length = 1.8, width = 1.8, every = 2 },
+	},
+	{ -- 9 bubble pop: a see-through soap-bubble ring with bubbles stuck round it
+		ring = { 0x9FE8FF, 0xFFB8F0, 0xC8FFB8 },
+		segments = 14,
+		spokes = 6,
+		spoke = 0xBFF0FF,
+		rungs = { 0xFFFFFF, 0xFFB8F0 },
+		frame = 0x7FD8FF,
+		tag = 0xBFF0FF,
+		material = Enum.Material.Glass,
+		clear = 0.35,
+		pips = { 0xBFF4FF, 0xFFC8F4 },
+		particles = { { kind = "bubble", color = 0xCFF4FF } },
+		light = 0xBFEFFF,
+	},
+	{ -- 10 frosty ice: an ice ring with icicles and falling snow
+		ring = { 0xBFF4FF, 0x8FD8FF },
+		segments = 16,
+		spokes = 6,
+		spoke = 0xDFF8FF,
+		rungs = { 0xFFFFFF, 0xBFEFFF },
+		frame = 0xE8FAFF,
+		tag = 0x8FE8FF,
+		material = Enum.Material.Ice,
+		spikes = { colors = { 0xE8FAFF, 0xA8E8FF }, length = 2, width = 0.9, every = 1, crystal = true },
+		particles = { { kind = "snow", color = 0xFFFFFF } },
+		light = 0x9FE8FF,
+	},
+	{ -- 11 robot gears: a metal gear with teeth, hazard-stripe rungs and red lights
+		ring = { 0x8A93A6, 0x6B7385 },
+		segments = 16,
+		spokes = 6,
+		spoke = 0x5A6274,
+		rungs = { 0xFFC93C, 0x2A2A2A },
+		frame = 0x4A5060,
+		hub = 0xE04848,
+		tag = 0xFFC93C,
+		material = Enum.Material.DiamondPlate,
+		spikes = { colors = { 0x7A8396 }, length = 1.2, width = 1.4, every = 1 },
+		gems = { 0xFF4D5E },
+		neon = 0xFF4D5E,
+		light = 0xFF6B6B,
+	},
+	{ -- 12 rocket: red and white with blue struts, boosters blasting fire
+		ring = { 0xFFFFFF, 0xE04848 },
+		segments = 16,
+		spokes = 6,
+		spoke = 0x3A6EE8,
+		rungs = { 0xFFFFFF },
+		frame = 0x3A6EE8,
+		hub = 0xE04848,
+		tag = 0xFF6B6B,
+		material = Enum.Material.SmoothPlastic,
+		boosters = true,
+		neon = 0xFFB31A,
+		light = 0xFFB31A,
+	},
+	{ -- 13 lava: cracked rock glowing orange, torches and embers
+		ring = { 0x2A1E1E, 0xFF5A1A },
+		segments = 16,
+		spokes = 6,
+		spoke = 0x3A2A2A,
+		rungs = { 0xFF8A1A },
+		frame = 0x3A2A2A,
+		tag = 0xFF7A2A,
+		material = Enum.Material.Basalt,
+		neonRing = true,
+		neonRungs = true,
+		torches = true,
+		neon = 0xFF5A1A,
+		particles = { { kind = "ember", color = 0xFF7A2A } },
+		light = 0xFF7A2A,
+	},
+	{ -- 14 rainbow: every colour, glowing rungs and a rainbow streak
+		ring = RAINBOW,
+		segments = 14,
+		spokes = 7,
+		spoke = 0xFFFFFF,
+		rungs = RAINBOW,
+		frame = 0xFFFFFF,
+		tag = 0xFF8FC8,
+		material = Enum.Material.SmoothPlastic,
+		neonRungs = true,
+		rainbowSpokes = true,
+		trail = RAINBOW,
+		light = 0xFFFFFF,
+	},
+	{ -- 15 thunderstorm: storm clouds on the stand, lightning-bolt spokes and sparks
+		ring = { 0x3A4256, 0x2A3042 },
+		segments = 16,
+		spokes = 6,
+		spoke = 0xFFE65A,
+		rungs = { 0xFFE65A },
+		frame = 0x2A3042,
+		tag = 0xFFE65A,
+		material = Enum.Material.Slate,
+		bolts = true,
+		neonRungs = true,
+		clouds = true,
+		neon = 0xFFE65A,
+		particles = { { kind = "spark", color = 0xFFF08A } },
+		light = 0xFFE65A,
+	},
+	{ -- 16 haunted: a ghostly green ring, bone spokes, a skull hub and wisps
+		ring = { 0x7AFFB0, 0x2A2A3A },
+		segments = 16,
+		spokes = 6,
+		spoke = 0xF2EEE0,
+		rungs = { 0x7AFFB0 },
+		frame = 0x2A2238,
+		tag = 0x7AFFB0,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		neonRungs = true,
+		bones = true,
+		skull = true,
+		neon = 0x5AFF9A,
+		particles = { { kind = "wisp", color = 0x7AFFB0 } },
+		light = 0x5AFF9A,
+	},
+	{ -- 17 diamond: a clear crystal ring with crystal spikes, a diamond hub and sparkles
+		ring = { 0x9FF4FF, 0xE8FFFF },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xCFFAFF,
+		rungs = { 0xE8FFFF },
+		frame = 0xE8FFFF,
+		tag = 0x9FF4FF,
+		material = Enum.Material.Glass,
+		clear = 0.2,
+		spikes = { colors = { 0x9FF4FF, 0xE8FFFF }, length = 1.8, width = 1.2, every = 2, crystal = true },
+		diamond = true,
+		gems = { 0x9FF4FF, 0xFFFFFF },
+		particles = { { kind = "sparkle", color = 0xE8FFFF } },
+		light = 0xBFF8FF,
+	},
+	{ -- 18 dragon: green scales, red spines, horns, wings and fire
+		ring = { 0x2E9A4A, 0x1E7A3A },
+		segments = 16,
+		spokes = 6,
+		spoke = 0x1E5A2E,
+		rungs = { 0xFFB31A },
+		frame = 0x3A2A2A,
+		tag = 0xFF5A3A,
+		material = Enum.Material.SmoothPlastic,
+		spikes = { colors = { 0xE0482E, 0xFF8A2A }, length = 1.9, width = 1.1, every = 1 },
+		horns = 0xF2E8D0,
+		wings = 0x2E9A4A,
+		torches = true,
+		neon = 0xFF5A1A,
+		particles = { { kind = "ember", color = 0xFF7A2A } },
+		light = 0xFF7A2A,
+	},
+	{ -- 19 ringed planet: a night-sky ring round a voxel planet with its own ring, and stars
+		ring = { 0x2A3A8A, 0x3A5AC8 },
+		segments = 16,
+		spokes = 6,
+		spoke = 0x8FA8FF,
+		rungs = { 0xFFE07A },
+		frame = 0x1A1E40,
+		tag = 0x8FA8FF,
+		material = Enum.Material.SmoothPlastic,
+		planet = { body = 0xFFA85A, band = 0xFFE0A8 },
+		pips = { 0xFFFFFF, 0xFFE07A },
+		particles = { { kind = "stars", color = 0xFFFFFF } },
+		light = 0x8FA8FF,
+	},
+	{ -- 20 galaxy: deep purple and pink neon, an inner ring, moons and a purple streak
+		ring = { 0x2A1450, 0xB45CFF },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xFF5FD0,
+		rungs = { 0xB45CFF, 0xFF5FD0 },
+		frame = 0x1A1030,
+		tag = 0xB45CFF,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		neonSpokes = true,
+		neonRungs = true,
+		inner = { 0xFF5FD0 },
+		moons = { 0xE8E0FF, 0xFFE07A, 0x8FE8FF },
+		trail = { 0xB45CFF, 0xFF5FD0 },
+		neon = 0xB45CFF,
+		particles = { { kind = "stars", color = 0xE0B8FF } },
+		light = 0xB45CFF,
+	},
+	{ -- 21 black hole: a black ring, glowing rings spiralling in to a black core
+		ring = { 0x0A0A12, 0x1A1028 },
+		segments = 16,
+		spokes = 8,
+		spoke = 0x1A1028,
+		rungs = { 0xFF8A3C, 0xB45CFF },
+		frame = 0x0A0A12,
+		tag = 0xA05AFF,
+		material = Enum.Material.SmoothPlastic,
+		neonRungs = true,
+		inner = { 0xFF8A3C, 0xB45CFF, 0xFF5FD0 },
+		planet = { body = 0x050508 },
+		trail = { 0xFF8A3C, 0xB45CFF },
+		neon = 0xA05AFF,
+		particles = { { kind = "swirl", color = 0xA05AFF } },
+		light = 0xA05AFF,
+	},
+	{ -- 22 supernova: a blazing sun with rays, fire and a big glow
+		ring = { 0xFFB31A, 0xFF6A1A },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xFFE14D,
+		rungs = { 0xFFF1B0 },
+		frame = 0xE0A82E,
+		tag = 0xFFB31A,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		neonSpokes = true,
+		neonRungs = true,
+		spikes = { colors = { 0xFFE14D, 0xFF8A1A }, length = 2, width = 0.8, every = 1, neon = true },
+		planet = { body = 0xFFE14D, glow = true },
+		torches = true,
+		neon = 0xFFB31A,
+		particles = { { kind = "fire", color = 0xFFB31A } },
+		light = 0xFFC83A,
+	},
+	{ -- 23 angel wings: white and gold, feathered wings, a halo and sparkles
+		ring = { 0xFFFFFF, 0xFFE07A },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xFFFFFF,
+		rungs = { 0xFFF1B0 },
+		frame = 0xF4F0EA,
+		hub = 0xFFE07A,
+		tag = 0xFFF1B0,
+		material = Enum.Material.Marble,
+		neonRing = true,
+		wings = 0xFFFFFF,
+		halo = 0xFFE07A,
+		neon = 0xFFE07A,
+		particles = { { kind = "sparkle", color = 0xFFF4C8 } },
+		light = 0xFFF4C8,
+	},
+	{ -- 24 royal crown: gold and jewels round a velvet inner ring, a crown on top
+		ring = { 0xFFC93C, 0xFFB31A },
+		segments = 16,
+		spokes = 8,
+		spoke = 0xFFC93C,
+		rungs = { 0xFFF1B0 },
+		frame = 0x6A2A9A,
+		hub = 0xFFE07A,
+		tag = 0xFFD43B,
+		material = Enum.Material.SmoothPlastic,
+		frameMaterial = Enum.Material.Fabric,
+		neonRing = true,
+		vault = true,
+		gems = { 0xFF4D5E, 0x7AE8FF, 0x5BE36A, 0xB45CFF },
+		inner = { 0xB0204A },
+		crown = 0xFFC93C,
+		trail = { 0xFFE07A, 0xFFB31A },
+		neon = 0xFFE07A,
+		particles = { { kind = "sparkle", color = 0xFFE07A } },
+		light = 0xFFD84A,
+	},
+	{ -- 25 infinity: everything at once, in rainbow neon
+		ring = RAINBOW,
+		segments = 21,
+		spokes = 7,
+		spoke = 0xFFFFFF,
+		rungs = RAINBOW,
+		frame = 0xFFFFFF,
+		hub = 0xFFFFFF,
+		tag = 0xFFFFFF,
+		material = Enum.Material.SmoothPlastic,
+		neonRing = true,
+		neonSpokes = true,
+		neonRungs = true,
+		rainbowSpokes = true,
+		inner = RAINBOW,
+		spikes = { colors = RAINBOW, length = 1.8, width = 0.9, every = 1, neon = true },
+		gems = { 0xFFFFFF },
+		planet = { body = 0xFFFFFF, glow = true },
+		wings = 0xFFFFFF,
+		crown = 0xFFE07A,
+		halo = 0xFFFFFF,
+		trail = RAINBOW,
+		neon = 0xFFFFFF,
+		particles = { { kind = "sparkle", color = 0xFFFFFF }, { kind = "stars", color = 0xFFE07A } },
+		light = 0xFFFFFF,
 	},
 }
 
@@ -712,10 +1015,26 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 	Homes.buildWheel(Kit, MapConfig, home, frame, (home:GetAttribute("WheelLevel") :: number?) or level)
 end
 
+-- Particle presets for the wheel looks (Roblox's built-in particle textures)
+local SPARKS = "rbxasset://textures/particles/sparkles_main.dds"
+local FLAME = "rbxasset://textures/particles/fire_main.dds"
+local SMOKE = "rbxasset://textures/particles/smoke_main.dds"
+local WHEEL_PARTICLES = {
+	sparkle = { texture = SPARKS, size = 0.8, speed = 2, life = 1.2, rate = 8 },
+	stars = { texture = SPARKS, size = 0.5, speed = 0.6, life = 2.5, rate = 6 },
+	snow = { texture = SPARKS, size = 0.45, speed = 0.5, life = 3, rate = 8, accel = Vector3.new(0, -2, 0) },
+	bubble = { texture = SPARKS, size = 0.9, speed = 0.5, life = 2.5, rate = 5, accel = Vector3.new(0, 1.5, 0) },
+	ember = { texture = FLAME, size = 0.45, speed = 2, life = 1.6, rate = 10, accel = Vector3.new(0, 3, 0) },
+	fire = { texture = FLAME, size = 1.6, speed = 1.5, life = 0.9, rate = 16, accel = Vector3.new(0, 2, 0) },
+	spark = { texture = SPARKS, size = 0.7, speed = 6, life = 0.35, rate = 7 },
+	wisp = { texture = SMOKE, size = 1.6, speed = 0.8, life = 2.5, rate = 4, alpha = 0.6, accel = Vector3.new(0, 1, 0) },
+	swirl = { texture = SMOKE, size = 2.2, speed = 0.4, life = 2, rate = 6, alpha = 0.5, spin = 120, dark = true },
+}
+
 -- The Speed wheel, dressed for its level: open sides (a ring, spokes and a hub, so you can see the runner inside)
--- that get grander with every level, from a plain cardboard spool to the golden vault. Replaces the home's old
--- wheel. Game code spins TrainingWheel.Wheel about its axle (Wheel's PrimaryPart, which runs along the home's x) by
--- the Wheel's Spin attribute and puts the runner at RunPoint; TrainPrompt is on the axle.
+-- that get wilder with every level, from a plain cardboard spool to Infinity. Replaces the home's old wheel. Game
+-- code spins TrainingWheel.Wheel about its axle (Wheel's PrimaryPart, which runs along the home's x) by the Wheel's
+-- Spin attribute and puts the runner at RunPoint; TrainPrompt is on the axle.
 function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, level: number)
 	level = math.clamp(level, 1, #Homes.WHEEL_LOOK)
 	local old = home:FindFirstChild("TrainingWheel")
@@ -723,23 +1042,59 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		old:Destroy()
 	end
 	local look = Homes.WHEEL_LOOK[level]
-	local R, W = MapConfig.wheelSize(level)
+	local size = math.min(level, 7) -- it has to fit the home, so it stops growing at 7
+	local R, W = MapConfig.wheelSize(size)
 	local p = MapConfig.BURROW_LAYOUT.TrainingWheel.position
 	local base = frame * CFrame.new(p.X, MapConfig.BURROW_FLOOR_LIFT, p.Z)
 	local hub = base * CFrame.new(0, R + 2.2, 0)
 	local model = Kit.model(home, "TrainingWheel", { Stat = "Speed", Level = level })
 	local material = look.material
-	local function opts(mat: Enum.Material?): any
-		return { collide = false, material = mat or material }
+	local frameMaterial = look.frameMaterial or material
+	local function opts(mat: Enum.Material?, clear: number?): any
+		return { collide = false, material = mat or material, transparency = clear }
 	end
+	local function glow(on: boolean?): Enum.Material?
+		return if on then Enum.Material.Neon else nil
+	end
+	-- a chunky voxel ball: three crossed blocks
+	local function voxelBall(parent: Instance, name: string, at: CFrame, r: number, color: number, o: any)
+		Kit.part(parent, name, Vector3.new(2 * r, 1.4 * r, 1.4 * r), at, color, o)
+		Kit.part(parent, name, Vector3.new(1.4 * r, 2 * r, 1.4 * r), at, color, o)
+		Kit.part(parent, name, Vector3.new(1.4 * r, 1.4 * r, 2 * r), at, color, o)
+	end
+	local top = 2 * R + 5 -- above everything that spins (base space): where a crown's arch or a halo goes
 
 	-- the stand: two posts each side and a brace across the top
 	for _, sx in { -1, 1 } do
 		local x = sx * (W / 2 + 1.4)
 		for _, z in { -3, 3 } do
-			Kit.block(model, "Post", 1.4, R + 2.2, 1.4, base, x, 0, z, look.frame, { material = material })
+			Kit.block(model, "Post", 1.4, R + 2.2, 1.4, base, x, 0, z, look.frame, { material = frameMaterial })
+			if look.torches then
+				-- a glowing block on the post with a flame
+				local torch =
+					Kit.block(model, "Torch", 1.2, 1.2, 1.2, base, x, R + 2.2, z, look.neon, opts(Enum.Material.Neon))
+				local fire = Instance.new("Fire")
+				fire.Size = 3
+				fire.Heat = 6
+				fire.Color = Kit.rgb(look.neon)
+				fire.SecondaryColor = Kit.rgb(0xFFE14D)
+				fire.Parent = torch
+			end
+			if look.horns then
+				-- a horn on each post, curling outward
+				local root = base * CFrame.new(x, R + 2.2, z) * CFrame.Angles(0, 0, -sx * math.rad(25))
+				Kit.part(model, "Horn", Vector3.new(0.9, 1.8, 0.9), root * CFrame.new(0, 0.9, 0), look.horns, opts())
+				Kit.part(
+					model,
+					"Horn",
+					Vector3.new(0.6, 1.2, 0.6),
+					root * CFrame.new(0, 1.8, 0) * CFrame.Angles(0, 0, -sx * math.rad(30)) * CFrame.new(0, 0.6, 0),
+					look.horns,
+					opts()
+				)
+			end
 		end
-		Kit.block(model, "Brace", 1.6, 1.6, 7.6, base, x, R + 2.2 - 1.8, 0, look.frame, { material = material })
+		Kit.block(model, "Brace", 1.6, 1.6, 7.6, base, x, R + 2.2 - 1.8, 0, look.frame, { material = frameMaterial })
 		if look.neon then
 			-- a glowing strip along the brace
 			Kit.block(model, "Strip", 0.4, 0.4, 7.8, base, x + sx * 0.8, R + 1, 0, look.neon, opts(Enum.Material.Neon))
@@ -754,17 +1109,168 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 				opts(Enum.Material.Neon)
 			)
 		end
+		if look.clouds then
+			-- a storm cloud sitting on the brace
+			for k, c in
+				{
+					{ 0, 0.6, 0, 2.6 },
+					{ 0, 0.3, -2.2, 2 },
+					{ 0, 0.3, 2.2, 2.1 },
+					{ 0, 1.6, -0.9, 1.8 },
+					{ 0, 1.4, 1.2, 1.6 },
+				}
+			do
+				Kit.part(
+					model,
+					"Cloud",
+					Vector3.one * c[4],
+					base * CFrame.new(x + c[1], R + 2.2 + c[2], c[3]),
+					if k % 2 == 0 then 0x5A6478 else 0x8A93A6,
+					opts(Enum.Material.SmoothPlastic)
+				)
+			end
+		end
+		if look.boosters then
+			-- a rocket booster on the outside of the stand, blasting fire downward
+			local bx = sx * (W / 2 + 2.9)
+			local body = base * CFrame.new(bx, R * 0.5 + 1.5, 0)
+			Kit.part(
+				model,
+				"Booster",
+				Vector3.new(1.8, R * 0.9, 1.8),
+				body,
+				0xFFFFFF,
+				opts(Enum.Material.SmoothPlastic)
+			)
+			Kit.part(
+				model,
+				"Booster",
+				Vector3.new(1.2, 1.2, 1.2),
+				body * CFrame.new(0, R * 0.45 + 0.6, 0),
+				0xE04848,
+				opts(Enum.Material.SmoothPlastic)
+			)
+			for _, fz in { -1, 1 } do
+				Kit.part(
+					model,
+					"Fin",
+					Vector3.new(0.3, 1.8, 1.2),
+					body * CFrame.new(0, -R * 0.45 + 0.9, fz * 1.4),
+					0xE04848,
+					opts(Enum.Material.SmoothPlastic)
+				)
+			end
+			local nozzle = Kit.part(
+				model,
+				"Nozzle",
+				Vector3.new(1.4, 0.6, 1.4),
+				body * CFrame.new(0, -R * 0.45 - 0.3, 0),
+				0x4A5060,
+				opts(Enum.Material.Metal)
+			)
+			local e = Instance.new("ParticleEmitter")
+			e.Texture = FLAME
+			e.EmissionDirection = Enum.NormalId.Bottom
+			e.Color = ColorSequence.new(Kit.rgb(0xFFE14D), Kit.rgb(0xFF5A1A))
+			e.LightEmission = 1
+			e.Size = NumberSequence.new(1, 0.2)
+			e.Speed = NumberRange.new(4, 6)
+			e.Lifetime = NumberRange.new(0.2, 0.35)
+			e.Rate = 30
+			e.SpreadAngle = Vector2.new(12, 12)
+			e.Parent = nozzle
+		end
+		if look.wings then
+			-- feathered wings fanning up off the top of the stand, outside the ring
+			for _, wz in { -1, 1 } do
+				for j = 1, 4 do
+					local angle = math.rad(18 + 17 * (j - 1))
+					local length = 2.6 + 1.1 * j
+					local root = base
+						* CFrame.new(sx * (W / 2 + 2), R * 1.55 + 2.2, wz * 0.8)
+						* CFrame.Angles(0, 0, sx * math.rad(12))
+						* CFrame.Angles(-wz * (math.pi / 2 - angle), 0, 0)
+					Kit.part(
+						model,
+						"Feather",
+						Vector3.new(0.4, length, 1.1),
+						root * CFrame.new(0, length / 2, 0),
+						if j % 2 == 0 then look.wings else 0xF4F0EA,
+						opts(Enum.Material.SmoothPlastic)
+					)
+				end
+			end
+		end
+	end
+	if look.crown then
+		-- an arch over the wheel with a crown on top
+		for _, sx in { -1, 1 } do
+			local x = sx * (W / 2 + 1.4)
+			Kit.block(
+				model,
+				"Arch",
+				1,
+				top - (R + 2.2),
+				1,
+				base,
+				x,
+				R + 2.2,
+				0,
+				look.frame,
+				{ material = frameMaterial }
+			)
+		end
+		Kit.block(model, "Arch", W + 3.8, 1, 1, base, 0, top, 0, look.frame, { material = frameMaterial })
+		local crownAt = base * CFrame.new(0, top + 1, 0)
+		for k = 0, 7 do
+			local a = 2 * math.pi * k / 8
+			local at = crownAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 1.7)
+			Kit.part(model, "Crown", Vector3.new(1.4, 1.2, 0.5), at, look.crown, opts(Enum.Material.SmoothPlastic))
+			if k % 2 == 0 then
+				Kit.part(
+					model,
+					"Crown",
+					Vector3.new(0.7, 1.3, 0.5),
+					at * CFrame.new(0, 1.2, 0),
+					look.crown,
+					opts(Enum.Material.SmoothPlastic)
+				)
+				Kit.part(
+					model,
+					"Gem",
+					Vector3.one * 0.6,
+					at * CFrame.new(0, 2, 0) * CFrame.Angles(math.pi / 4, 0, math.pi / 4),
+					if look.gems then look.gems[(k // 2) % #look.gems + 1] else 0xFF4D5E,
+					opts(Enum.Material.Neon)
+				)
+			end
+		end
+	end
+	if look.halo then
+		local haloAt = base * CFrame.new(0, (if look.crown then top + 4.5 else top), 0)
+		for k = 0, 11 do
+			local a = 2 * math.pi * k / 12
+			Kit.part(
+				model,
+				"Halo",
+				Vector3.new(1.5, 0.4, 0.5),
+				haloAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 2.6),
+				look.halo,
+				opts(Enum.Material.Neon)
+			)
+		end
 	end
 
 	local wheel = Kit.model(model, "Wheel")
 	local axle = Kit.part(wheel, "Axle", Vector3.new(W + 3.6, 1.2, 1.2), hub, look.frame, {
 		collide = false,
 		shape = Enum.PartType.Cylinder,
-		material = material,
+		material = frameMaterial,
 	})
 	local function onSide(sx: number, angle: number, radius: number): CFrame
 		return hub * CFrame.new(sx * W / 2, 0, 0) * CFrame.Angles(angle, 0, 0) * CFrame.new(0, radius, 0)
 	end
+	local streaks = 0
 	for _, sx in { -1, 1 } do
 		-- the ring: segments in the level's colours
 		local n = look.segments
@@ -772,15 +1278,8 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		for k = 0, n - 1 do
 			local color = look.ring[k % #look.ring + 1]
 			local at = onSide(sx, 2 * math.pi * k / n, R)
-			local glow = look.neonRing and k % 2 == 1
-			Kit.part(
-				wheel,
-				"Rim",
-				Vector3.new(0.9, 1, chord),
-				at,
-				color,
-				opts(if glow then Enum.Material.Neon else nil)
-			)
+			local lit = look.neonRing and k % 2 == 1
+			local rim = Kit.part(wheel, "Rim", Vector3.new(0.9, 1, chord), at, color, opts(glow(lit), look.clear))
 			if look.studs and k % 2 == 0 then
 				-- toy-brick studs on the outside of the ring
 				Kit.part(wheel, "Stud", Vector3.new(0.4, 0.8, 0.8), at * CFrame.new(sx * 0.6, 0, 0), color, {
@@ -790,7 +1289,7 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 				})
 			end
 			if look.gems and k % 2 == 1 then
-				-- jewels set round the vault's ring
+				-- jewels set round the ring
 				Kit.part(
 					wheel,
 					"Gem",
@@ -800,44 +1299,228 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 					opts(Enum.Material.Neon)
 				)
 			end
+			if look.pips and k % 2 == 0 then
+				-- bubbles (or stars) stuck round the outside
+				Kit.part(
+					wheel,
+					"Pip",
+					Vector3.one * 1.1,
+					at * CFrame.new(sx * 0.6, 0.3, 0),
+					look.pips[(k // 2) % #look.pips + 1],
+					{
+						collide = false,
+						material = if look.clear then Enum.Material.Glass else Enum.Material.Neon,
+						transparency = look.clear,
+						shape = Enum.PartType.Ball,
+					}
+				)
+			end
+			local spikes = look.spikes
+			if spikes and k % (spikes.every or 1) == 0 then
+				-- plates, icicles, gear teeth, crystals or rays sticking out of the ring (short enough to clear the floor)
+				local length = math.min(spikes.length, 1.7)
+				local width = spikes.width
+				local spikeColor = spikes.colors[(k // (spikes.every or 1)) % #spikes.colors + 1]
+				local spikeOpts = opts(glow(spikes.neon), look.clear)
+				local out = at * CFrame.new(0, 0.5, 0)
+				if spikes.crystal then
+					out *= CFrame.Angles(0, math.pi / 4, 0)
+					Kit.part(
+						wheel,
+						"Spike",
+						Vector3.new(width, length * 0.65, width),
+						out * CFrame.new(0, length * 0.33, 0),
+						spikeColor,
+						spikeOpts
+					)
+					Kit.part(
+						wheel,
+						"Spike",
+						Vector3.new(width * 0.5, length * 0.35, width * 0.5),
+						out * CFrame.new(0, length * 0.82, 0),
+						spikeColor,
+						spikeOpts
+					)
+				else
+					Kit.part(
+						wheel,
+						"Spike",
+						Vector3.new(0.6, length, width),
+						out * CFrame.new(0, length / 2, 0),
+						spikeColor,
+						spikeOpts
+					)
+				end
+			end
+			if look.trail and streaks < 4 and k % math.max(1, n // 2) == 0 then
+				-- light streaks off the ring while it spins
+				streaks += 1
+				local a0 = Instance.new("Attachment")
+				a0.Position = Vector3.new(0, -1.2, 0)
+				a0.Parent = rim
+				local a1 = Instance.new("Attachment")
+				a1.Position = Vector3.new(0, 0.6, 0)
+				a1.Parent = rim
+				local keys = {}
+				for i, c in look.trail do
+					table.insert(keys, ColorSequenceKeypoint.new((i - 1) / math.max(1, #look.trail - 1), Kit.rgb(c)))
+				end
+				if #keys == 1 then
+					table.insert(keys, ColorSequenceKeypoint.new(1, keys[1].Value))
+				end
+				local trail = Instance.new("Trail")
+				trail.Attachment0 = a0
+				trail.Attachment1 = a1
+				trail.Color = ColorSequence.new(keys)
+				trail.Transparency = NumberSequence.new(0.25, 1)
+				trail.Lifetime = 0.35
+				trail.LightEmission = 1
+				trail.Parent = rim
+			end
 		end
-		-- the spokes, and on the cabin wheel ship's-wheel handles past the ring
+		-- glowing rings inside the ring (galaxy, black hole): one per colour, or one ring cycling many colours
+		if look.inner then
+			local rings = if #look.inner <= 3 then #look.inner else 1
+			for i = 1, rings do
+				local radius = R * (0.78 - 0.17 * (i - 1))
+				local count = 14
+				local innerChord = 2 * radius * math.sin(math.pi / count)
+				for k = 0, count - 1 do
+					local color = if rings == 1 and #look.inner > 1
+						then look.inner[k % #look.inner + 1]
+						else look.inner[i]
+					Kit.part(
+						wheel,
+						"Inner",
+						Vector3.new(0.6, 0.6, innerChord),
+						onSide(sx, 2 * math.pi * (k + 0.5 * i) / count, radius) * CFrame.new(sx * 0.1, 0, 0),
+						color,
+						opts(Enum.Material.Neon)
+					)
+				end
+			end
+		end
+		-- the spokes: plain, bones, lightning bolts; ship's-wheel handles past the ring; moons on them
 		for k = 0, look.spokes - 1 do
 			local a = 2 * math.pi * (k + 0.5) / look.spokes
-			local spokeMaterial = if look.neonSpokes then Enum.Material.Neon else nil
-			Kit.part(
-				wheel,
-				"Spoke",
-				Vector3.new(0.6, R - 0.5, 0.7),
-				onSide(sx, a, (R - 0.5) / 2),
-				look.spoke,
-				opts(spokeMaterial)
-			)
+			local spokeColor = if look.rainbowSpokes then look.ring[k % #look.ring + 1] else look.spoke
+			local spokeOpts = opts(glow(look.neonSpokes or look.bolts), look.clear)
+			if look.bolts then
+				-- a zigzag in three pieces
+				local piece = (R - 1) / 3
+				for i = 0, 2 do
+					local offset = if i == 1 then 0.12 else -0.06
+					Kit.part(
+						wheel,
+						"Spoke",
+						Vector3.new(0.5, piece + 0.4, 0.7),
+						onSide(sx, a + offset, 0.5 + piece * (i + 0.5))
+							* CFrame.Angles(if i == 1 then -0.5 else 0.5, 0, 0),
+						spokeColor,
+						spokeOpts
+					)
+				end
+			else
+				Kit.part(
+					wheel,
+					"Spoke",
+					Vector3.new(0.6, R - 0.5, 0.7),
+					onSide(sx, a, (R - 0.5) / 2),
+					spokeColor,
+					spokeOpts
+				)
+			end
+			if look.bones then
+				-- knobbly bone ends
+				for _, r in { 1.6, R - 1.2 } do
+					Kit.part(wheel, "Knob", Vector3.new(0.9, 0.8, 1.5), onSide(sx, a, r), spokeColor, opts())
+				end
+			end
 			if look.handles then
 				Kit.part(wheel, "Handle", Vector3.new(0.8, 1.8, 0.8), onSide(sx, a, R + 1.4), look.spoke, opts())
 			end
+			if look.moons and k % 2 == 0 then
+				voxelBall(
+					wheel,
+					"Moon",
+					onSide(sx, a, R * 0.55) * CFrame.new(sx * 0.5, 0, 0),
+					0.7,
+					look.moons[(k // 2) % #look.moons + 1],
+					opts(Enum.Material.SmoothPlastic)
+				)
+			end
 		end
-		-- the hub: a plain cap, a lollipop swirl (candy) or a vault dial (gold)
+		-- the hub: a plain cap, a lollipop swirl (candy), a vault dial (gold), a skull or a diamond
 		local capAt = hub * CFrame.new(sx * (W / 2 + 0.15), 0, 0)
-		local capR = if look.lollipop then 0.3 * R elseif look.vault then 0.24 * R else 1.3
-		Kit.part(wheel, "Hub", Vector3.new(0.8, 2 * capR, 2 * capR), capAt, look.hub or look.frame, {
-			collide = false,
-			shape = Enum.PartType.Cylinder,
-			material = material,
-		})
-		if look.lollipop or look.vault then
+		if look.skull then
+			local face = capAt * CFrame.new(sx * 0.4, 0, 0)
+			Kit.part(wheel, "Hub", Vector3.new(1.6, 2.6, 2.6), face, 0xF2EEE0, opts(Enum.Material.SmoothPlastic))
+			for _, ez in { -0.6, 0.6 } do
+				Kit.part(
+					wheel,
+					"Eye",
+					Vector3.new(0.3, 0.7, 0.7),
+					face * CFrame.new(sx * 0.75, 0.3, ez),
+					look.neon or 0x1A1430,
+					opts(Enum.Material.Neon)
+				)
+			end
+		elseif look.diamond then
 			Kit.part(
 				wheel,
 				"Hub",
-				Vector3.new(0.9, capR, capR),
-				capAt * CFrame.new(sx * 0.1, 0, 0),
-				if look.lollipop then 0xFFFFFF else 0xD9A21E,
-				{ collide = false, shape = Enum.PartType.Cylinder, material = material }
+				Vector3.one * 2.4,
+				capAt * CFrame.new(sx * 0.5, 0, 0) * CFrame.Angles(math.pi / 4, 0, 0),
+				0xCFFAFF,
+				opts(Enum.Material.Glass, 0.15)
 			)
+		else
+			local capR = if look.lollipop then 0.3 * R elseif look.vault then 0.24 * R else 1.3
+			Kit.part(wheel, "Hub", Vector3.new(0.8, 2 * capR, 2 * capR), capAt, look.hub or look.frame, {
+				collide = false,
+				shape = Enum.PartType.Cylinder,
+				material = material,
+			})
+			if look.lollipop or look.vault then
+				Kit.part(
+					wheel,
+					"Hub",
+					Vector3.new(0.9, capR, capR),
+					capAt * CFrame.new(sx * 0.1, 0, 0),
+					if look.lollipop then 0xFFFFFF else 0xD9A21E,
+					{ collide = false, shape = Enum.PartType.Cylinder, material = material }
+				)
+			end
+		end
+	end
+	-- a voxel planet (or sun, or black hole) in the middle, with a tilted ring round it
+	if look.planet then
+		local planet = look.planet
+		voxelBall(
+			wheel,
+			"Planet",
+			hub,
+			0.24 * R,
+			planet.body,
+			opts(if planet.glow then Enum.Material.Neon else Enum.Material.SmoothPlastic)
+		)
+		if planet.band then
+			local tilt = hub * CFrame.Angles(0, 0, math.rad(25))
+			for k = 0, 13 do
+				local a = 2 * math.pi * k / 14
+				Kit.part(
+					wheel,
+					"Band",
+					Vector3.new(1.4, 0.3, 1.4),
+					tilt * CFrame.new(math.cos(a) * 0.42 * R, 0, math.sin(a) * 0.42 * R),
+					planet.band,
+					opts(Enum.Material.SmoothPlastic)
+				)
+			end
 		end
 	end
 	-- the rungs you run on
-	local rungs = MapConfig.wheelRungs(level)
+	local rungs = MapConfig.wheelRungs(size)
 	for k = 0, rungs - 1 do
 		local a = 2 * math.pi * k / rungs
 		Kit.part(
@@ -854,9 +1537,42 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		)
 	end
 	wheel.PrimaryPart = axle
-	wheel:SetAttribute("Spin", MapConfig.wheelSpin(level))
+	-- idle spin: faster with the level (HomeView spins it faster still while its owner trains)
+	wheel:SetAttribute("Spin", MapConfig.wheelSpin(size) + 0.08 * math.max(0, level - 7))
 	if look.light then
-		Kit.light(axle, "PointLight", look.light, 0.6, 16)
+		Kit.light(axle, "PointLight", look.light, if level == 22 then 0.9 else 0.6, 16)
+	end
+	-- the look's particles fill a box round the wheel (it doesn't spin, so it costs nothing to move)
+	if look.particles then
+		local box = Kit.part(model, "Fx", Vector3.new(W + 2, 2 * R + 2, 2 * R + 2), hub, 0xFFFFFF, {
+			collide = false,
+			transparency = 1,
+			query = false,
+		})
+		for _, spec in look.particles do
+			local preset = WHEEL_PARTICLES[spec.kind] or WHEEL_PARTICLES.sparkle
+			local e = Instance.new("ParticleEmitter")
+			e.Name = "Wheel_" .. spec.kind
+			e.Texture = preset.texture
+			e.Color = ColorSequence.new(Kit.rgb(spec.color))
+			e.LightEmission = if preset.dark then 0 else 1
+			e.Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.2, preset.size),
+				NumberSequenceKeypoint.new(1, 0),
+			})
+			e.Transparency = NumberSequence.new(preset.alpha or 0.1)
+			e.Speed = NumberRange.new(preset.speed * 0.5, preset.speed)
+			e.Lifetime = NumberRange.new(preset.life * 0.6, preset.life)
+			e.Rate = preset.rate
+			e.SpreadAngle = Vector2.new(180, 180)
+			e.Acceleration = preset.accel or Vector3.zero
+			e.Rotation = NumberRange.new(0, 360)
+			e.RotSpeed = NumberRange.new(-(preset.spin or 30), preset.spin or 30)
+			e.Shape = Enum.ParticleEmitterShape.Box
+			e.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+			e.Parent = box
+		end
 	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "TrainPrompt"
@@ -871,8 +1587,12 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		transparency = 1,
 	})
 
-	-- the tag over the wheel, in the level's colour
-	local tagAnchor = Kit.part(model, "Tag", Vector3.one, hub * CFrame.new(0, R + 4, 0), 0xFFFFFF, {
+	-- the tag over the wheel, in the level's colour (above the crown or halo when there is one)
+	local tagLift = if look.crown
+		then top - R - 2.2 + (if look.halo then 8 else 5)
+		elseif look.halo then top - R - 0.2
+		else R + 4
+	local tagAnchor = Kit.part(model, "Tag", Vector3.one, hub * CFrame.new(0, tagLift, 0), 0xFFFFFF, {
 		collide = false,
 		transparency = 1,
 	})
@@ -887,7 +1607,7 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 	label.TextColor3 = Color3.fromRGB(26, 20, 48)
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
-	label.Text = (if level == 7 then "★ " else "") .. "SPEED · Lv " .. level
+	label.Text = (if level >= 7 then "★ " else "") .. "SPEED · Lv " .. level
 	label.Parent = billboard
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0.4, 0)

@@ -30,8 +30,8 @@ function Economy.income(player: Player): number
 	return Pens.income(player) * Economy.multiplier(player)
 end
 
--- The player list: Cash and Per Sec, in short money ("$1.5K")
-local function leaderstats(player: Player): (StringValue, StringValue)
+-- The player list: Cash and Per Sec, in short money ("$1.5K"), and Speed ("16,000", "2.4M")
+local function leaderstats(player: Player): (StringValue, StringValue, StringValue)
 	local folder = player:FindFirstChild("leaderstats")
 	if not folder then
 		folder = Instance.new("Folder")
@@ -48,7 +48,7 @@ local function leaderstats(player: Player): (StringValue, StringValue)
 		end
 		return v :: StringValue
 	end
-	return stat("Cash"), stat("Per Sec")
+	return stat("Cash"), stat("Per Sec"), stat("Speed")
 end
 
 function Economy.start(_bedroom: Model)
@@ -67,9 +67,10 @@ function Economy.start(_bedroom: Model)
 				if player:GetAttribute("Income") ~= income then
 					player:SetAttribute("Income", income)
 				end
-				local cash, perSec = leaderstats(player)
+				local cash, perSec, speed = leaderstats(player)
 				cash.Value = GameConfig.money(player:GetAttribute("Cash") :: number? or 0)
 				perSec.Value = GameConfig.money(income) .. "/s"
+				speed.Value = GameConfig.speedText(player:GetAttribute("Speed") :: number? or GameConfig.SPEED_START)
 				if s.hole:GetAttribute("Income") ~= income then
 					s.hole:SetAttribute("Income", income)
 					Homes.refreshSign(s.hole)

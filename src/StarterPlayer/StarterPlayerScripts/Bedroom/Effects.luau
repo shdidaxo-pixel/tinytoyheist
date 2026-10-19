@@ -12,7 +12,7 @@ local Effects = {}
 local player = Players.LocalPlayer
 
 -- A big message in the middle of the screen
-local function shout(text: string)
+local function shout(text: string, color: Color3?)
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "BedroomShout"
 	gui.ResetOnSpawn = false
@@ -25,7 +25,7 @@ local function shout(text: string)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
-	label.TextColor3 = Color3.fromRGB(255, 77, 94)
+	label.TextColor3 = color or Color3.fromRGB(255, 77, 94)
 	label.Text = text
 	label.Parent = gui
 	local stroke = Instance.new("UIStroke")
@@ -171,7 +171,11 @@ function Effects.start(bedroom: Model)
 	effects.Parent = Workspace
 	local remotes = ReplicatedStorage:WaitForChild("BedroomRemotes");
 	(remotes:WaitForChild("Knocked") :: RemoteEvent).OnClientEvent:Connect(knocked);
-	(remotes:WaitForChild("NoiseRipple") :: RemoteEvent).OnClientEvent:Connect(ripple)
+	(remotes:WaitForChild("NoiseRipple") :: RemoteEvent).OnClientEvent:Connect(ripple);
+	-- "Placed Teddy Knight in your home!" (green) or a warning (orange)
+	(remotes:WaitForChild("Notice") :: RemoteEvent).OnClientEvent:Connect(function(text: string, kind: string?)
+		shout(text, if kind == "warn" then Color3.fromRGB(255, 154, 46) else Color3.fromRGB(91, 227, 106))
+	end)
 	watchHazards(bedroom:WaitForChild("Hazards"))
 end
 

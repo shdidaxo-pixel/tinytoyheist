@@ -1446,8 +1446,16 @@ do
 		palette = P.red,
 		size = UDim2.fromOffset(330, 66),
 		textSize = 34,
+		onClick = function()
+			local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("BedroomRemotes")
+			local drop = remotes and remotes:FindFirstChild("DropRequest")
+			if drop then
+				(drop :: RemoteEvent):FireServer()
+			end
+		end,
 	})
 	hud.drop = dropHolder
+	hud.action = action
 	hud.notify = group("Notify", Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -160), Vector2.new(600, 40))
 
 	-- Touch screens: the thumbstick sits bottom-left and the jump button bottom-right, so the stats and the wake timer
@@ -1466,6 +1474,40 @@ do
 end
 
 ---------------------------------------------------------------------------------------------------------------------
+-- The Giant's wake meter and timer, and RUN! and the Drop Toy button while you're dragging a toy, from the
+-- bedroom's game state (Workspace.Bedroom.GiantKid attributes and the Player's Carrying attribute).
+task.spawn(function()
+	local Workspace = game:GetService("Workspace")
+	local player = Players.LocalPlayer
+	local kid: Instance? = nil
+	while gui.Parent do
+		local bedroom = Workspace:FindFirstChild("Bedroom")
+		kid = kid or (bedroom and bedroom:FindFirstChild("GiantKid"))
+		local carrying = player:GetAttribute("Carrying") ~= nil
+		hud.run.Visible = carrying
+		hud.action.Visible = carrying
+		if kid then
+			local meter = ((kid:GetAttribute("WakeMeter") :: number?) or 0) / 100
+			UIKit.tween(hud.wakeFill, 0.25, {
+				Size = UDim2.fromScale(math.clamp(meter, 0.02, 1), 1),
+				BackgroundColor3 = if meter >= 0.8 then hex("E8202E") else hex("FF9A2E"),
+			}, Enum.EasingStyle.Linear)
+			local state = kid:GetAttribute("State")
+			local now = Workspace:GetServerTimeNow()
+			if state == "Stirring" then
+				hud.timer.Text = "HE'S WAKING UP!"
+			elseif state == "Awake" then
+				local left = math.max(0, math.ceil(((kid:GetAttribute("StateEndsAt") :: number?) or now) - now))
+				hud.timer.Text = string.format("awake · sleeps in %ds", left)
+			else
+				local left = math.max(0, math.ceil(((kid:GetAttribute("WakesAt") :: number?) or now) - now))
+				hud.timer.Text = string.format("wakes in %dm %02ds", left // 60, left % 60)
+			end
+		end
+		task.wait(0.25)
+	end
+end)
+
 -- Demo loop (placeholder until the game systems exist): cycles the quest, shows RUN! while "carrying", ticks the
 -- cash with "+$" pops and posts notifications, so every animation can be seen in a playtest.
 task.spawn(function()
@@ -1478,22 +1520,13 @@ task.spawn(function()
 		{ "Train Speed on your wheel", false },
 	}
 	local step = 1
-	local seconds, wakeIn = 0, 161
+	local seconds = 0
 	while gui.Parent do
 		task.wait(1)
 		seconds += 1
-		wakeIn = math.max(0, wakeIn - 1)
-		hud.timer.Text = string.format("wakes in %dm %02ds", wakeIn // 60, wakeIn % 60)
-		UIKit.tween(
-			hud.wakeFill,
-			1,
-			{ Size = UDim2.fromScale(0.38 + 0.004 * seconds % 0.4, 1) },
-			Enum.EasingStyle.Linear
-		)
 		if step <= #steps then
 			if seconds % 4 == 0 then
 				hud.quest.Text = steps[step][1]
-				hud.run.Visible = steps[step][2]
 				hud.zone.Visible = step == 1
 				hud.setTraining(step == 5)
 				UIKit.bump(hud.quest)

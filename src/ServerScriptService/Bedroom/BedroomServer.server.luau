@@ -10,7 +10,7 @@ local BedroomLighting = require(ReplicatedStorage:WaitForChild("Shared"):WaitFor
 
 BedroomLighting.apply(BedroomLighting.Night, 0)
 
-for _, name in { "Homes", "Giant", "Train", "Cat", "Hazards" } do
+for _, name in { "Homes", "Carry", "Giant", "Train", "Cat", "Hazards" } do
 	local ok, err = pcall(function()
 		local system = require(script.Parent:WaitForChild(name)) :: any
 		system.start(bedroom)

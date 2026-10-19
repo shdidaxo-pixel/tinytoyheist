@@ -85,6 +85,12 @@ local function claim(player: Player)
 		local hole = holes:FindFirstChild("Hole" .. index)
 		if hole and hole:GetAttribute("Owner") == 0 then
 			hole:SetAttribute("Owner", player.UserId)
+			-- your pen starts with only your own toys
+			for _, toy in (hole:FindFirstChild("PenToys") :: Instance):GetChildren() do
+				if toy:GetAttribute("Demo") then
+					toy:Destroy()
+				end
+			end
 			local spawnPad = hole:FindFirstChild("Spawn")
 			if spawnPad and spawnPad:IsA("SpawnLocation") then
 				player.RespawnLocation = spawnPad
@@ -213,6 +219,11 @@ local function fillDemoPen(hole: Model)
 				if d:IsA("BasePart") then
 					d.Anchored = true
 				end
+			end
+			if hole:GetAttribute("Owner") ~= 0 then
+				-- someone moved in while the demo toys were being made
+				toy:Destroy()
+				break
 			end
 			toy.Parent = toys
 		end

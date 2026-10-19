@@ -49,7 +49,8 @@ function Knock.hit(player: Player, from: Vector3, options: Options): boolean
 	local stun = options.stun or 1.5
 	Events.Knocked:FireClient(player, away.Unit * (options.push or 60), stun, options.message)
 	if options.drop ~= false then
-		Events.DropCarried:Fire(player, options.message)
+		-- the third value says they're being sent home (the Giant, a trap): Grip can't save the toy then
+		Events.DropCarried:Fire(player, options.message, options.home == true)
 	end
 	if options.home and Knock.sendHome then
 		task.delay(stun, function()

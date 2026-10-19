@@ -6,13 +6,12 @@
 --   ToyVFX.addGlowTell(target, rarity)   on a sleeping toy's blanket (a Part or a Model): Epic and up leak their
 --                                        colour for about 1 s every 8 s. Server or client; the client script makes
 --                                        it flicker. Commons to Rares get nothing.
---   ToyVFX.revealBurst(model)            client: the wake-up burst (shockwave ring, confetti, sparkles, flash).
+--   ToyVFX.revealBurst(model)            client: the wake-up burst (Shared.VFX "Hatch": beams, shockwaves, confetti,
+--                                        more per rarity, mutation and size on top).
 --   ToyVFX.popIn(model, seconds?)        client: the toy pops in from small with a little overshoot.
 -- Effect strengths per rarity live in ToyRarities.Fx; sizes scale with the toy's height.
 local CollectionService = game:GetService("CollectionService")
-local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local ToyBuilder = require(script.Parent.ToyBuilder)
 local ToyRarities = require(script.Parent.ToyRarities)
@@ -374,93 +373,47 @@ end
 ------------------------------------------------------------------------------------------------------------------
 -- Reveal (client)
 
-local CONFETTI = { Common = 14, Uncommon = 20, Rare = 28, Epic = 38, Legendary = 52, Mythic = 66, Secret = 84 }
+-- The hatch burst itself lives in Shared.VFX (VFX.burst("Hatch")): beams, shockwaves, confetti, more per rarity,
+-- and a second burst for a mutation or a big size. Your own toy waits for your hatch charge-up (VFX.holdReveal).
+local function vfx(): any
+	local ok, mod = pcall(function()
+		return require(script.Parent.Parent:WaitForChild("VFX", 5) :: ModuleScript)
+	end)
+	return if ok then mod else nil
+end
+
+-- the size roll on a toy (1 = normal), whatever the size session calls it
+local function sizeMult(model: Model): number
+	for _, name in { "SizeMult", "SizeRoll", "SizeScale" } do
+		local v = model:GetAttribute(name)
+		if type(v) == "number" then
+			return v
+		end
+	end
+	return 1
+end
+ToyVFX.sizeMult = sizeMult
 
 function ToyVFX.revealBurst(model: Model)
-	local root = model.PrimaryPart
-	local rarity = (model:GetAttribute("Rarity") :: string?) or "Common"
-	if not root then
+	local VFX = vfx()
+	if not VFX or not model.PrimaryPart then
 		return
 	end
-	local H = heightOf(model)
-	local unit = H / 10
-	local color = ToyVFX.rarityColor(rarity)
-	local secret = rarity == "Secret"
-	local folder = Instance.new("Folder")
-	folder.Name = "RevealFx"
-
-	local att = Instance.new("Attachment")
-	att.Name = "RevealBurst"
-	att.Parent = root
-	local confetti = Instance.new("ParticleEmitter")
-	confetti.Texture = TEX.Square
-	confetti.Color = secret and RAINBOW or ColorSequence.new(color, Color3.new(1, 1, 1))
-	confetti.Enabled = false
-	confetti.Lifetime = NumberRange.new(1.2, 1.8)
-	confetti.Speed = NumberRange.new(7 * unit, 13 * unit)
-	confetti.SpreadAngle = Vector2.new(70, 70)
-	confetti.Acceleration = Vector3.new(0, -9 * unit, 0)
-	confetti.Drag = 2.2
-	confetti.Size = seq({ { 0, 0.5 * unit, 0.15 * unit }, { 1, 0.35 * unit } })
-	confetti.Transparency = seq({ { 0, 0 }, { 0.8, 0 }, { 1, 1 } })
-	confetti.Rotation = NumberRange.new(0, 360)
-	confetti.RotSpeed = NumberRange.new(-300, 300)
-	confetti.LightInfluence = 0.5
-	confetti.Parent = att
-	local sparkle = Instance.new("ParticleEmitter")
-	sparkle.Texture = TEX.Sparkle
-	sparkle.Color = secret and RAINBOW or ColorSequence.new(color, Color3.new(1, 1, 1))
-	sparkle.Enabled = false
-	sparkle.Lifetime = NumberRange.new(0.6, 1)
-	sparkle.Speed = NumberRange.new(2 * unit, 4 * unit)
-	sparkle.SpreadAngle = Vector2.new(180, 180)
-	sparkle.Drag = 3
-	sparkle.Size = seq({ { 0, 0 }, { 0.3, 1.4 * unit, 0.3 * unit }, { 1, 0 } })
-	sparkle.LightEmission = 1
-	sparkle.LightInfluence = 0
-	sparkle.Parent = att
-	local flash = Instance.new("ParticleEmitter")
-	flash.Texture = TEX.Glow
-	flash.Color = ColorSequence.new(color)
-	flash.Enabled = false
-	flash.Lifetime = NumberRange.new(0.45)
-	flash.Speed = NumberRange.new(0)
-	flash.LockedToPart = true
-	flash.Size = seq({ { 0, H * 1.2 }, { 1, H * 2.4 } })
-	flash.Transparency = seq({ { 0, 0.45 }, { 1, 1 } })
-	flash.LightEmission = 1
-	flash.LightInfluence = 0
-	flash.Parent = att
-	local n = CONFETTI[rarity] or 20
-	confetti:Emit(n)
-	sparkle:Emit(math.ceil(n / 3))
-	flash:Emit(1)
-
-	local light = Instance.new("PointLight")
-	light.Color = color
-	light.Brightness = 3
-	light.Range = math.min(50, H * 3)
-	light.Shadows = false
-	light.Parent = att
-	TweenService:Create(light, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Brightness = 0 })
-		:Play()
-
-	-- shockwave ring on the floor
-	local base = footprint(model) + 4
-	local ring = floorPart(model, "Shockwave", base, folder)
-	local img = floorImage(ring, TEX.Ring, color, 0, 1)
-	folder.Parent = model
-	TweenService:Create(
-		ring,
-		TweenInfo.new(0.7, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{ Size = Vector3.new(base * 4, 0.05, base * 4) }
-	):Play()
-	TweenService:Create(img, TweenInfo.new(0.7), { ImageTransparency = 1 }):Play()
-	Debris:AddItem(att, 2.5)
-	Debris:AddItem(folder, 2.5)
+	if VFX.holdReveal(model) then
+		model:SetAttribute("VfxHeld", true)
+		return
+	end
+	VFX.burst("Hatch", model, {
+		rarity = model:GetAttribute("Rarity"),
+		mutation = model:GetAttribute("Mutation"),
+		sizeMult = sizeMult(model),
+	})
 end
 
 function ToyVFX.popIn(model: Model, seconds: number?)
+	if model:GetAttribute("VfxHeld") then
+		return -- held back for its owner's hatch charge-up; popped in at the burst
+	end
 	local total = seconds or 0.45
 	local base = model:GetScale()
 	local t0 = os.clock()

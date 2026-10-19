@@ -14,6 +14,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local VFX = require(Shared:WaitForChild("VFX")) :: any
 local Moments = require(Shared:WaitForChild("VFX"):WaitForChild("Moments")) :: any
 local ToyVFX = require(Shared:WaitForChild("Toys"):WaitForChild("ToyVFX")) :: any
+local ToyAnimator = require(Shared:WaitForChild("Toys"):WaitForChild("ToyAnimator")) :: any
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 
 local me = Players.LocalPlayer
@@ -136,6 +137,7 @@ local function onReveal(info: any)
 		})
 		for _, t in toys do
 			pcall(ToyVFX.popIn, t, 0.5)
+			pcall(ToyAnimator.play, t, "Hatch") -- the animations session's hatch jump, now that it can be seen
 		end
 		if toy then
 			Moments.fire("ToyRevealed", { toy = toy, mine = true })

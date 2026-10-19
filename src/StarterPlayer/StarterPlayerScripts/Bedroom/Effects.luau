@@ -7,6 +7,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
+local VFX = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("VFX")) :: any
+local Moments = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("VFX"):WaitForChild("Moments")) :: any
+
 local Effects = {}
 
 local player = Players.LocalPlayer
@@ -45,6 +48,44 @@ local function shout(text: string, color: Color3?)
 	end)
 end
 
+-- three stars circling over a knocked-down player's head
+local function dizzy(character: Model, seconds: number)
+	local head = character:FindFirstChild("Head") :: BasePart?
+	if not head then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Dizzy"
+	gui.Size = UDim2.fromOffset(110, 50)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 2.2, 0)
+	gui.LightInfluence = 0
+	gui.Adornee = head
+	gui.Parent = head
+	local stars = {}
+	for i = 1, 3 do
+		local img = Instance.new("ImageLabel")
+		img.BackgroundTransparency = 1
+		img.AnchorPoint = Vector2.new(0.5, 0.5)
+		img.Size = UDim2.fromOffset(26, 26)
+		img.Image = VFX.Assets.get("Star")
+		img.ImageColor3 = Color3.fromRGB(255, 220, 80)
+		img.Parent = gui
+		stars[i] = img
+	end
+	VFX.animate(seconds, function(t)
+		local a = os.clock() * 6
+		for i, img in stars do
+			local k = a + i * math.pi * 2 / 3
+			img.Position = UDim2.new(0.5, math.cos(k) * 40, 0.5, math.sin(k) * 12)
+			img.ZIndex = if math.sin(k) > 0 then 2 else 1
+			img.Rotation = a * 40
+			img.ImageTransparency = if t > 0.8 then (t - 0.8) / 0.2 else 0
+		end
+	end, function()
+		gui:Destroy()
+	end)
+end
+
 local function knocked(push: Vector3, stun: number, message: string)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -53,6 +94,12 @@ local function knocked(push: Vector3, stun: number, message: string)
 		return
 	end
 	shout(message)
+	-- a jolt, a white flash, a dust puff, and stars going round your head while you're down
+	VFX.shake(0.55, 0.45)
+	VFX.flash(Color3.new(1, 1, 1), 0.45, 0.3)
+	VFX.burst("Poof", root.Position - Vector3.new(0, 2.5, 0), { scale = 1.2 })
+	dizzy(character, stun)
+	Moments.fire("Knocked", { message = message })
 	humanoid.PlatformStand = true
 	root.AssemblyLinearVelocity = push + Vector3.new(0, 38, 0)
 	root.AssemblyAngularVelocity = Vector3.new(math.random() * 6 - 3, 0, math.random() * 6 - 3)

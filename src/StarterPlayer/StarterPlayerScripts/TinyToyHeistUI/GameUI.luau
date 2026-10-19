@@ -15,6 +15,7 @@ local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
 local Toys = Shared:WaitForChild("Toys")
 local ToyCatalog = require(Toys:WaitForChild("ToyCatalog")) :: any
 local MutationData = require(Toys:WaitForChild("MutationData")) :: any
+local VFX = require(Shared:WaitForChild("VFX")) :: any
 
 local P = UIKit.Palettes
 local img, toyImage, hex = UIKit.image, UIKit.toy, UIKit.hex
@@ -1114,13 +1115,13 @@ local function showReveal(ctx: Ctx, info: any)
 	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	UIKit.text(pop, info.name, 30, { position = UDim2.fromOffset(210, 196), anchor = Vector2.new(0.5, 0), stroke = 4 })
 	local line = info.rarity .. (if info.mutation then "  ·  " .. string.upper(info.mutation) .. "!" else "")
-	UIKit.text(pop, line, 22, {
+	local rarityLabel = UIKit.text(pop, line, 22, {
 		color = if info.mutation then mutationColor(info.mutation) else color,
 		position = UDim2.fromOffset(210, 232),
 		anchor = Vector2.new(0.5, 0),
 		stroke = 3.5,
 	})
-	UIKit.text(pop, "+" .. GameConfig.money(info.perSecond) .. "/s", 28, {
+	local cashLabel = UIKit.text(pop, "+" .. GameConfig.money(info.perSecond) .. "/s", 28, {
 		font = UIKit.Fonts.number,
 		color = UIKit.CashGreen,
 		position = UDim2.fromOffset(210, 262),
@@ -1154,7 +1155,9 @@ local function showReveal(ctx: Ctx, info: any)
 		end
 	end
 	hit.Activated:Connect(close)
-	task.delay(4, close)
+	-- rays, shine, the rarity line bouncing in, the $/s counting up (VFX)
+	pcall(VFX.revealCard, pop, info, { rarityLabel = rarityLabel, cashLabel = cashLabel })
+	task.delay(4 + math.max(0, VFX.tier(info.rarity).n - 4) * 0.5, close)
 end
 
 -- Rewards ready to claim right now: the daily gift (0 or 1) and the playtime gifts (a badge on each button)
@@ -1402,7 +1405,9 @@ function GameUI.start(ctx: Ctx)
 		end
 	end);
 	(remotes:WaitForChild("Reveal") :: RemoteEvent).OnClientEvent:Connect(function(info: any)
-		showReveal(ctx, info)
+		VFX.afterHatch(function() -- after the hatch charge-up and burst (VFX), if there is one
+			showReveal(ctx, info)
+		end)
 	end)
 	-- the Index stand in your home opens the Index
 	game:GetService("ProximityPromptService").PromptTriggered:Connect(function(prompt)
@@ -1424,6 +1429,9 @@ function GameUI.start(ctx: Ctx)
 		local cash = attr("Cash")
 		local delta = cash - shown
 		UIKit.countTo(hud.cash, shown, cash, 0.6, GameConfig.money)
+		-- the counter bounces: a nudge for the per-second tick, a real boing for a big payout
+		local income = math.max(1, attr("Income"))
+		VFX.uiPop(hud.cash, if delta > income * 4 then 0.25 elseif delta > 0 then 0.06 else 0)
 		shown = cash
 		if delta > 0 then
 			UIKit.floatUp(

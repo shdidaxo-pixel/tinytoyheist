@@ -262,6 +262,7 @@ local function fxFolder(): Folder
 	end
 	local f = Instance.new("Folder")
 	f.Name = "VFX"
+	f.Archivable = false -- never saved with the place
 	f.Parent = Workspace
 	folder = f
 	return f
@@ -493,6 +494,9 @@ local function screen(name: string): ScreenGui
 end
 
 function VFX.flash(color: Color3?, alpha: number?, seconds: number?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	local f = Instance.new("Frame")
 	f.Name = "Flash"
 	f.BorderSizePixel = 0
@@ -515,6 +519,9 @@ end
 -- Coloured screen edges. seconds = a pulse that fades; nil = stays (pulsing gently) until VFX.vignette(nil).
 local held: ImageLabel? = nil
 function VFX.vignette(color: Color3?, alpha: number?, seconds: number?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	if color == nil then
 		if held then
 			local h = held
@@ -563,6 +570,9 @@ local trauma = 0
 local traumaDecay = 1
 local shakeBound = false
 function VFX.shake(strength: number, seconds: number?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	if low() then
 		return
 	end
@@ -593,6 +603,9 @@ end
 -- a quick zoom-in punch (field of view dips and springs back)
 local punching = false
 function VFX.fovPunch(amount: number?, seconds: number?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	local cam = Workspace.CurrentCamera
 	if not cam or punching or low() then
 		return
@@ -611,6 +624,9 @@ end
 
 -- Screen confetti: paper bits and stars falling across the screen
 function VFX.confetti(n: number, colors: { Color3 }?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	n = math.min(160, count(n))
 	local layer = screen("Over")
 	local holder = Instance.new("Frame")
@@ -732,6 +748,9 @@ function VFX.popText(text: string, at: any, opts: TextOpts?): Instance?
 	local px = o.size or 30
 	local life = o.duration or 1.2
 	if typeof(at) == "UDim2" or (typeof(at) == "Instance" and at:IsA("GuiObject")) then
+		if not me then
+			return nil
+		end
 		-- on the screen
 		local pos: UDim2
 		if typeof(at) == "UDim2" then
@@ -1486,6 +1505,9 @@ end
 
 -- little stars that spray out of a point on the screen
 function VFX.uiSparks(at: UDim2, n: number?, color: Color3?)
+	if not me then
+		return -- Edit mode (no player): world effects only
+	end
 	local layer = screen("Over")
 	local list = {}
 	for _ = 1, count(n or 6) do

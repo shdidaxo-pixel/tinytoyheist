@@ -65,18 +65,47 @@ function KidView.start(bedroom: Model)
 	local poolTurn = pool.CFrame - pool.CFrame.Position
 
 	local up: boolean? = nil
+	local walking: boolean? = nil
+	local walker = kid:WaitForChild("Walker") :: Model
+	local walkerRoot = walker.PrimaryPart :: BasePart
+	local lumps = { asleep:WaitForChild("BodyLower"), upper }
+	-- the walking Kid's parts, with their rest offsets from his Root and which leg or arm they belong to
+	local limbs: { { part: BasePart, offset: CFrame, kind: string, side: number } } = {}
+	for _, p in walker:GetChildren() do
+		if p:IsA("BasePart") and p ~= walkerRoot then
+			local offset = walkerRoot.CFrame:ToObjectSpace(p.CFrame)
+			local kind = if p.Name == "Leg" or p.Name == "Foot"
+				then "Leg"
+				elseif p.Name == "Arm" or p.Name == "Hand" then "Arm"
+				else "Body"
+			table.insert(limbs, { part = p, offset = offset, kind = kind, side = if offset.X < 0 then -1 else 1 })
+		end
+	end
+	local walkerCurrent = walkerRoot.CFrame
+	local lastWalker = walkerCurrent.Position
+	local stride, speed = 0, 0
+
 	local function refresh()
-		local want = kid:GetAttribute("State") ~= "Asleep" or kid:GetAttribute("Flashlight") == true
-		if want == up then
+		local isWalking = kid:GetAttribute("Walking") == true
+		local want = not isWalking and (kid:GetAttribute("State") ~= "Asleep" or kid:GetAttribute("Flashlight") == true)
+		if want == up and isWalking == walking then
 			return
 		end
-		up = want
+		up, walking = want, isWalking
 		for _, p in sitUp:GetChildren() do
 			setShown(p, want)
 		end
 		for _, p in asleep:GetChildren() do
 			if LYING[p.Name] then
-				setShown(p, not want)
+				setShown(p, not want and not isWalking)
+			end
+		end
+		for _, p in lumps do
+			setShown(p, not isWalking) -- out of bed, the duvet lies flat
+		end
+		for _, p in walker:GetChildren() do
+			if p ~= walkerRoot then
+				setShown(p, isWalking)
 			end
 		end
 		beam.Enabled = want
@@ -88,14 +117,56 @@ function KidView.start(bedroom: Model)
 		if face then
 			face.Enabled = want
 		end
+		if isWalking then
+			local pose = kid:GetAttribute("WalkerPose")
+			if typeof(pose) == "CFrame" then
+				walkerCurrent = pose
+			end
+		end
 	end
 	refresh()
 	kid:GetAttributeChangedSignal("State"):Connect(refresh)
 	kid:GetAttributeChangedSignal("Flashlight"):Connect(refresh)
+	kid:GetAttributeChangedSignal("Walking"):Connect(refresh)
 
-	RunService.RenderStepped:Connect(function()
+	RunService.RenderStepped:Connect(function(dt)
 		local t = Workspace:GetServerTimeNow()
-		if up then
+		if walking then
+			-- stomp along: lerp to the server's pose, legs and arms swinging, the body bobbing
+			local pose = kid:GetAttribute("WalkerPose")
+			if typeof(pose) == "CFrame" then
+				walkerCurrent = walkerCurrent:Lerp(pose, 1 - math.exp(-dt * 8))
+			end
+			local moved = (walkerCurrent.Position - lastWalker).Magnitude
+			lastWalker = walkerCurrent.Position
+			speed += (moved / math.max(dt, 1e-3) - speed) * math.min(1, dt * 6)
+			stride += dt * (1 + speed * 0.12)
+			local amount = math.clamp(speed / 8, 0, 1)
+			local bob = math.abs(math.sin(stride * 2)) * 4 * amount
+			walkerRoot.CFrame = walkerCurrent
+			for _, limb in limbs do
+				local cf
+				if limb.kind == "Leg" then
+					local hip = CFrame.new(limb.side * 20, 86, 0)
+					cf = walkerCurrent
+						* hip
+						* CFrame.Angles(math.sin(stride + (limb.side + 1) * 0.5 * math.pi) * 0.45 * amount, 0, 0)
+						* hip:Inverse()
+						* limb.offset
+				elseif limb.kind == "Arm" then
+					local shoulder = CFrame.new(limb.side * 53, 156, 0)
+					cf = walkerCurrent
+						* CFrame.new(0, bob, 0)
+						* shoulder
+						* CFrame.Angles(-math.sin(stride + (limb.side + 1) * 0.5 * math.pi) * 0.5 * amount, 0, 0)
+						* shoulder:Inverse()
+						* limb.offset
+				else
+					cf = walkerCurrent * CFrame.new(0, bob, 0) * limb.offset
+				end
+				limb.part.CFrame = cf
+			end
+		elseif up then
 			local target = MapConfig.flashlightTarget(t)
 			local aim = CFrame.lookAt(lensRest, target)
 			flashlight:PivotTo(aim * aimRest:Inverse() * flashRest)

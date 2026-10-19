@@ -371,6 +371,46 @@ return function(Kit: any, MapConfig: any, bedroom: Model)
 	poolLight:SetAttribute("Shown", 1)
 	Kit.light(poolLight, "SpotLight", 0xFFF2B0, 6, 60, { Face = Enum.NormalId.Bottom, Angle = 70, Enabled = false })
 
+	-- Standing up: the Kid out of bed, walking the run when he's awake. Built beside the bed, facing the homes (-Z is
+	-- his front); game code moves it by its Root and swings the legs and arms. Hidden until then.
+	local walker = Kit.model(giant, "Walker")
+	local wAt = CFrame.new(-40, 0, 1420)
+	local function w(name: string, sx: number, sy: number, sz: number, x: number, y: number, z: number, color: number)
+		local p =
+			block(walker, name, sx, sy, sz, wAt, x, y, z, color, { collide = false, material = Enum.Material.Fabric })
+		p:SetAttribute("Shown", 0)
+		p.Transparency = 1
+		return p
+	end
+	local wRoot = part(walker, "Root", Vector3.new(4, 1, 4), wAt * CFrame.new(0, 0.5, 0), 0xFFFFFF, {
+		collide = false,
+		transparency = 1,
+	})
+	wRoot:SetAttribute("Shown", 1)
+	walker.PrimaryPart = wRoot
+	for _, s in { -1, 1 } do
+		-- legs in striped pyjama bottoms, socks for feet
+		for k = 0, 7 do
+			w("Leg", 28, 10, 28, s * 20, 6 + k * 10, 0, if k % 2 == 0 then PJ_BLUE else 0xFFFFFF)
+		end
+		w("Foot", 32, 12, 42, s * 20, 0, -6, 0xF4F1E8)
+	end
+	for k = 0, 6 do
+		w("Torso", 84, 10, 46, 0, 86 + k * 10, 0, if k % 2 == 0 then PJ_BLUE else 0xFFFFFF)
+	end
+	for _, s in { -1, 1 } do
+		for k = 0, 5 do
+			w("Arm", 22, 10, 22, s * 53, 96 + k * 10, 0, if k % 2 == 0 then PJ_BLUE else 0xFFFFFF)
+		end
+		w("Hand", 22, 18, 24, s * 53, 78, 0, SKIN)
+	end
+	local wHead = w("Head", 64, 58, 56, 0, 156, 0, SKIN)
+	face(wHead, Enum.NormalId.Front, "angry").Enabled = false
+	w("Hair", 70, 14, 62, 0, 214, 2, HAIR)
+	for _, tuft in { { -18, 8 }, { 8, -6 }, { 22, 10 }, { -4, 14 } } do
+		w("Tuft", 12, 8, 12, tuft[1], 228, tuft[2], HAIR)
+	end
+
 	---------------------------------------------------------------------------------------------------------------
 	-- Nightstand by the head of the bed: stepped lamp, red alarm clock reading 2:00, the baby monitor
 	local stand = Kit.model(furniture, "Nightstand")

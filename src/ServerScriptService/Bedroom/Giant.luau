@@ -3,10 +3,13 @@
 --   Asleep   about 4 minutes. The meter drains 2 a second; noise fills it. At 80 he sits up with his flashlight and
 --            sweeps it down the run (until the meter falls back under 60). At 100 he wakes early.
 --   Stirring 10 s warning: he sits up and the lights come on.
---   Awake    60 s: lights on, the cat turns aggressive, the flashlight sweeps the run.
+--   Awake    60 s: lights on, the cat turns aggressive, and he gets out of bed and walks toward the loudest noise
+--            of the last 5 s (or the nearest mouse in the run). Anyone he reaches is grabbed: they drop their toy
+--            and land back home after a 3 s stun. He never comes into the safe zone or the homes.
+--   BackToBed up to 12 s: he walks back to bed and lies down; then Asleep again.
 -- Anyone caught in the beam while carrying a toy drops it. Everything is on GiantKid's attributes, so clients (the
 -- lights, the HUD) follow along: State, WakeMeter (0..100), Flashlight (bool), WakesAt (server time of the next
--- natural wake-up), StateEndsAt.
+-- natural wake-up), StateEndsAt, Walking (bool) and WalkerPose (the walking Kid's Root CFrame).
 -- To test from the command bar while playing (Server): workspace.Bedroom.GiantKid:SetAttribute("WakeMeter", 100)
 
 local Players = game:GetService("Players")
@@ -25,6 +28,11 @@ Giant.DRAIN = 2 -- meter points a second while asleep
 Giant.FLASHLIGHT_ON = 80
 Giant.FLASHLIGHT_OFF = 60
 Giant.BEAM_RADIUS = 34 -- the pool of light on the floor
+Giant.BACK_TO_BED = 12
+Giant.WALK_SPEED = 13 -- a little slower than a mouse, faster than one dragging a Medium or Large toy
+Giant.REACH = 34
+Giant.HEARING = 5 -- seconds of noise he remembers when choosing where to go
+Giant.heard = {} :: { { position: Vector3, points: number, at: number } }
 
 local function now(): number
 	return Workspace:GetServerTimeNow()
@@ -61,6 +69,7 @@ function Giant.start(bedroom: Model)
 		if kid:GetAttribute("State") == "Asleep" then
 			kid:SetAttribute("WakeMeter", math.min(100, (kid:GetAttribute("WakeMeter") :: number) + added))
 		end
+		table.insert(Giant.heard, { position = position, points = added, at = os.clock() })
 		Events.NoiseRipple:FireAllClients(position, added)
 	end)
 
@@ -94,7 +103,12 @@ function Giant.start(bedroom: Model)
 				if now() >= (kid:GetAttribute("StateEndsAt") :: number) then
 					kid:SetAttribute("WakeMeter", 0)
 					kid:SetAttribute("Flashlight", false)
-					kid:SetAttribute("WakesAt", now() + Giant.SLEEP)
+					kid:SetAttribute("WakesAt", now() + Giant.SLEEP + Giant.BACK_TO_BED)
+					setState("BackToBed", Giant.BACK_TO_BED)
+				end
+			elseif state == "BackToBed" then
+				if now() >= (kid:GetAttribute("StateEndsAt") :: number) or not kid:GetAttribute("Walking") then
+					kid:SetAttribute("Walking", false)
 					setState("Asleep")
 				end
 			end
@@ -106,7 +120,11 @@ function Giant.start(bedroom: Model)
 		while kid.Parent do
 			task.wait(0.2)
 			local state = kid:GetAttribute("State")
-			if state == "Asleep" and not kid:GetAttribute("Flashlight") then
+			if
+				(state == "Asleep" and not kid:GetAttribute("Flashlight"))
+				or kid:GetAttribute("Walking")
+				or state == "BackToBed"
+			then
 				continue
 			end
 			local target = MapConfig.flashlightTarget(now())
@@ -122,6 +140,101 @@ function Giant.start(bedroom: Model)
 						})
 					end
 				end
+			end
+		end
+	end)
+	-- Out of bed: walk toward the loudest recent noise (or the nearest mouse in the run) and grab whoever he reaches
+	local walker = kid:WaitForChild("Walker") :: Model
+	local home = (walker.PrimaryPart :: BasePart).CFrame
+	local rootY = home.Position.Y
+	local position = Vector3.new(home.Position.X, 0, home.Position.Z)
+	local facing = Vector3.new(0, 0, -1)
+	local function allowed(p: Vector3): Vector3
+		local x = math.clamp(p.X, -170, 170)
+		local z = math.clamp(p.Z, 640, MapConfig.LENGTH - 60)
+		for _, f in MapConfig.FOOTPRINTS do
+			local x0, z0, x1, z1 = f[1] - 36, f[2] - 36, f[3] + 36, f[4] + 36
+			if x > x0 and x < x1 and z > z0 and z < z1 then
+				local options = { { x0 - x, 0 }, { x1 - x, 0 }, { 0, z0 - z }, { 0, z1 - z } }
+				table.sort(options, function(a, b)
+					return math.abs(a[1]) + math.abs(a[2]) < math.abs(b[1]) + math.abs(b[2])
+				end)
+				x += options[1][1]
+				z += options[1][2]
+			end
+		end
+		return Vector3.new(x, 0, z)
+	end
+	local start = allowed(position)
+	local function inRun(p: Vector3): boolean
+		return MapConfig.inRoom(p) and not MapConfig.inSafeZone(p) and p.Z >= 560
+	end
+	local function setPose()
+		local yaw = math.atan2(-facing.X, -facing.Z)
+		kid:SetAttribute("WalkerPose", CFrame.new(position.X, rootY, position.Z) * CFrame.Angles(0, yaw, 0))
+	end
+	setPose()
+	task.spawn(function()
+		local last = os.clock()
+		while kid.Parent do
+			task.wait(1 / 20)
+			local dt = math.min(os.clock() - last, 0.2)
+			last = os.clock()
+			local state = kid:GetAttribute("State")
+			local cutoff = os.clock() - Giant.HEARING
+			for i = #Giant.heard, 1, -1 do
+				if Giant.heard[i].at < cutoff then
+					table.remove(Giant.heard, i)
+				end
+			end
+			if state == "Awake" then
+				if not kid:GetAttribute("Walking") then
+					kid:SetAttribute("Walking", true)
+					position = start
+				end
+				-- where to go: the loudest noise he heard in the run, else the nearest mouse, else the middle
+				local goal, loudest = nil, 0
+				for _, n in Giant.heard do
+					if n.points > loudest and inRun(n.position) then
+						goal, loudest = n.position, n.points
+					end
+				end
+				local best = math.huge
+				for _, player in Players:GetPlayers() do
+					local root = Knock.root(player)
+					if root and inRun(root.Position) then
+						local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+						local d = (flat - position).Magnitude
+						if not goal and d < best then
+							best = d
+							goal = flat
+						end
+						if d <= Giant.REACH and root.Position.Y < 80 then
+							Knock.hit(player, position, {
+								message = "The Giant caught you!",
+								push = 90,
+								stun = 3,
+								home = true,
+							})
+						end
+					end
+				end
+				goal = goal or Vector3.new(0, 0, 1000)
+				local d = Vector3.new(goal.X - position.X, 0, goal.Z - position.Z)
+				if d.Magnitude > 4 then
+					position = allowed(position + d.Unit * math.min(d.Magnitude, Giant.WALK_SPEED * dt))
+					facing = facing:Lerp(d.Unit, math.min(1, dt * 3)).Unit
+				end
+				setPose()
+			elseif state == "BackToBed" and kid:GetAttribute("Walking") then
+				local d = start - position
+				if d.Magnitude < 6 then
+					kid:SetAttribute("Walking", false)
+				else
+					position = allowed(position + d.Unit * math.min(d.Magnitude, Giant.WALK_SPEED * 1.6 * dt))
+					facing = facing:Lerp(d.Unit, math.min(1, dt * 3)).Unit
+				end
+				setPose()
 			end
 		end
 	end)

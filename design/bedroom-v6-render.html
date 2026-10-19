@@ -76,7 +76,7 @@ html.shot .view{aspect-ratio:auto;height:100vh;border:0;border-radius:0}
       <tbody>
         <tr><td>Room</td><td>420 wide, 1700 long, 320 tall</td><td>The hallway door (130 wide) straight ahead in the far wall</td></tr>
         <tr><td>Homes</td><td>8 in a half-circle wall, radius 340</td><td>Each 120 wide and 110 deep, open to the top plate; a safe zone 140 deep in front</td></tr>
-        <tr><td>Carpet (Small)</td><td>start–900</td><td>Noise x1; the block tower (left) and the train's long oval track</td></tr>
+        <tr><td>Carpet (Small)</td><td>start–900</td><td>Noise x1; the block tower (left) and the winding train track</td></tr>
         <tr><td>Wood (Medium)</td><td>900–1300</td><td>Noise x2; the cat, the desk (left)</td></tr>
         <tr><td>Creaky boards (Large)</td><td>1300–1700</td><td>Noise x3; the bed (right), loose planks, the baby monitor patch</td></tr>
       </tbody>
@@ -11624,8 +11624,8 @@ f 1921/18 1923/18 1924/18
    left wall and the open hallway door straight ahead. Kept simple: big readable shapes, few props.
    Night lighting follows Dylan's photo 2, "lights on" follows photo 1. Studs: x across, z down the room from the start. */
 const HW=210, LEN=1700, WALL_H=320;
-const BW=120, BD=110, N=8, CR=340, CZ0=340, STEP=22.5, HOLE_A=i=>270+(i-3.5)*STEP; // homes round the curved start wall
-const SAFE_R=200, CARPET_Z=900, WOOD_Z=1300, SH_Z=470; // safe zone r 200-340 in front of the homes; carpet (Small, x1) < 1080 < wood (Medium, x2) < 1600 < creaky (Large, x3)
+const BW=130, BD=170, N=8, CR=380, CZ0=380, STEP=22.5, HOLE_A=i=>270+(i-3.5)*STEP; // homes round the curved start wall
+const SAFE_R=240, CARPET_Z=900, WOOD_Z=1300, SH_Z=510; // safe zone r 240-380 in front of the homes; carpet (Small, x1) < 1080 < wood (Medium, x2) < 1600 < creaky (Large, x3)
 const DOOR_W=130, DOOR_H=230; // the open hallway door, centred in the far wall
 const deg=d=>d*Math.PI/180;
 const PC=(r,a)=>[r*Math.cos(deg(a)),CZ0+r*Math.sin(deg(a))];
@@ -11683,9 +11683,9 @@ function buildRoom(){
   floorLabel('CREAKY · LARGE · NOISE x3',90,WOOD_Z+50,300,'#FFB0A8');
   const base=M(0xE6E1D6,{r:.7}),trim=M(0xF1EBDD,{r:.6}),wp=wallMat(1/48,1/WALL_H),sage=M(0x8A9E78,{r:.9});
   // the curved start wall: solid wall between the homes (and at both ends), the homes themselves are open bays
-  for(let i=0;i<N-1;i++)prism([corner(i,65,0),corner(i+1,-65,0),corner(i+1,-65,BD+8),corner(i,65,BD+8)],WALL_H,[sage,wp]);
-  prism([[-(CR+10),CZ0],corner(0,-65,0),corner(0,-65,BD+8),[-(CR+BD+20),CZ0]],WALL_H,[sage,wp]);
-  prism([corner(N-1,65,0),[CR+10,CZ0],[CR+BD+20,CZ0],corner(N-1,65,BD+8)],WALL_H,[sage,wp]);
+  for(let i=0;i<N-1;i++)prism([corner(i,BW/2+5,0),corner(i+1,-BW/2-5,0),corner(i+1,-BW/2-5,BD+8),corner(i,BW/2+5,BD+8)],WALL_H,[sage,wp]);
+  prism([[-(CR+10),CZ0],corner(0,-BW/2-5,0),corner(0,-BW/2-5,BD+8),[-(CR+BD+20),CZ0]],WALL_H,[sage,wp]);
+  prism([corner(N-1,BW/2+5,0),[CR+10,CZ0],[CR+BD+20,CZ0],corner(N-1,BW/2+5,BD+8)],WALL_H,[sage,wp]);
   // shoulders in to the run, and the long walls
   [-1,1].forEach(s=>{const a=[s*(CR+10),CZ0],b=[s*HW,SH_Z],L=Math.hypot(b[0]-a[0],b[1]-a[1]);
     const w=box(8,WALL_H,L,wallMat(L/48),(a[0]+b[0])/2+s*4,0,(a[1]+b[1])/2);w.rotation.y=Math.atan2(b[0]-a[0],b[1]-a[1]);
@@ -11820,21 +11820,21 @@ function baseInterior(i,pl){
   const fc=FAIRY[L],bulbs=[];for(let k=0;k<9;k++){const x=-50+k*12.5,y=62-Math.sin(k/8*Math.PI)*1.5-2.2;const b=new THREE.Mesh(new THREE.SphereGeometry(1.2,10,8),new THREE.MeshBasicMaterial({color:k%2?fc:0xFFF1C8}));b.position.set(x,y,cz+1.6);g.add(b);const gl=glow(fc,10,.6,g);gl.position.copy(b.position);bulbs.push(gl)}
   animated.push(t=>bulbs.forEach((b,k)=>{b.material.opacity=.45+.25*Math.sin(t*2+k*1.3+i)}));
   const fl=new THREE.PointLight(fc,L===6?1.3:1,120,1.6);fl.position.set(0,50,ZM);g.add(fl);
-  // slots with the owner's awake toys; cash pile, push-pin lock, matchbook Index, spool wheel, matchbox bed
-  const capC=[0xE04848,0x4DA8FF,0x3DDC97,0xFFC93C],nSlots=SLOTS_AT[L-1],nail=M(0xB8BFC8,{m:.8,r:.3});
-  SLOT_OFFS.slice(0,nSlots).forEach(([lx,lz],k)=>{const [x,z]=at(lx,lz);let top=1.6;
-    if(L===2)padMesh('sock',g,x,z,k);else if(L===3){padMesh('brick',g,x,z,k);top=4}else if(L===4)padMesh('stump',g,x,z,k);
-    else{const col=L===7?0xFFC93C:L===5?[0xFF8FC8,0xFFFFFF,0x8FE8D0][k%3]:L===6?0x1A1430:capC[k%4];
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(6,6,1.6,20),M(col,{m:L===7||L<5?.55:.1,r:.35}));cap.position.set(x,.8,z);cap.castShadow=cap.receiveShadow=true;g.add(cap);
-      const rim=new THREE.Mesh(new THREE.TorusGeometry(6,.45,6,24),L===6?M(0x7AE8FF,{e:0x7AE8FF,ei:1.2}):M(new THREE.Color(col).multiplyScalar(.7),{m:.4,r:.4}));rim.rotation.x=Math.PI/2;rim.position.set(x,1.6,z);g.add(rim)}
-    if(k<pl.toys){const sz=k%5===4?'L':k%2?'M':'S';awakeToy(g,x,z,sz,TOY_COLS[(i*3+k)%TOY_COLS.length],k*1.3+i+(s<0?Math.PI:0),null,top-1)}});
+  // the toy pen: the back of the home is the owner's toys' own floor, dressed for the level; the toys roam it freely
+  const nail=M(0xB8BFC8,{m:.8,r:.3}),PZ0=40,PZ1=BD-12,PW=BW-14;
+  const penMat=L===1?M(0xC49A6C,{r:.9}):L===2?M(0xffffff,{map:stripeTex('#F28DB2','#FFFFFF',12),r:.95}):L===3?M(0xffffff,{map:(()=>{const t=studTex(0x3DA5FF);t.repeat.set(PW/5,(PZ1-PZ0)/5);return t})(),r:.45})
+    :L===4?M(0xffffff,{map:plankTex('#C89A62','#9C7246',2,2),r:.85}):L===5?M(0xffffff,{map:stripeTex('#FF8FC8','#FFFFFF',14),r:.6}):L===6?M(0x1A1430,{r:.4,e:0x2A1A60,ei:.4}):M(0xFFC93C,{m:.7,r:.3,e:0x5A3A00,ei:.2});
+  box(PW,.6,PZ1-PZ0,penMat,0,0,-(PZ0+PZ1)/2,null,g);
+  if(L===6)[PZ0,PZ1].forEach(z=>box(PW,.8,1,M(0x7AE8FF,{e:0x7AE8FF,ei:1.6}),0,.4,-z,null,g));
+  for(let k=0;k<pl.toys;k++){const sz=k%5===4?'L':k%2?'M':'S',x=-PW/2+8+((k*37+i*11)%(PW-16)),z=-(PZ0+6+((k*53+i*7)%(PZ1-PZ0-12)));
+    awakeToy(g,x,z,sz,TOY_COLS[(i*3+k)%TOY_COLS.length],k*1.7+i,null,0);const r=roamers.pop();r.pen=[-PW/2+6,PW/2-6,-(PZ1-6),-(PZ0+4)];r.speed*=.8;penToys.push(r)}
   {const [x,z]=at(28,14);const th=new THREE.Mesh(new THREE.CylinderGeometry(5.5,4.8,8,22,1,true),M(0xC9CED8,{m:.8,r:.3,side:THREE.DoubleSide}));th.position.set(x,4,z);g.add(th);
     const coin=M(0xF2C94C,{m:.7,r:.3,e:0x6B4E00,ei:.25});for(let k=0;k<16;k++){const c=new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,.6,14),coin);const an=k*2.4,rr=k<10?Math.sqrt(k)*1.1:4+((k*3)%5);c.position.set(x+Math.cos(an)*rr,k<10?6+Math.max(0,3-rr):.3,z+Math.sin(an)*rr);c.rotation.set(Math.sin(k)*.4,0,Math.cos(k)*.4);g.add(c)}}
   {const [x,z]=at(-30,12),pin=new THREE.Group();pin.position.set(x,0,z);pin.rotation.z=.12;g.add(pin);const red=M(pl.locked?0x8A1F2A:0xFF4D5E,{r:.35,e:pl.locked?0:0x5A0A12,ei:.5});
     const nd=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,3,8),nail);nd.position.y=1.5;pin.add(nd);
     [[4.5,4.5,2,4],[2.4,3,4,7],[3.6,3.6,1.6,9.6]].forEach(([a,b,h,y])=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(a,b,h,20),red);m.position.y=y;m.castShadow=true;pin.add(m)})}
   {const [x,z]=at(-52,30);box(9,5,5,M(0x1A1430,{r:.4}),x,0,z,null,g);[-1,1].forEach(q=>{const c=box(5,.6,7,M(q<0?0xE04848:0xF4F1E8,{r:.6}),x+q*2.3,5.6,z,null,g);c.rotation.z=q*-.35})}
-  {const [x,z]=at(50,22);trainingWheel(g,x,z)}
+  {const [x,z]=at(50,22);levelWheel(g,x,z,L)}
   {const [x,z]=at(0,24);box(16,3.4,10,M(0xE8D2A8,{r:.8}),x,0,z,null,g);box(9,3.8,10.4,M(0x2F6FB9,{r:.6}),x+4,0,z,null,g);box(11,1,8,M(0xffffff,{map:stripeTex('#F28DB2','#FFFFFF',6),r:.95}),x-1.5,3.4,z,null,g);
     const sp=new THREE.Mesh(new THREE.RingGeometry(9,10.5,32),new THREE.MeshBasicMaterial({color:0x3DDC97,transparent:true,opacity:.6,side:THREE.DoubleSide}));sp.rotation.x=-Math.PI/2;sp.position.set(x,.12,z);g.add(sp)}
   if(L===7)[[-56,6],[56,6]].forEach(([lx,lz])=>{const [x,z]=at(lx,lz);for(let k=0;k<12;k++){const c=new THREE.Mesh(new THREE.CylinderGeometry(3,3,1,16),gold);c.position.set(x,.5+k*1.05,z);g.add(c)}});
@@ -11845,6 +11845,27 @@ function baseInterior(i,pl){
   if(pl.me){const arrow=textSprite('▼',{w:64,h:64,sx:9,sy:9,bg:null,color:'#FFC93C',font:'900 60px Nunito, sans-serif',parent:g});arrow.position.set(54,66,0);animated.push(t=>{arrow.position.y=66+Math.sin(t*3)*1.5})}
   if(pl.locked){const bar=M(0xFF4D5E,{r:.4,m:.3,e:0x5A0A12,ei:.6});for(let k=0;k<12;k++){const b=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,30,10),bar);b.position.set(-55+k*10,15,1);b.castShadow=true;g.add(b)}box(BW,1.6,1.6,bar,0,30,1,null,g)}
 }
+
+// Toys wander their home's pen: pick a spot, walk there with a hop, pause, pick another.
+const penToys=[];
+function penRoam(dt,t){penToys.forEach(r=>{const p=r.t.position,[x0,x1,z0,z1]=r.pen;
+  if(r.wait>0){r.wait-=dt;p.y=r.y0+Math.abs(Math.sin(t*2+r.ph))*.25;return}
+  if(r.tx===undefined||Math.hypot(r.tx-p.x,r.tz-p.z)<.8){r.tx=x0+Math.random()*(x1-x0);r.tz=z0+Math.random()*(z1-z0);r.wait=.6+Math.random()*2.5;return}
+  const dx=r.tx-p.x,dz=r.tz-p.z,d=Math.hypot(dx,dz),s=Math.min(d,r.speed*dt);p.x+=dx/d*s;p.z+=dz/d*s;p.y=r.y0+Math.abs(Math.sin(t*9+r.ph))*.9;
+  const want=Math.atan2(-dz,dx);let diff=want-r.t.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));r.t.rotation.y+=diff*Math.min(1,dt*6)})}
+// The Speed wheel levels up with the home: bigger, and made of better stuff each level.
+function levelWheel(g,x,z,L){
+  const R=6.5+L*.55,W=7+L*.3,w=new THREE.Group();w.position.set(x,R+2.2,z);g.add(w);const spin=new THREE.Group();w.add(spin);
+  const look={1:[0xD9B27C,0xFFC93C,0x8A5A34],2:[0xF28DB2,0xFFFFFF,0x7FD6E8],3:[0xE04848,0xFFC93C,0x4DA8FF],4:[0xB07A48,0xE8C890,0x6B4A2E],5:[0xFF8FC8,0xFFFFFF,0x8FE8D0],6:[0x1A1430,0x7AE8FF,0x9B7BFF],7:[0xFFC93C,0xFFF1B0,0xD9A21E]}[L];
+  const side=M(look[0],{r:L===7?.3:.7,m:L===7?.75:0}),rung=M(look[1],{r:.5,e:L===6?look[1]:0,ei:L===6?1.4:1}),frame=M(look[2],{r:.6,m:L===7?.7:0});
+  [-W/2,W/2].forEach(sx=>{const d=new THREE.Mesh(new THREE.CylinderGeometry(R,R,.9,32),side);d.rotation.z=Math.PI/2;d.position.x=sx;spin.add(d);
+    if(L>=3){const rim=new THREE.Mesh(new THREE.TorusGeometry(R,.5,8,32),L===6?M(look[2],{e:look[2],ei:1.5}):frame);rim.rotation.y=Math.PI/2;rim.position.x=sx*1.06;spin.add(rim)}});
+  const nr=14+L*2;for(let k=0;k<nr;k++){const a=k/nr*Math.PI*2,r2=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,W-.2,8),rung);r2.rotation.z=Math.PI/2;r2.position.set(0,Math.cos(a)*(R-.5),Math.sin(a)*(R-.5));spin.add(r2)}
+  [-W/2-1.4,W/2+1.4].forEach(sx=>{box(1.4,R+2.2,1.4,frame,sx,-R-2.2,-3,null,w);box(1.4,R+2.2,1.4,frame,sx,-R-2.2,3,null,w);box(1.6,1.6,7.6,frame,sx,-1,0,null,w)});
+  if(L===7)glow(0xFFE07A,R*3.4,.35,w);if(L===6)glow(0x7AE8FF,R*3.4,.3,w);
+  const tag=textSprite(`SPEED · Lv ${L}`,{w:256,h:56,sx:13,sy:2.85,font:'900 30px Nunito, sans-serif',bg:'rgba(77,168,255,.95)',color:'#1A1430',parent:w});tag.position.set(0,R+3,0);
+  animated.push(t=>{spin.rotation.x=-t*(1.2+L*.25)})}
+
 function bases(){BASES.forEach((p,i)=>baseInterior(i,p))}
 // Studs on a top surface: one tiled texture on a thin plane, not thousands of parts.
 function studTop(w,d,col,x,y,z,parent,rep=5){const t=studTex(col);t.repeat.set(w/rep,d/rep);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(0xffffff,{map:t,r:.45}));m.rotation.x=-Math.PI/2;m.position.set(x,y+.08,z);m.receiveShadow=true;(parent||root).add(m);return m}
@@ -12021,15 +12042,15 @@ function glowTex(){if(glowTex.t)return glowTex.t;const c=document.createElement(
 function glow(color,size,opacity=.6,parent){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));s.scale.set(size,size,1);(parent||root).add(s);return s}
 function starTex(){if(starTex.t)return starTex.t;const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#fff';g.shadowColor='#fff';g.shadowBlur=8;g.beginPath();for(let k=0;k<10;k++){const r=k%2?11:28,a=-Math.PI/2+k*Math.PI/5;g.lineTo(32+Math.cos(a)*r,32+Math.sin(a)*r)}g.fill();starTex.t=new THREE.CanvasTexture(c);return starTex.t}
 /* ---------- Landmarks ---------- */
-const TOWER=[65,820];
-// the train track: an oval (stadium) centred on the run, straights at x = +-TRACK_X, ends swinging across the run
-const TRACK_X=120,TRACK_ZC=910,TRACK_HL=180,TRACK_P=4*TRACK_HL+2*Math.PI*TRACK_X;
-function trackPt(s){s=((s%TRACK_P)+TRACK_P)%TRACK_P;const R2=TRACK_X,L=2*TRACK_HL,A=Math.PI*R2;
-  if(s<L)return [R2,TRACK_ZC-TRACK_HL+s,0,1];s-=L;
-  if(s<A){const f=s/R2;return [R2*Math.cos(f),TRACK_ZC+TRACK_HL+R2*Math.sin(f),-Math.sin(f),Math.cos(f)]}s-=A;
-  if(s<L)return [-R2,TRACK_ZC+TRACK_HL-s,0,-1];s-=L;
-  const f=Math.PI+s/R2;return [R2*Math.cos(f),TRACK_ZC-TRACK_HL+R2*Math.sin(f),-Math.sin(f),Math.cos(f)]}
-const nearTrack=(x,z,r)=>{const d=z>TRACK_ZC-TRACK_HL&&z<TRACK_ZC+TRACK_HL?Math.abs(Math.abs(x)-TRACK_X):Math.abs(Math.hypot(x,z-(z>TRACK_ZC?TRACK_ZC+TRACK_HL:TRACK_ZC-TRACK_HL))-TRACK_X);return d<8+r};
+const TOWER=[45,800];
+// the train track: a winding loop. It snakes down the left side, crosses the run by the bed, snakes back up the right
+// side and crosses again near the start, so the train covers a lot of ground and cuts across the run twice.
+const TRACK_CURVE=new THREE.CatmullRomCurve3([[140,640],[175,760],[125,880],[165,1000],[115,1120],[140,1220],[40,1250],[-70,1235],
+  [-150,1170],[-105,1050],[-160,930],[-100,810],[-150,700],[-110,610],[-20,585],[70,600]].map(([x,z])=>new THREE.Vector3(x,0,z)),true,'centripetal');
+const TRACK_P=TRACK_CURVE.getLength();
+function trackPt(s){const u=(((s%TRACK_P)+TRACK_P)%TRACK_P)/TRACK_P,p=TRACK_CURVE.getPointAt(u),t=TRACK_CURVE.getTangentAt(u);return [p.x,p.z,t.x,t.z]}
+const TRACK_SAMPLES=Array.from({length:500},(_,k)=>trackPt(k*TRACK_P/500));
+const nearTrack=(x,z,r)=>TRACK_SAMPLES.some(([px,pz])=>Math.hypot(px-x,pz-z)<8+r);
 function letterTex(ch,bg,fg){return canvasTex((g,S)=>{g.fillStyle=bg;g.fillRect(0,0,S,S);g.fillStyle='rgba(255,255,255,.9)';g.fillRect(14,14,S-28,S-28);g.fillStyle=bg;g.fillRect(24,24,S-48,S-48);g.fillStyle=fg;g.font='400 150px "Lilita One", sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(ch,S/2,S/2+8)},256)}
 let TRAIN=null;
 function blockTower(){
@@ -12041,7 +12062,7 @@ function blockTower(){
   for(let k=0;k<20;k++){const th=deg(200+k*30),r=27,g=new THREE.Group();g.position.set(tx+Math.cos(th)*r,6*k,tz+Math.sin(th)*r);g.rotation.y=-th;root.add(g);
     box(22,4,13,SC[k%5],0,2,0,{r:.35},g);studTop(22,13,SC[k%5],0,6,0,g,4.4)}
   // a fallen block between the track and the wall, as a hiding spot
-  const fb=box(30,30,30,M(0xffffff,{map:letterTex('E','#9246D4','#FFFFFF'),r:.55}),168,0,760);fb.rotation.set(0,.6,0);
+  const fb=box(30,30,30,M(0xffffff,{map:letterTex('E','#9246D4','#FFFFFF'),r:.55}),-188,0,760);fb.rotation.set(0,.6,0);
   // the wooden train track: a long oval down both sides of the run that swings across it at each end
   const wood=M(0xD2A86E,{r:.75}),groove=M(0x8A6236,{r:.9}),n=Math.ceil(TRACK_P/4.2),m4=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),one=new THREE.Vector3(1,1,1);
   const bed=new THREE.InstancedMesh(new THREE.BoxGeometry(4.6,1.6,11),wood,n),gr=new THREE.InstancedMesh(new THREE.BoxGeometry(4.6,.3,1),groove,n*2);
@@ -12051,17 +12072,17 @@ function blockTower(){
   bed.receiveShadow=true;root.add(bed,gr);
   TRAIN=new THREE.Group();root.add(TRAIN);const cars=[];
   const wheel=(g,x,z)=>{const w=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,1.4,14),M(0x1A1430,{r:.5}));w.rotation.x=Math.PI/2;w.position.set(x,2.8,z);g.add(w)};
-  for(let k=0;k<3;k++){const g=new THREE.Group();g.scale.setScalar(1.4);TRAIN.add(g);cars.push(g);const c=[0xE04848,0x4DA8FF,0x3DDC97][k];
+  for(let k=0;k<5;k++){const g=new THREE.Group();g.scale.setScalar(1.4);TRAIN.add(g);cars.push(g);const c=[0xE04848,0x4DA8FF,0x3DDC97,0xFFC93C,0x9B7BFF][k];
     box(18,6,10,c,0,3,0,{r:.4},g);[-6,6].forEach(x=>[-5.4,5.4].forEach(z=>wheel(g,x,z)));
     if(k===0){box(7,10,10,c,-5,9,0,{r:.4},g);box(8,2,11,M(0x1A1430),-5,19,0,null,g);const ch=new THREE.Mesh(new THREE.CylinderGeometry(1.8,2.4,6,10),M(0x1A1430));ch.position.set(5,12,0);g.add(ch);box(2,4,6,M(0xFFC93C),9.5,5,0,null,g);glow(0xFFE6A0,14,.8,g).position.set(10.5,7,0)}
-    else{box(8,8,8,[0xFFC93C,0xFF7AA8][k-1],-3,9,0,{r:.4},g);box(6,6,6,[0x9246D4,0xFFC93C][k-1],4,9,0,{r:.4},g)}
+    else{box(8,8,8,[0xFFC93C,0xFF7AA8,0x4DA8FF,0x3DDC97][k-1],-3,9,0,{r:.4},g);box(6,6,6,[0x9246D4,0xFFC93C,0xE04848,0xFF7AA8][k-1],4,9,0,{r:.4},g)}
     g.traverse(o=>{if(o.isMesh)o.castShadow=true})}
   animated.push(t=>{cars.forEach((g,k)=>{const [x,z,hx,hz]=trackPt(t*60+300-k*27);g.position.set(x,1.6+Math.abs(Math.sin(t*14+k))*.25,z);g.rotation.y=Math.atan2(-hz,hx)})});
 }
-let CAT_POS=null;
+let CAT_POS=null,CAT_G=null,CAT_ALERT=null;
 function cat(){
   // a big orange tabby crouched on the wood ring, tail swishing, bell on its collar (you hear it before you see it)
-  const [x,z]=[-20,1150],g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=.4;root.add(g);CAT_POS=[x,z]; // facing along the ring, toward smaller angles
+  const [x,z]=[-20,1150],g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=.4;root.add(g);CAT_POS=[x,z];CAT_G=g; // facing along the ring, toward smaller angles
   const fur=M(0xF28C28,{r:.85}),dark=M(0xC4601A,{r:.85}),cream=M(0xFFE3C2,{r:.85});
   const body=box(70,28,32,fur,0,16,0,null,g);[-22,-6,10,26].forEach(sx=>box(6,28.4,32.4,dark,sx,16,0,null,g));
   box(40,4,26,cream,6,14,0,null,g);
@@ -12121,7 +12142,7 @@ function babyMonitor(){
 /* ---------- Hazards ---------- */
 // footprints of the big pieces, so toys and hazards stay clear of them
 const FOOT=[[-210,1275,-10,1600],[-210,1610,-134,1690],[106,1330,212,1510],[40,1385,112,1455],[-70,1640,70,1700]];
-const FOOT_C=[[65,820,40],[168,760,26]];
+const FOOT_C=[[45,800,40],[-188,760,26]];
 const blocked=(x,z,r)=>FOOT.some(([x0,z0,x1,z1])=>x>x0-r&&x<x1+r&&z>z0-r&&z<z1+r)||FOOT_C.some(([cx,cz,cr])=>Math.hypot(x-cx,z-cz)<cr+r)||Math.abs(x)>HW-r-6||nearTrack(x,z,r);
 function looseBoards(){
   const plank=M(0x9A7853,{r:.85}),edge=M(0x3A2818,{r:1});
@@ -12134,7 +12155,7 @@ function brick(x,z,c,rot,y=0){const g=new THREE.Group();g.position.set(x,y,z);g.
 function hazards(){
   cat();looseBoards();babyMonitor();
   // mouse traps by the walls, out of the middle of the run
-  mouseTrap(-188,850,.15);mouseTrap(188,1000,-.15);mouseTrap(-188,1150,.1);mouseTrap(190,1290,-.1);
+  mouseTrap(-188,850,.15);mouseTrap(190,880,-.15);mouseTrap(-188,1150,.1);mouseTrap(190,1290,-.1);
   // squeaky ducks and loose toy bricks near the Large toys (they squeak and clack)
   squeakyDuck(50,1360,1);squeakyDuck(85,1500,4);
   const BC=[0xE04848,0xFFC93C,0x4DA8FF,0x3DDC97];[[-30,1000],[50,1180],[40,1300],[0,1440],[60,960]].forEach(([x,z],k)=>{brick(x,z,BC[k%4],k*.9);if(k%2===0)brick(x+1.5,z+.8,BC[(k+2)%4],k*.9+.4,3.8)});
@@ -12166,7 +12187,7 @@ function players(){
   const top=avatar(0,0,0x4DA8FF,0,{cap:0xFF7AA8});top.position.set(TOWER[0]+4,120.2,TOWER[1]);faceToward(top,0,1100);
   // heading out of the safe zone, jumping clear of the train, fleeing the cat, and one at the hallway door
   [[-40,420,0xFFC93C,0xE04848],[30,400,0x9B7BFF,0x3DDC97]].forEach(([x,z,c,cap])=>{const a=avatar(x,z,c,0,{cap});faceToward(a,x,z+100);animateAvatar(a,'run',1.4)});
-  const jump=avatar(100,700,0xFF7AA8,0,{cap:null});faceToward(jump,70,660);animateAvatar(jump,'run',1.6);
+  const jump=avatar(-80,600,0xFF7AA8,0,{cap:null});faceToward(jump,-60,560);animateAvatar(jump,'run',1.6);
   const flee=avatar(30,1100,0x3DDC97,0,{cap:0x1A1430});faceToward(flee,60,1040);animateAvatar(flee,'run',1.6);
   const out=avatar(10,1660,0x4DA8FF,0,{cap:0xFFC93C});faceToward(out,10,1760);animateAvatar(out,'run',1.3);
   // a raider inside mia.ttv's gold vault
@@ -12208,6 +12229,9 @@ function setLights(day){
   HEMI.color.setHex(day?0xFFF3DE:0x4058D8);HEMI.groundColor.setHex(day?0x9A8466:0x15132E);HEMI.intensity=day?1.1:.55;
   AMB.color.setHex(day?0xFFF1DC:0x26348A);AMB.intensity=day?.42:.22;
   S(MOON,day?0:.34);S(SUN,day?.6:0);S(CEILL,day?1.05:0);S(LAMP,day?3:2.4);S(WINDOW,day?.35:1.2);S(MONITOR,day?.45:.9);S(NLIGHT,day?.25:.8);
+  // with the lights on the cat gets aggressive: it leaves its patrol and pounces at the nearest mouse
+  if(CAT_G){if(!CAT_ALERT){CAT_ALERT=textSprite('!',{w:64,h:64,sx:14,sy:14,bg:'rgba(255,77,94,.95)',color:'#FFFFFF',font:'900 56px Nunito, sans-serif'});}
+    if(day){CAT_G.position.set(-40,7,1030);CAT_G.rotation.set(0,Math.atan2(-70,70),.18);CAT_ALERT.position.set(-40,64,1030)}else{CAT_G.position.set(-20,0,1150);CAT_G.rotation.set(0,.4,0)}CAT_ALERT.visible=day}
   CEIL.material.color.setHex(day?0xEFE8D8:0x1B2142);renderer.toneMappingExposure=day?.98:.98}
 
 function buildCams(){
@@ -12216,7 +12240,7 @@ function buildCams(){
     ['lightson','Lights on',{pos:[0,290,110],look:[0,0,1000],day:true,flash:true,cap:'Lights on (photo 1): the same room when the Kid wakes up and sits up. The sage walls, wood and colours read true. Seen from anywhere, it means run.'}],
     ['map','Top-down',{pos:[0,2000,880],look:[0,0,879],top:true,xray:true,cap:'Top-down: the curved wall of 8 homes and the safe strip at the start, then the three floor bands with their toys, the bed and nightstand on the right, the desk on the left (as you run toward the door), and the hallway beyond the door.'}],
     ['homes','The homes',{pos:[0,150,760],look:[0,40,170],cap:'Looking back up the run at the curved start wall: all 8 homes side by side in the wall, wall between each one, fronts open so you can see who has what. The teal strip in front of them is the safe zone.'}],
-    ['safe','Leaving home',{pos:[0,14,330],look:[0,22,1300],cap:'What you see stepping out of the safe zone: the bands of toys getting bigger the further you go, and the hallway door at the end.'}],
+    ['safe','Leaving home',{pos:[0,14,370],look:[0,22,1300],cap:'What you see stepping out of the safe zone: the bands of toys getting bigger the further you go, and the hallway door at the end.'}],
     ['run','Down the run',{pos:[30,9,850],look:[10,30,1700],cap:'Mouse height in the carpet band, looking down the run: the wood and creaky bands ahead, the bed on the right, the desk on the left, the open door straight on.'}],
     ['bases','The row of homes',{pos:BP(5,20,40,-260),look:BP(1,0,40,40),cap:'Along the row of homes from the safe strip: open fronts with torn drywall edges, solid wall between neighbours.'}],
     ['yours','Your base',{pos:BP(3,0,32,-150),look:BP(3,0,30,60),cap:'Your base (Level 2, sock-lined): OSB backing, pine studs and blocking, white cables stapled up to the top plate, an outlet box, a fairy light, your toys on their slots, the matchbox bed, the push-pin lock, the spool wheel and the matchbook Index.'}],
@@ -12224,7 +12248,7 @@ function buildCams(){
     ['across','Across the room',{pos:BP(3,0,15,100),look:BP(6,0,30,20),cap:'From the back of your home, looking out across the safe strip at the homes further round the curve.'}],
     ['rich','Level 7 base',{pos:BP(4,0,32,-150),look:BP(4,0,24,60),cap:'mia.ttv\'s Level 7 golden vault: gold over the framing, coin pillars, 20 slots, and sneakyPete raiding it.'}],
     ['l1','Level 1 base',{pos:BP(1,0,32,-150),look:BP(1,0,24,60),cap:'Bloxer99\'s Level 1 base, locked: brown wool insulation between the studs (photo 3), bottle-cap slots and red bars across the front.'}],
-    ['tower','Block tower and train',{pos:[-60,70,640],look:[60,45,820],cap:'The tower on the left of the carpet band, and the train track: a long oval down both sides of the run that swings across it at each end. Time your crossing; get hit and you drop your toy.'}],
+    ['tower','Block tower and train',{pos:[-70,70,620],look:[50,40,800],cap:'The tower on the left of the carpet band, and the train track: a winding loop that snakes down both sides of the run and cuts across it twice. Five cars long. Time your crossing; get hit and you drop your toy.'}],
     ['cat','The cat',{pos:[-80,18,1060],look:[-10,18,1145],cap:'The cat prowls the wood band. You hear its bell first; get close and it pounces.'}],
     ['bed','The bed',{pos:[110,110,1150],look:[-110,55,1450],cap:'The Giant Kid asleep along the right-hand wall: voxel headboard with glow stars, the quilted blue duvet, his arm hanging over the Large toys, and the nightstand lamp by his feet. The baby monitor\'s green patch counts noise double.'}],
     ['flash','Flashlight at 80+',{pos:[150,140,850],look:[-100,80,1500],flash:true,cap:'At 80+ noise the Kid sits up and sweeps a flashlight back down the run. Get caught in the beam carrying a toy and you drop it.'}],
@@ -12271,7 +12295,7 @@ function init(){
 function resize(){const b=document.getElementById('view').getBoundingClientRect();renderer.setSize(b.width,b.height,false);camera.aspect=b.width/b.height;camera.updateProjectionMatrix()}
 let frames=0;
 function loop(){
-  requestAnimationFrame(loop);const t=clock.getElapsedTime(),dt=Math.min(.05,t-(loop.pt??t));loop.pt=t;roam(dt,t);
+  requestAnimationFrame(loop);const t=clock.getElapsedTime(),dt=Math.min(.05,t-(loop.pt??t));loop.pt=t;roam(dt,t);penRoam(dt,t);
   animated.forEach(f=>f(t));
   ripples.forEach(o=>{const p=((t*.6)+o.o)%1;o.r.scale.setScalar(6+p*26);o.r.material.opacity=.75*(1-p)});
   glows.forEach(g=>{const on=((t+g.ph)%6)<1.2;g.m.userData.mat.emissive.setHex(on?g.c:0);g.m.userData.mat.emissiveIntensity=on?.9:0});

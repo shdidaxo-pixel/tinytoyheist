@@ -735,16 +735,32 @@ function Mutations.apply(model: Model, id: string?)
 end
 
 -- Client: the moving part of a mutation's look. Effects are cheap: no per-frame instance creation.
+-- Workspace.StreamingEnabled is on, so a toy can start animating before all its blocks and effect parts have
+-- streamed in (the showcase, other players' pens). Each effect looks its parts up again, about once a second, until
+-- it has them all, instead of keeping whatever was there on the first frame.
+local RESCAN = 1
+
 function Mutations.animate(model: Model): (((t: number, dt: number) -> ())?, ((t: number) -> number)?)
 	local id = model:GetAttribute("Mutation")
 	local H = heightOf(model)
 	if id == "Rainbow" then
-		local list = {}
-		for _, p in blocksOf(model) do
-			local base = p:GetAttribute("BaseColor")
-			if typeof(base) == "Color3" and not isDark(base) then
-				local q = localPos(model, p)
-				table.insert(list, { p, (q.Y * 0.045 + q.X * 0.025) })
+		local list: { { any } } = {}
+		local seen = -1
+		local scanned = -math.huge
+		local function scan()
+			local blocks = model:FindFirstChild("Blocks")
+			local n = if blocks then #blocks:GetChildren() else 0
+			if n == seen then
+				return
+			end
+			seen = n
+			list = {}
+			for _, p in blocksOf(model) do
+				local base = p:GetAttribute("BaseColor")
+				if typeof(base) == "Color3" and not isDark(base) then
+					local q = localPos(model, p)
+					table.insert(list, { p, (q.Y * 0.045 + q.X * 0.025) })
+				end
 			end
 		end
 		local last = -1
@@ -753,30 +769,54 @@ function Mutations.animate(model: Model): (((t: number, dt: number) -> ())?, ((t
 				return -- 20 colour updates a second is plenty
 			end
 			last = t
+			if t - scanned >= RESCAN then
+				scanned = t
+				scan()
+			end
 			for _, e in list do
 				(e[1] :: BasePart).Color = Color3.fromHSV((t * 0.25 + e[2]) % 1, 0.78, 1)
 			end
 		end,
 			nil
 	elseif id == "Cosmic" then
-		local f = model:FindFirstChild("MutationFx")
-		local pivot = f and f:FindFirstChild("CosmicOrbit")
-		local joint = pivot and pivot:FindFirstChild("Joint") :: Motor6D?
-		if joint then
-			return function(t)
-				joint.Transform = CFrame.Angles(0, t * 1.8, 0)
-			end, nil
-		end
+		local joint: Motor6D? = nil
+		local scanned = -math.huge
+		return function(t)
+			if not joint or not joint.Parent then
+				if t - scanned < RESCAN then
+					return
+				end
+				scanned = t
+				local f = model:FindFirstChild("MutationFx")
+				local pivot = f and f:FindFirstChild("CosmicOrbit")
+				joint = pivot and pivot:FindFirstChild("Joint") :: Motor6D?
+				if not joint then
+					return
+				end
+			end
+			(joint :: Motor6D).Transform = CFrame.Angles(0, t * 1.8, 0)
+		end,
+			nil
 	elseif id == "Glow" then
 		-- a slow glow-stick pulse
-		local f = model:FindFirstChild("MutationFx")
-		local ref = f and f:FindFirstChild("MutationLight") :: ObjectValue?
-		local light = ref and ref.Value :: PointLight?
-		if light then
-			return function(t)
-				light.Brightness = 1.6 * (0.65 + 0.35 * math.sin(t * 2.4))
-			end, nil
-		end
+		local light: PointLight? = nil
+		local scanned = -math.huge
+		return function(t)
+			if not light or not light.Parent then
+				if t - scanned < RESCAN then
+					return
+				end
+				scanned = t
+				local f = model:FindFirstChild("MutationFx")
+				local ref = f and f:FindFirstChild("MutationLight") :: ObjectValue?
+				light = ref and ref.Value :: PointLight?
+				if not light then
+					return
+				end
+			end
+			(light :: PointLight).Brightness = 1.6 * (0.65 + 0.35 * math.sin(t * 2.4))
+		end,
+			nil
 	elseif id == "Bubble" then
 		return nil, function(t)
 			return H * (0.16 + 0.04 * math.sin(t * 1.6))

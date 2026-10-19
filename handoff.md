@@ -39,7 +39,7 @@ Raids and saving still need a two-player test and a published place.
 Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `src/ServerScriptService/Bedroom/`.
 - **Saving** (`PlayerData.luau`): one profile per player (cash, toys `{u, id, m}`, home level, stats, Speed points,
   Index, sets done, rebirths, daily streak, x2 boost), key `p_<UserId>` in the DataStore
-  `TinyToyHeist_v1`, loaded on join, saved, every 60 s and on leave, with a session lock. **The place is unpublished
+  `TinyToyHeist_v1`, loaded on join, saved every 60 s and on leave, with a session lock. **The place is unpublished
   (PlaceId 0), so in Studio it plays on a fresh profile and saves nothing** (Player attribute `DataOffline`). To test
   saving: publish the place and turn on Game Settings > Security > Enable Studio Access to API Services.
 - **Pens** (`Pens.luau`): your saved toys are put in your pen when you join and cleared when you leave. Banking: the

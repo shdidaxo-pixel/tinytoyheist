@@ -6,13 +6,14 @@
 local PenRoam = {}
 
 -- Seconds per walk-and-pause, by toy size (big toys amble)
-PenRoam.LEG = { S = 5, M = 6, L = 7.5, G = 9 } :: { [string]: number }
-PenRoam.WALK = 0.6 -- the part of each leg spent walking
+PenRoam.LEG = { S = 6, M = 7, L = 8.5, G = 10 } :: { [string]: number }
+PenRoam.WALK = 0.7 -- the part of each leg spent walking
 
 local function spot(seed: number, leg: number): (number, number)
-	-- two smooth noise tracks, stretched so the toy uses the whole pen
-	local x = math.noise(seed * 0.1731 + 3.1, leg * 0.37, 0.5) * 2.4
-	local z = math.noise(seed * 0.2917 + 7.7, leg * 0.37, 2.5) * 2.4
+	-- two noise tracks, far enough apart from leg to leg that each walk really goes somewhere (Dylan, 19 Oct: the
+	-- toys didn't move around freely), and not stretched so far that they pile up against the pen's edges
+	local x = math.noise(seed * 0.1731 + 3.1, leg * 0.83, 0.5) * 1.9
+	local z = math.noise(seed * 0.2917 + 7.7, leg * 0.83, 2.5) * 1.9
 	return math.clamp(x, -1, 1), math.clamp(z, -1, 1)
 end
 

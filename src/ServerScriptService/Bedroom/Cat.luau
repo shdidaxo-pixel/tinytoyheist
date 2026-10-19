@@ -1,7 +1,8 @@
 --!strict
 -- The cat. It patrols an ellipse on the wood band. It notices a mouse nearby that's carrying a toy or running, stalks
 -- it and pounces: a hit knocks you over and you drop your toy. With the lights on (the Kid awake) it's aggressive:
--- it sees further, chases anyone, runs faster and pounces sooner. It never comes into the safe zone or the homes.
+-- it hunts every mouse in the run wherever they are, runs nearly as fast as one, pounces from further and rests
+-- less. It never comes into the safe zone or the homes.
 -- The server works out where it is and writes it to the Cat's "Pose" attribute; clients move the model smoothly.
 -- Attributes on Hazards.Cat: State (Patrol, Stalk, Pounce, Rest), Aggressive, Pose (CFrame of its Root).
 
@@ -15,7 +16,8 @@ local Knock = require(script.Parent.Knock)
 local Cat = {}
 local S = MapConfig.SCALE -- the room (and the cat) are shrunk; distances that come from its size shrink too
 Cat.CALM = { sight = 70, stalk = 9, patrol = 8, pounceFrom = 26 * S }
-Cat.ANGRY = { sight = 130, stalk = 20, patrol = 12, pounceFrom = 40 * S }
+-- lights on: it hunts everyone in the run, anywhere, and runs nearly as fast as a mouse (Dylan, 19 Oct)
+Cat.ANGRY = { sight = 3000, stalk = 26, patrol = 18, pounceFrom = 48 * S }
 Cat.CARRY_SIGHT = 1.6 -- a mouse dragging a toy is noticed from further away
 Cat.LEAP_SPEED = 75 * S
 Cat.LEAP_TIME = 0.45

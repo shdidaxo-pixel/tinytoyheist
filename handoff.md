@@ -37,11 +37,12 @@ Raids and saving still need a two-player test and a published place.
 
 ### The game systems (built 19 Oct 2026, afternoon; play-tested solo in Studio)
 Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `src/ServerScriptService/Bedroom/`.
-- **Saving** (`PlayerData.luau`): one profile per player (cash, toys `{u, id, m}`, home level, stats, Speed points,
+- **Saving** (`PlayerData.luau`): one profile per player (cash, toys `{u, id, m, s}` (s = the blanket size it woke at), home level, stats, Speed points,
   Index, sets done, rebirths, daily streak, x2 boost), key `p_<UserId>` in the DataStore
-  `TinyToyHeist_v1`, loaded on join, saved every 60 s and on leave, with a session lock. **The place is unpublished
-  (PlaceId 0), so in Studio it plays on a fresh profile and saves nothing** (Player attribute `DataOffline`). To test
-  saving: publish the place and turn on Game Settings > Security > Enable Studio Access to API Services.
+  `TinyToyHeist_v1`, loaded on join, saved every 60 s and on leave, with a session lock. **Tested (19 Oct): cash,
+  toys and their sizes, home level, stats, daily streak and Index all come back after rejoining.** The place is
+  published as a private experience (placeId 75787601263038, gameId 10771951800; still named "samrtly's Place") with
+  Studio API access on, so Studio play tests read and write Dylan's real save: wipe it before launch.
 - **Pens** (`Pens.luau`): your saved toys are put in your pen when you join and cleared when you leave. Banking: the
   blanket lies in your pen with a countdown (S 5 s, M 20 s, L 60 s), then the toy pops out with the reveal card.
   The mutation is rolled at banking (no re-rolls by rejoining). Your first toy ever is the Plush Bunny.
@@ -68,11 +69,10 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
 - Gotcha: BillboardGuis with `AlwaysOnTop` don't show up in Studio screen captures.
 
 ### Still to do
-1. Publish and test saving.
-2. Shop: passes and products need IDs made on the Roblox site (the shop UI isn't wired).
-3. Gadgets (Flashlight, Decoy, ...), the Pencil Bonk, door lock upgrades, alarm bell.
-4. The wheel's solid sides hide you while you train (see-through sides or a cut-away would fix it).
-5. Other rooms (the hallway door is blocked 150 studs in) and Giant toys: renders first, as always.
+1. Shop: passes and products need IDs made on the Roblox site (the shop UI isn't wired).
+2. Gadgets (Flashlight, Decoy, ...), the Pencil Bonk, door lock upgrades, alarm bell.
+3. The wheel's solid sides hide you while you train (see-through sides or a cut-away would fix it).
+4. Other rooms (the hallway door is blocked 150 studs in) and Giant toys: renders first, as always.
 
 ### How to work here (the rules that bit this session)
 - CLAUDE.md: StyLua + Selene before every commit; small commits with explicit paths; push to origin main.

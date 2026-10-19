@@ -72,6 +72,17 @@ Server: `Homes.rewheel` clamps to `#WHEEL_LOOK`.
 Showcase: `Workspace.Showcase` wheel row is now 3 rows of 9 with each wheel's name; blankets moved to z 140 and toys
 to z 250.
 
+## Tested (19 Oct, Studio Play, Dylan's save)
+
+- Save migrated: Speed 16,000, wheel 1, walk 16; player list shows "16,000".
+- Training: +100 Speed a second on wheel 1 ("+50 Speed" pops every half second), HUD and Upgrades panel tick up
+  live, the wheel spins x2.4 while running; hopping off sets walk speed from Speed (18,400 Speed = walk 18.4).
+- Wheel 20 look built in a real home (`WheelLevel` attribute on the hole, not saved). No errors in the output.
+- Not tested: buying a wheel level in Play (it would spend Dylan's cash).
+
+Captures: `design/studio-wheels/` (`all-wheels.jpg` = every level on one sheet, three per shot; `training-popup.jpg`,
+`upgrades-panel.jpg`). The showcase in Studio was rebuilt with all 25 (Studio change: the place needs saving).
+
 ## For the other sessions
 
 - **SFX** (`Footsteps.luau` wheel loop pitch): the `SpeedPoints` attribute and `GameConfig.SPEED_MAX_POINTS` are gone.

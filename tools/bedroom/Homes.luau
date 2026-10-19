@@ -1,8 +1,9 @@
 --!strict
--- The 8 player homes in the curved wall: open bays in the wall framing (studs, blocking, top plate, OSB at the back),
--- torn drywall up the front edges, cables stapled up the studs, an outlet, a fairy light, the toy pen at the back, and
--- the door props (a toy padlock, the Toy Index box and book, the levelled Speed wheel, an invisible spawn pad), the
--- floating sign and the lock bars.
+-- The 8 player homes in the curved wall: each home's plot is its whole wedge of the curve, side by side with no walls
+-- between them, just a toy fence down each side that changes with the level (Dylan, 19 Oct). The wall framing at the
+-- back (studs, blocking, top plate, OSB), cables stapled up the studs, an outlet, a fairy light, the toy pen at the
+-- back, the door props (a toy padlock, the Toy Index box and book, the levelled Speed wheel, an invisible spawn pad),
+-- props in the back corners, the floating sign and the lock bars.
 --
 -- Home space: origin at the middle of the open front, on the floor; LookVector into the room, +Z back into the wall,
 -- x across (walking in, -x is on your right). MapConfig.BURROW_LAYOUT positions are in this space.
@@ -15,15 +16,16 @@ local Homes = {}
 -- A studded toy-brick material in MaterialService, when the place has one
 Homes.STUDS = "" -- none yet (the AI stud materials came out as grids and bricks)
 
--- How each level looks: fairy light, pen floor and the dressing in the bays
+-- How each level looks: fairy light, pen floor, the plot's floor (floor, ground) and the dressing in the bays. The
+-- toy fence for each level is in Homes.buildFence.
 Homes.LEVEL_LOOK = {
-	{ fairy = 0xFFD27A, pen = 0xC49A6C }, -- 1 Cardboard
-	{ fairy = 0xFFB0C8, pen = 0xF28DB2 }, -- 2 Sock-lined
-	{ fairy = 0xFFE08A, pen = 0x3DA5FF }, -- 3 Toy bricks
-	{ fairy = 0xFF9A4A, pen = 0xC89A62 }, -- 4 Cosy cabin
-	{ fairy = 0xFF8FC8, pen = 0xFF8FC8 }, -- 5 Candy land
-	{ fairy = 0x7AE8FF, pen = 0x1A1430 }, -- 6 Arcade neon
-	{ fairy = 0xFFE07A, pen = 0xFFC93C }, -- 7 Golden vault
+	{ fairy = 0xFFD27A, pen = 0xC49A6C, floor = 0xC9A06A, ground = Enum.Material.Cardboard }, -- 1 Cardboard
+	{ fairy = 0xFFB0C8, pen = 0xF28DB2, floor = 0xF6D2E0, ground = Enum.Material.Fabric }, -- 2 Sock-lined
+	{ fairy = 0xFFE08A, pen = 0x3DA5FF, floor = 0x2E7FD6, ground = Enum.Material.Plastic }, -- 3 Toy bricks
+	{ fairy = 0xFF9A4A, pen = 0xC89A62, floor = 0xB98A58, ground = Enum.Material.WoodPlanks }, -- 4 Cosy cabin
+	{ fairy = 0xFF8FC8, pen = 0xFF8FC8, floor = 0xFFC2DA, ground = Enum.Material.SmoothPlastic }, -- 5 Candy land
+	{ fairy = 0x7AE8FF, pen = 0x1A1430, floor = 0x241C4A, ground = Enum.Material.Fabric }, -- 6 Arcade neon
+	{ fairy = 0xFFE07A, pen = 0xFFC93C, floor = 0xE8B030, ground = Enum.Material.Foil }, -- 7 Golden vault
 }
 
 -- How each Speed wheel level looks, plainest to craziest (names and prices: GameConfig.WHEELS). The ring's segments
@@ -131,7 +133,7 @@ Homes.WHEEL_LOOK = {
 		tag = 0x9BE36A,
 		material = Enum.Material.SmoothPlastic,
 		bones = true,
-		spikes = { colors = { 0x6BBF3A, 0xF0A030 }, length = 1.8, width = 1.8, every = 2 },
+		spikes = { colors = { 0x7BD84A, 0xFFA83A }, length = 1.8, width = 2.6, every = 2 },
 	},
 	{ -- 9 bubble pop: a see-through soap-bubble ring with bubbles stuck round it
 		ring = { 0x9FE8FF, 0xFFB8F0, 0xC8FFB8 },
@@ -280,6 +282,7 @@ Homes.WHEEL_LOOK = {
 		spikes = { colors = { 0xE0482E, 0xFF8A2A }, length = 1.9, width = 1.1, every = 1 },
 		horns = 0xF2E8D0,
 		wings = 0x2E9A4A,
+		wingTip = 0x1E5A2E,
 		torches = true,
 		neon = 0xFF5A1A,
 		particles = { { kind = "ember", color = 0xFF7A2A } },
@@ -366,6 +369,7 @@ Homes.WHEEL_LOOK = {
 		material = Enum.Material.Marble,
 		neonRing = true,
 		wings = 0xFFFFFF,
+		wingTip = 0xFFE07A,
 		halo = 0xFFE07A,
 		neon = 0xFFE07A,
 		particles = { { kind = "sparkle", color = 0xFFF4C8 } },
@@ -407,7 +411,7 @@ Homes.WHEEL_LOOK = {
 		neonRungs = true,
 		rainbowSpokes = true,
 		inner = RAINBOW,
-		spikes = { colors = RAINBOW, length = 1.8, width = 0.9, every = 1, neon = true },
+		spikes = { colors = RAINBOW, length = 1.8, width = 0.9, every = 2, neon = true },
 		gems = { 0xFFFFFF },
 		planet = { body = 0xFFFFFF, glow = true },
 		wings = 0xFFFFFF,
@@ -421,11 +425,36 @@ Homes.WHEEL_LOOK = {
 }
 
 local PINE, PINE_DARK, OSB, GOLD = 0xF2D3A4, 0xD8B07A, 0xDDBB88, 0xFFC93C
-local DRYWALL = 0xF2EFE8
 local RED = 0xFF4D5E
 
--- Bays between the back studs: centre x and width
-local BAYS = { { -47, 26 }, { 0, 52 }, { 47, 26 } }
+-- The studs across the back wall (x in home space): the middle pair, a pair where the old side walls were, and one
+-- just inside each corner of the wider plot
+function Homes.backStuds(MapConfig: any): { number }
+	local corner = MapConfig.homeHalfWidth(MapConfig.BURROW_DEPTH - 10) - 4.5
+	return { -corner, -64, -30, 30, 64, corner }
+end
+
+-- The bays between the back studs, left to right: centre x and width (the middle three are the old ones)
+function Homes.bays(MapConfig: any): { { number } }
+	local corner = MapConfig.homeHalfWidth(MapConfig.BURROW_DEPTH - 10) - 4.5
+	local outer = (corner - 4 - 68) / 2
+	return { { -(68 + outer), 2 * outer }, { -47, 26 }, { 0, 52 }, { 47, 26 }, { 68 + outer, 2 * outer } }
+end
+
+-- A fence's own space: along one edge of the plot (side 1 = +x, -1 = -x), FENCE_INSET inside it, on the floor at the
+-- front; +Z runs along the fence to the back wall, and -side * X points into the home.
+function Homes.fenceFrame(MapConfig: any, frame: CFrame, side: number): CFrame
+	local half = math.rad(MapConfig.HOME_STEP / 2)
+	local inset = MapConfig.FENCE_INSET
+	local x = side * MapConfig.homeHalfWidth(0) - side * inset * math.cos(half)
+	return frame * CFrame.new(x, MapConfig.BURROW_FLOOR_LIFT, inset * math.sin(half)) * CFrame.Angles(0, side * half, 0)
+end
+
+-- How long a fence is, from the front to just short of the back wall
+function Homes.fenceLength(MapConfig: any, _side: number): number
+	local half = math.rad(MapConfig.HOME_STEP / 2)
+	return (MapConfig.BURROW_DEPTH - MapConfig.FENCE_INSET * math.sin(half)) / math.cos(half) - 2
+end
 
 local function variant(name: string): string?
 	return if game:GetService("MaterialService"):FindFirstChild(name, true) then name else nil
@@ -433,7 +462,7 @@ end
 
 -- Build home `index` into `parent` at `level`. Returns the home model (Hole1..8).
 function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, level: number): Model
-	local BW, BD, H = MapConfig.BURROW_WIDTH, MapConfig.BURROW_DEPTH, MapConfig.WALL_HEIGHT
+	local BD, H = MapConfig.BURROW_DEPTH, MapConfig.WALL_HEIGHT
 	local LIFT = MapConfig.BURROW_FLOOR_LIFT
 	local frame = MapConfig.homeFrame(index)
 	local part, block = Kit.part, Kit.block
@@ -448,47 +477,43 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 		Locked = false,
 	})
 
-	-- Shell: subfloor, OSB back sheathing, a side stud each side (they are the home's side walls), two back studs,
-	-- staggered blocking between them and the top plate you see when you look up
+	-- Shell: the plot is the home's whole wedge of the curve, edge to edge with its neighbours (no walls between homes;
+	-- Dylan, 19 Oct: "fenced off" instead). A wedge subfloor, the OSB back sheathing across the full width, studs and
+	-- staggered blocking at the back, the top plate you see when you look up, and an invisible wall along each fence.
 	local shell = Kit.folder(home, "Shell")
-	block(shell, "Floor", BW + 10, 1, BD, frame, 0, LIFT - 1, BD / 2, OSB, {
+	local hw = MapConfig.homeHalfWidth
+	local function edge(side: number, z: number): Vector3
+		return at(side * hw(z), 0, z).Position
+	end
+	Kit.quadWall(shell, "Floor", edge(1, 0), edge(-1, 0), edge(-1, BD + 2), edge(1, BD + 2), LIFT - 1, 1, OSB, {
 		material = Enum.Material.Wood,
-		variant = nil,
 		shadow = false,
 		attributes = { FloorType = "Burrow", Noise = 0 },
 	})
-	block(shell, "Sheathing", BW + 10, H, 2, frame, 0, 0, BD + 1, OSB, {
-		material = Enum.Material.Wood,
-		variant = nil,
-	})
-	for _, side in { -1, 1 } do
-		block(shell, "SideStud", MapConfig.HOME_STUD, H, BD, frame, side * (BW / 2 + 2.5), 0, BD / 2, PINE, {
-			material = Enum.Material.Wood,
-		})
-	end
-	for _, x in { -30, 30 } do
+	block(shell, "Sheathing", 2 * hw(BD + 2) + 1, H, 2, frame, 0, 0, BD + 1, OSB, { material = Enum.Material.Wood })
+	for _, x in Homes.backStuds(MapConfig) do
 		block(shell, "BackStud", 8, H, 10, frame, x, 0, BD - 5, PINE, { material = Enum.Material.Wood })
 	end
-	for k, bay in BAYS do
+	for k, bay in Homes.bays(MapConfig) do
 		for _, y in { 120, 240 } do
-			local lift = if k == 2 then 6 else 0
+			local lift = if k % 2 == 1 then 6 else 0
 			block(shell, "Blocking", bay[2], 8, 10, frame, bay[1], y + lift, BD - 5, PINE_DARK, {
 				material = Enum.Material.Wood,
 			})
 		end
 	end
-	block(shell, "TopPlate", BW + 10, 8, BD, frame, 0, H - 8, BD / 2, PINE_DARK, { material = Enum.Material.Wood })
-
-	-- Torn drywall up both front edges: a fixed jagged pattern per home
-	local drywall = Kit.folder(shell, "Drywall")
-	for _, q in { -1, 1 } do
-		for y = 0, H - 14, 14 do
-			local w = 3 + ((y * 7 + (index - 1) * 5 + (q + 1) * 3) % 9)
-			block(drywall, "Drywall", w, 14, 4, frame, q * (BW / 2 + 5 - w / 2), y, 1, DRYWALL, {
-				material = Enum.Material.Plaster,
-				shadow = false,
-			})
-		end
+	Kit.quadWall(shell, "TopPlate", edge(1, 0), edge(-1, 0), edge(-1, BD), edge(1, BD), H - 8, 8, PINE_DARK, {
+		material = Enum.Material.Wood,
+	})
+	-- the fences are only dressing: these keep players (and raiders) from climbing from one home into the next
+	for _, side in { -1, 1 } do
+		local fence = Homes.fenceFrame(MapConfig, frame, side)
+		local length = Homes.fenceLength(MapConfig, side)
+		Kit.block(shell, "FenceWall", 2, MapConfig.FENCE_WALL_HEIGHT, length, fence, 0, 0, length / 2, RED, {
+			transparency = 1,
+			query = false,
+			shadow = false,
+		})
 	end
 
 	-- Cables: two white runs stapled up the back, one feeding the outlet; a yellow one sagging across the studs
@@ -592,10 +617,12 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 	})
 	Homes.setSign(sign, "EMPTY HOME", "Lv " .. level)
 
-	-- Lock bars across the open front and a barrier behind them; hidden until the door is locked
+	-- Lock bars across the open front (between the two fences) and a barrier behind them; hidden until the door is locked
 	local bars = Kit.folder(home, "LockBars")
-	for k = 0, 11 do
-		Kit.disc(bars, "Bar", 0.8, 30, at(55 - k * 10, 15, -1), RED, {
+	local front = hw(0) - MapConfig.FENCE_INSET - 4
+	local count = math.floor(2 * front / 10)
+	for k = 0, count do
+		Kit.disc(bars, "Bar", 0.8, 30, at(front - k * 2 * front / count, 15, -1), RED, {
 			material = Enum.Material.Neon,
 			collide = false,
 			transparency = 1,
@@ -604,7 +631,7 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 	block(
 		bars,
 		"Bar",
-		BW,
+		2 * front,
 		1.6,
 		1.6,
 		frame,
@@ -614,7 +641,7 @@ function Homes.build(Kit: any, MapConfig: any, parent: Instance, index: number, 
 		RED,
 		{ material = Enum.Material.Neon, collide = false, transparency = 1 }
 	)
-	block(home, "DoorBarrier", BW + 10, 60, 2, frame, 0, 0, -1.5, RED, { collide = false, transparency = 1 })
+	block(home, "DoorBarrier", 2 * hw(0), 60, 2, frame, 0, 0, -1.5, RED, { collide = false, transparency = 1 })
 	Homes.setLocked(home, false) -- opens the padlock's shackle
 
 	Homes.applyLevel(Kit, MapConfig, home, level)
@@ -805,19 +832,22 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 	local gold = level == 7
 	home:SetAttribute("Level", level)
 
-	for _, name in { "Dressing", "FairyLight", "PenFloor", "TrainingWheel" } do
+	for _, name in { "Dressing", "FairyLight", "PenFloor", "TrainingWheel", "Fence" } do
 		local old = home:FindFirstChild(name)
 		if old then
 			old:Destroy()
 		end
 	end
 
-	-- the framing turns gold in the vault
+	-- the plot's floor takes the level's look, and the framing turns gold in the vault
 	local shell = home:FindFirstChild("Shell")
 	if shell then
 		for _, p in shell:GetChildren() do
 			if p:IsA("BasePart") then
-				if p.Name == "SideStud" or p.Name == "BackStud" then
+				if p.Name == "Floor" then
+					p.Color = rgb(look.floor)
+					p.Material = look.ground
+				elseif p.Name == "BackStud" then
 					p.Color = rgb(if gold then GOLD else PINE)
 					p.Material = if gold then Enum.Material.Foil else Enum.Material.Wood
 				elseif p.Name == "Sheathing" then
@@ -835,7 +865,7 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 	if level == 1 or level == 3 then
 		-- batts of insulation stacked up each bay: brown mineral wool (Dylan's photo) or pink
 		local colors = if level == 1 then { 0xA88A62, 0x8E7350, 0x9C7E58 } else { 0xF2A6B8, 0xE58BA1, 0xEC98AD }
-		for b, bay in BAYS do
+		for b, bay in Homes.bays(MapConfig) do
 			local row = 0
 			for y = 0, H - 30, 20 do
 				local depth = 4 + ((row * 7 + b * 3 + index) % 4)
@@ -861,7 +891,7 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 	elseif level == 2 then
 		-- odd socks stretched over the bays
 		local sockColors = { 0xF28DB2, 0x7FD6E8, 0xFFD95A }
-		for b, bay in BAYS do
+		for b, bay in Homes.bays(MapConfig) do
 			for k = 0, 9 do
 				block(
 					dressing,
@@ -873,14 +903,14 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 					bay[1],
 					2 + k * 11,
 					back - 1.5,
-					if k % 2 == 0 then sockColors[b] else 0xFFFFFF,
+					if k % 2 == 0 then sockColors[(b - 1) % 3 + 1] else 0xFFFFFF,
 					{
 						material = Enum.Material.Fabric,
 						shadow = false,
 					}
 				)
 			end
-			block(dressing, "SockCuff", bay[2], 6, 2.2, frame, bay[1], 112, back - 1.5, sockColors[b], {
+			block(dressing, "SockCuff", bay[2], 6, 2.2, frame, bay[1], 112, back - 1.5, sockColors[(b - 1) % 3 + 1], {
 				material = Enum.Material.Fabric,
 				shadow = false,
 			})
@@ -928,6 +958,8 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 			end
 		end
 	end
+
+	Homes.cornerProps(Kit, MapConfig, dressing, frame, level)
 
 	-- Fairy light hanging off the yellow cable, in the level's colour
 	local fairy = Kit.folder(home, "FairyLight")
@@ -1011,8 +1043,456 @@ function Homes.applyLevel(Kit: any, MapConfig: any, home: Model, level: number)
 		end
 	end
 
+	-- the toy fence down both sides, new for every level
+	Homes.buildFence(Kit, MapConfig, home, frame, level)
+
 	-- the wheel has its own level (the home's WheelLevel attribute) when game code has set one
 	Homes.buildWheel(Kit, MapConfig, home, frame, (home:GetAttribute("WheelLevel") :: number?) or level)
+end
+
+-- Something in each back corner of the plot (outside the pen) that gets grander with the level: a paper ball, sock
+-- baskets, brick towers, lantern cabins, lollipop trees, arcade cabinets, coin piles and a trophy.
+function Homes.cornerProps(Kit: any, MapConfig: any, parent: Instance, frame: CFrame, level: number)
+	local LIFT = MapConfig.BURROW_FLOOR_LIFT
+	local function o(extra: { [string]: any }?): any
+		local t: { [string]: any } = { collide = false }
+		for k, v in extra or {} do
+			t[k] = v
+		end
+		return t
+	end
+	local BRICKS = { 0xE04848, 0xFFC93C, 0x4DA8FF, 0x3DDC97 }
+	for s, cx in { -82, 82 } do
+		local c = frame * CFrame.new(cx, LIFT, 148)
+		local function block(
+			name: string,
+			w: number,
+			h: number,
+			d: number,
+			x: number,
+			y: number,
+			z: number,
+			color: number,
+			extra: { [string]: any }?
+		)
+			return Kit.block(parent, name, w, h, d, c, x, y, z, color, o(extra))
+		end
+		if level == 1 then
+			Kit.ball(
+				parent,
+				"PaperBall",
+				8,
+				(c * CFrame.new(0, 7, 0)).Position,
+				0xF4F1E8,
+				o({ material = Enum.Material.Plaster })
+			)
+		elseif level == 2 then
+			Kit.disc(
+				parent,
+				"Basket",
+				13,
+				16,
+				c * CFrame.new(0, 8, 0),
+				0xD9B27C,
+				o({ material = Enum.Material.Fabric })
+			)
+			for k, color in { 0xF28DB2, 0x7FD6E8, 0xFFD95A } do
+				local sock = c * CFrame.new(-6 + (k - 1) * 6, 19, 0) * CFrame.Angles(0, 0, (k - 2) * 0.4)
+				Kit.part(parent, "Sock", Vector3.new(5, 10, 9), sock, color, o({ material = Enum.Material.Fabric }))
+			end
+		elseif level == 3 then
+			for k = 0, 6 do
+				block(
+					"Brick",
+					19,
+					10,
+					19,
+					((k % 3) - 1) * 1.5,
+					k * 10,
+					0,
+					BRICKS[(k + s) % 4 + 1],
+					{ material = Enum.Material.Plastic }
+				)
+			end
+		elseif level == 4 then
+			block("Cabin", 22, 26, 16, 0, 0, 0, 0xD8B07A, { material = Enum.Material.WoodPlanks })
+			block("Roof", 26, 5, 20, 0, 26, 0, 0xC0392B, { material = Enum.Material.Wood })
+			block("Window", 8, 8, 0.6, 0, 9, -8.3, 0xFFC070, { material = Enum.Material.Neon })
+		elseif level == 5 then
+			Kit.disc(parent, "Stick", 1.6, 55, c * CFrame.new(0, 27.5, 0), 0xFFFFFF, o())
+			local candy = c * CFrame.new(0, 62, 0) * CFrame.Angles(0, math.pi / 2, 0)
+			Kit.part(parent, "Lollipop", Vector3.new(3, 34, 34), candy, 0xFF5FA8, o({ shape = Enum.PartType.Cylinder }))
+			Kit.part(parent, "Swirl", Vector3.new(3.4, 22, 22), candy, 0xFFFFFF, o({ shape = Enum.PartType.Cylinder }))
+			Kit.part(parent, "Swirl", Vector3.new(3.8, 10, 10), candy, 0x7AE8FF, o({ shape = Enum.PartType.Cylinder }))
+			for k, color in { 0x3DDC97, 0xFFD95A, 0x9B7BFF, 0xFF5FA8 } do
+				local a = k * math.pi / 2
+				Kit.ball(
+					parent,
+					"Gumdrop",
+					3,
+					(c * CFrame.new(math.cos(a) * 8, 2.5, math.sin(a) * 8)).Position,
+					color,
+					o()
+				)
+			end
+		elseif level == 6 then
+			block("Arcade", 22, 42, 19, 0, 0, 0, 0x2A1F55)
+			block("Screen", 16, 12, 0.6, 0, 22, -9.8, 0x22D3EE, { material = Enum.Material.Neon })
+			block("Marquee", 20, 4, 0.6, 0, 36, -9.8, 0xFF5FA8, { material = Enum.Material.Neon })
+			block("Stick", 1.6, 6, 1.6, 0, 16, -8, 0x1A1430)
+			Kit.ball(parent, "Knob", 2, (c * CFrame.new(0, 23, -8)).Position, 0xFF4D5E, o())
+		elseif level == 7 then
+			for k = 0, 19 do
+				local a, r = k * 2.4, (k % 5) * 1.8
+				Kit.disc(
+					parent,
+					"Coin",
+					3,
+					1.2,
+					c * CFrame.new(math.cos(a) * r, 0.6 + (k // 5) * 1.2, math.sin(a) * r),
+					GOLD,
+					o({
+						material = Enum.Material.Foil,
+					})
+				)
+			end
+			if cx > 0 then
+				Kit.disc(parent, "Trophy", 6, 4, c * CFrame.new(0, 8, 0), 0x7A4A10, o())
+				Kit.disc(parent, "Trophy", 2, 12, c * CFrame.new(0, 16, 0), GOLD, o({ material = Enum.Material.Foil }))
+				local cup = Kit.disc(
+					parent,
+					"Trophy",
+					8,
+					14,
+					c * CFrame.new(0, 29, 0),
+					GOLD,
+					o({ material = Enum.Material.Foil })
+				)
+				Kit.light(cup, "PointLight", 0xFFE07A, 0.8, 24)
+			end
+		end
+	end
+end
+
+-- The toy fence down both sides of the plot, new for every level (Dylan picked "a new fence every level", 19 Oct):
+-- popsicle sticks, clothes pegs and odd socks, toy bricks, a pencil palisade, candy canes, glow sticks, the gold vault.
+-- A corner post at the front of each fence carries the level's topper and stands taller. It's all dressing (nothing
+-- collides; Shell.FenceWall keeps players out). Every part has U, how far along its fence it is (0 at the front, 1 at
+-- the back, 1.1 for the corner post), which the client's upgrade build-up uses to drop the pieces in one by one.
+function Homes.buildFence(Kit: any, MapConfig: any, home: Model, frame: CFrame, level: number): Folder
+	level = math.clamp(level, 1, #MapConfig.HOLE_LEVELS)
+	local folder = Kit.folder(home, "Fence")
+	local H = MapConfig.HOLE_LEVELS[level].fenceHeight
+	local BRICKS = { 0xE04848, 0xFFC93C, 0x4DA8FF, 0x3DDC97 }
+	local NEON = { 0x22D3EE, 0xFF5FA8, 0x9B7BFF, 0xB9F64A }
+	local GEMS = { 0xFF4D5E, 0x7AE8FF, 0x5BE36A, 0xB45CFF }
+	local WOOD, PLASTIC, NEONM, FOIL =
+		Enum.Material.Wood, Enum.Material.SmoothPlastic, Enum.Material.Neon, Enum.Material.Foil
+	for _, side in { -1, 1 } do
+		local f = Homes.fenceFrame(MapConfig, frame, side)
+		local L = Homes.fenceLength(MapConfig, side)
+		local ins = -side -- toward the middle of the home
+		-- walking in, +x is on your left
+		local group = Kit.folder(folder, if side == 1 then "Left" else "Right")
+		local u = 0
+		local function o(extra: { [string]: any }?): any
+			local t: { [string]: any } = { collide = false, material = PLASTIC }
+			for k, v in extra or {} do
+				t[k] = v
+			end
+			return t
+		end
+		local function tagged(p: BasePart): BasePart
+			p:SetAttribute("U", u)
+			return p
+		end
+		local function box(
+			name: string,
+			w: number,
+			h: number,
+			d: number,
+			x: number,
+			y: number,
+			z: number,
+			color: number,
+			extra: { [string]: any }?
+		): BasePart
+			return tagged(Kit.block(group, name, w, h, d, f, x, y, z, color, o(extra)))
+		end
+		local function cyl(
+			name: string,
+			r: number,
+			h: number,
+			x: number,
+			y: number,
+			z: number,
+			color: number,
+			extra: { [string]: any }?
+		): BasePart
+			return tagged(Kit.disc(group, name, r, h, f * CFrame.new(x, y + h / 2, z), color, o(extra)))
+		end
+		local function ball(
+			name: string,
+			r: number,
+			x: number,
+			y: number,
+			z: number,
+			color: number,
+			extra: { [string]: any }?
+		): BasePart
+			return tagged(Kit.ball(group, name, r, (f * CFrame.new(x, y, z)).Position, color, o(extra)))
+		end
+		local function across(
+			name: string,
+			size: Vector3,
+			x: number,
+			y: number,
+			z: number,
+			color: number,
+			extra: { [string]: any }?
+		): BasePart
+			-- a cylinder lying across the fence (its round face looks into the home)
+			local e = o(extra)
+			e.shape = Enum.PartType.Cylinder
+			return tagged(Kit.part(group, name, size, f * CFrame.new(x, y, z), color, e))
+		end
+		local function along(z: number)
+			u = math.clamp(z / L, 0, 1)
+		end
+
+		if level == 1 then
+			-- popsicle sticks with round tops on two cross sticks, and a strip of tape here and there
+			local k = 0
+			for z = 9.6, L - 3, 7 do
+				along(z)
+				local color = if k % 3 == 0 then 0xDDBB80 else 0xE8C890
+				box("Stick", 1.3, H - 2.6, 5.1, 0, 0, z, color, { material = WOOD })
+				across("StickTop", Vector3.new(1.3, 5.1, 5.1), 0, H - 2.6, z, color, { material = WOOD })
+				k += 1
+			end
+			u = 0.5
+			box("Rail", 1.3, 4.2, L - 6, ins * 1.4, 5.6, L / 2 + 1, 0xDDBB80, { material = WOOD })
+			box("Rail", 1.3, 4.2, L - 6, ins * 1.4, H - 9.6, L / 2 + 1, 0xDDBB80, { material = WOOD })
+			for z = 32, L - 10, 74 do
+				along(z)
+				box("Tape", 1.6, 11, 6.4, ins * 2.4, H - 13.6, z, 0xE8E2CC, { transparency = 0.15 })
+			end
+		elseif level == 2 then
+			-- clothes pegs standing up in four plastic colours, a line along the top with odd socks pegged on
+			local PEGS = { 0xF28DB2, 0x7FD6E8, 0xFFD95A, 0xFFFFFF }
+			local k = 0
+			for z = 8, L - 3, 5.4 do
+				along(z)
+				local color = PEGS[k % 4 + 1]
+				box("Peg", 1.4, H, 2.2, -0.9, 0, z, color)
+				box("Peg", 1.4, H, 2.2, 0.9, 0, z, color)
+				box("Spring", 3.8, 2.2, 2.9, 0, H * 0.45, z, 0xC0C6D0, { material = Enum.Material.Metal })
+				k += 1
+			end
+			u = 0.5
+			box("Rail", 1.6, 3.2, L - 6, 0, 6.4, L / 2 + 1, 0xFFFFFF)
+			box("Line", 0.5, 0.5, L - 6, ins * 1, H + 1.6, L / 2 + 1, 0xFFFFFF)
+			k = 0
+			for z = 20, L - 12, 30 do
+				along(z)
+				local color = ({ 0xF28DB2, 0x7FD6E8, 0xFFD95A, 0x9B7BFF })[k % 4 + 1]
+				box("Sock", 1.1, 9.6, 5.1, ins * 1.9, H - 9.6, z, color, { material = Enum.Material.Fabric })
+				box("Sock", 1.1, 3.8, 8, ins * 1.9, H - 11.4, z + 1.5, color, { material = Enum.Material.Fabric })
+				box("SockCuff", 1.3, 2, 5.4, ins * 1.9, H - 1.6, z, 0xFFFFFF, { material = Enum.Material.Fabric })
+				k += 1
+			end
+		elseif level == 3 then
+			-- a low wall of toy bricks, studs on top
+			local rows = 3
+			for row = 0, rows - 1 do
+				local k = 0
+				for z = 3 + (row % 2) * 6.4, L - 12, 12.8 do
+					along(z + 6.4)
+					local color = BRICKS[(k + row * 3) % 4 + 1]
+					box("Brick", 6.4, 7.7, 12.5, 0, row * 7.7, z + 6.4, color, { material = Enum.Material.Plastic })
+					if row == rows - 1 then
+						for _, dz in { -3.2, 3.2 } do
+							cyl(
+								"Stud",
+								1.9,
+								1.6,
+								0,
+								rows * 7.7,
+								z + 6.4 + dz,
+								color,
+								{ material = Enum.Material.Plastic }
+							)
+						end
+					end
+					k += 1
+				end
+			end
+		elseif level == 4 then
+			-- a palisade of sharpened square pencils, points up, with a wooden ruler across them
+			local BODY = { 0xF2C230, 0xF2C230, 0xF2C230, 0xE04848, 0x3A6FD8, 0x3DDC97 }
+			local k = 0
+			for z = 7, L - 2, 6 do
+				along(z)
+				local h = H - 4.8 + ((k * 7) % 3) * 1.6
+				box("Eraser", 2.6, 2.6, 2.6, 0, 0, z, 0xFF8FA8)
+				box("Pencil", 3.8, h - 9, 3.8, 0, 2.6, z, BODY[(k * 5) % 6 + 1])
+				box("Tip", 3, 2.4, 3, 0, h - 6.4, z, 0xF1D2A0, { material = WOOD })
+				box("Tip", 1.9, 2.4, 1.9, 0, h - 4, z, 0xF1D2A0, { material = WOOD })
+				box("Lead", 0.9, 1.6, 0.9, 0, h - 1.6, z, 0x2A2A34)
+				k += 1
+			end
+			u = 0.5
+			local ruler = box("Ruler", 1.3, 6.4, L - 6, ins * 3, 12.8, L / 2 + 1, 0xF4E3B2, { material = WOOD })
+			Kit.text(ruler, "1       2       3       4       5       6       7       8       9      10", {
+				face = if ins > 0 then Enum.NormalId.Right else Enum.NormalId.Left,
+				color = Color3.fromRGB(90, 58, 26),
+				pixelsPerStud = 6,
+			})
+		elseif level == 5 then
+			-- candy canes with candy rails and gumdrops
+			local k = 0
+			for z = 8, L - 3, 21 do
+				along(z)
+				cyl("Cane", 2.1, H, 0, 0, z, 0xFFFFFF)
+				for y = 3, H - 4, 6.4 do
+					cyl("Stripe", 2.25, 2.4, 0, y, z, 0xFF3B6B)
+				end
+				local hook = if k % 2 == 0 then 1 else -1
+				box("Hook", 3.4, 3.4, 7.8, 0, H, z + hook * 2.2, 0xFFFFFF)
+				box("Hook", 3.4, 4.4, 3.4, 0, H - 3, z + hook * 4.6, 0xFF3B6B)
+				k += 1
+			end
+			u = 0.5
+			box("Rail", 2.6, 3.8, L - 6, 0, 8, L / 2 + 1, 0xFF8FC8)
+			box("Rail", 2.6, 3.8, L - 6, 0, H - 11, L / 2 + 1, 0x7AE8FF)
+			k = 0
+			for z = 18.5, L - 6, 21 do
+				along(z)
+				ball("Gumdrop", 2.6, 0, H - 11 + 5.8, z, ({ 0x3DDC97, 0xFFD95A, 0x9B7BFF, 0xFF5FA8 })[k % 4 + 1])
+				k += 1
+			end
+		elseif level == 6 then
+			-- glow sticks in a dark frame, an LED strip along the top
+			local k = 0
+			for z = 5, L - 2, 4.8 do
+				along(z)
+				cyl("GlowStick", 1.2, H - 4.4, 0, 1.9, z, NEON[k % 4 + 1], { material = NEONM })
+				k += 1
+			end
+			u = 0.5
+			box("Frame", 4.2, 2.6, L - 4, 0, 0, L / 2 + 1, 0x1A1430)
+			box("Frame", 4.2, 2.6, L - 4, 0, H - 2.6, L / 2 + 1, 0x1A1430)
+			box("LED", 1.9, 1.4, L - 4, 0, H, L / 2 + 1, 0xFFE066, { material = NEONM })
+		elseif level == 7 then
+			-- the vault: coin-stack posts, gold bars between them, gold rulers and gems
+			local k = 0
+			for z = 8, L - 3, 25.6 do
+				along(z)
+				local n = 0
+				for y = 0, H - 3.2, 3.4 do
+					local jitter = ((n * 7) % 3 - 1) * 0.3
+					cyl("Coin", 4.5, 3.2, jitter, y, z + jitter, GOLD, { material = FOIL })
+					n += 1
+				end
+				if z + 25.6 < L - 3 then
+					for j = 1, 4 do
+						along(z + j * 5.1)
+						box("GoldBar", 1.9, H - 6.4, 1.9, 0, 1.6, z + j * 5.1, 0xFFD86A, { material = FOIL })
+					end
+					along(z + 12.8)
+					local gem = f * CFrame.new(ins * 2.4, H - 7.2, z + 12.8) * CFrame.Angles(0.6, math.pi / 4, 0.6)
+					tagged(
+						Kit.part(
+							group,
+							"Gem",
+							Vector3.new(2.4, 2.4, 2.4),
+							gem,
+							GEMS[k % 4 + 1],
+							o({ material = NEONM })
+						)
+					)
+				end
+				k += 1
+			end
+			u = 0.5
+			box("Ruler", 2.6, 4.8, L - 6, 0, 6.4, L / 2 + 1, 0xFFD54A, { material = FOIL })
+			box("Ruler", 2.6, 4.8, L - 6, 0, H - 9.6, L / 2 + 1, 0xFFD54A, { material = FOIL })
+		end
+
+		-- The corner post at the front, taller each level, with the level's topper
+		u = 1.1
+		local P = H + 16 + level * 3
+		local x, z = ins * 1.9, 2.4
+		if level == 1 then
+			box("Post", 6.7, P, 6.7, x, 0, z, 0xE8C890, { material = WOOD })
+			cyl("BottleCap", 5.8, 2.6, x, P, z, 0xE04848, { material = Enum.Material.Metal })
+		elseif level == 2 then
+			box("Post", 6.7, P, 6.7, x, 0, z, 0xF28DB2, { material = Enum.Material.Fabric })
+			ball("PomPom", 5.4, x, P + 4.8, z, 0xFFD95A, { material = Enum.Material.Fabric })
+		elseif level == 3 then
+			local top = 0
+			for y = 0, P - 7.7, 7.7 do
+				box("Post", 10.2, 7.7, 10.2, x, y, z, BRICKS[(y // 7.7) % 4 + 1], { material = Enum.Material.Plastic })
+				top = y + 7.7
+			end
+			for _, d in { { -2.5, -2.5 }, { 2.5, -2.5 }, { -2.5, 2.5 }, { 2.5, 2.5 } } do
+				cyl("Stud", 1.9, 1.6, x + d[1], top, z + d[2], 0x3DDC97, { material = Enum.Material.Plastic })
+			end
+		elseif level == 4 then
+			-- a giant pencil
+			box("Eraser", 9.6, 5, 9.6, x, 0, z, 0xFF8FA8)
+			box("Band", 10, 2.6, 10, x, 5, z, 0xC0C6D0, { material = Enum.Material.Metal })
+			box("Post", 9.6, P - 7.6, 9.6, x, 7.6, z, 0xF2C230)
+			box("Tip", 7.4, 4, 7.4, x, P, z, 0xF1D2A0, { material = WOOD })
+			box("Tip", 5, 4, 5, x, P + 4, z, 0xF1D2A0, { material = WOOD })
+			box("Tip", 2.6, 3, 2.6, x, P + 8, z, 0xF1D2A0, { material = WOOD })
+			box("Lead", 1.3, 2, 1.3, x, P + 11, z, 0x2A2A34)
+		elseif level == 5 then
+			cyl("Post", 3.4, P, x, 0, z, 0xFFFFFF)
+			for y = 4, P - 5, 9.6 do
+				cyl("Stripe", 3.55, 3.2, x, y, z, 0xFF3B6B)
+			end
+			cyl("Stick", 1, 9.6, x, P, z, 0xFFFFFF)
+			across("Lollipop", Vector3.new(2.6, 19, 19), x, P + 19, z, 0xFF5FA8)
+			across("Swirl", Vector3.new(3, 12, 12), x, P + 19, z, 0xFFFFFF)
+			across("Swirl", Vector3.new(3.4, 5, 5), x, P + 19, z, 0x7AE8FF)
+		elseif level == 6 then
+			box("Post", 6.4, P, 6.4, x, 0, z, 0x1A1430)
+			box("Band", 7, 1.6, 7, x, P * 0.3, z, 0x22D3EE, { material = NEONM })
+			box("Band", 7, 1.6, 7, x, P * 0.6, z, 0xFF5FA8, { material = NEONM })
+			local star = ball("Star", 3.2, x, P + 6, z, 0xFFE066, { material = NEONM })
+			box("Star", 1.9, 12, 1.9, x, P, z, 0xFFE066, { material = NEONM })
+			box("Star", 1.9, 1.9, 12, x, P + 5, z, 0xFFE066, { material = NEONM })
+			Kit.light(star, "PointLight", 0xFFE066, 0.8, 22)
+		else
+			for y = 0, P - 3.2, 3.4 do
+				cyl("Coin", 5.1, 3.2, x + ((y // 3.4) % 3 - 1) * 0.3, y, z, GOLD, { material = FOIL })
+			end
+			cyl("Crown", 5.8, 3.8, x, P, z, GOLD, { material = FOIL })
+			for k = 0, 5 do
+				local a = k * math.pi / 3
+				box(
+					"Crown",
+					1.9,
+					5.8,
+					1.9,
+					x + math.cos(a) * 4.5,
+					P + 3.8,
+					z + math.sin(a) * 4.5,
+					GOLD,
+					{ material = FOIL }
+				)
+				if k % 2 == 0 then
+					ball("Gem", 1.1, x + math.cos(a) * 5.9, P + 1.9, z + math.sin(a) * 5.9, GEMS[k // 2 + 1], {
+						material = NEONM,
+					})
+				end
+			end
+			local glow = ball("Gem", 1.6, x, P + 6, z, 0xFF4D5E, { material = NEONM })
+			Kit.light(glow, "PointLight", 0xFFE07A, 0.9, 26)
+		end
+	end
+	return folder
 end
 
 -- Particle presets for the wheel looks (Roblox's built-in particle textures)
@@ -1181,21 +1661,23 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 			e.Parent = nozzle
 		end
 		if look.wings then
-			-- feathered wings fanning up off the top of the stand, outside the ring
+			-- big wings on struts up from the posts, fanning out front and back over the top of the ring
 			for _, wz in { -1, 1 } do
-				for j = 1, 4 do
-					local angle = math.rad(18 + 17 * (j - 1))
-					local length = 2.6 + 1.1 * j
+				local lift = 0.6 * R
+				Kit.block(model, "WingArm", 0.8, lift, 0.8, base, sx * (W / 2 + 1.4), R + 2.2, wz * 3, look.frame, {
+					material = frameMaterial,
+				})
+				for j, length in { 5.2, 6.4, 7, 6.2, 5 } do
+					local angle = math.rad(4 + 16 * (j - 1))
 					local root = base
-						* CFrame.new(sx * (W / 2 + 2), R * 1.55 + 2.2, wz * 0.8)
-						* CFrame.Angles(0, 0, sx * math.rad(12))
-						* CFrame.Angles(-wz * (math.pi / 2 - angle), 0, 0)
+						* CFrame.new(sx * (W / 2 + 2.1), R + 2.2 + lift, wz * 3)
+						* CFrame.Angles(wz * (math.pi / 2 - angle), 0, 0)
 					Kit.part(
 						model,
 						"Feather",
-						Vector3.new(0.4, length, 1.1),
+						Vector3.new(0.35, length, 1.5),
 						root * CFrame.new(0, length / 2, 0),
-						if j % 2 == 0 then look.wings else 0xF4F0EA,
+						if j % 2 == 0 then look.wings else (look.wingTip or 0xF4F0EA),
 						opts(Enum.Material.SmoothPlastic)
 					)
 				end
@@ -1221,25 +1703,25 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 			)
 		end
 		Kit.block(model, "Arch", W + 3.8, 1, 1, base, 0, top, 0, look.frame, { material = frameMaterial })
-		local crownAt = base * CFrame.new(0, top + 1, 0)
+		local crownAt = base * CFrame.new(0, top + 1.4, 0)
 		for k = 0, 7 do
 			local a = 2 * math.pi * k / 8
-			local at = crownAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 1.7)
-			Kit.part(model, "Crown", Vector3.new(1.4, 1.2, 0.5), at, look.crown, opts(Enum.Material.SmoothPlastic))
+			local at = crownAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 2.6)
+			Kit.part(model, "Crown", Vector3.new(2.1, 1.8, 0.6), at, look.crown, opts(Enum.Material.SmoothPlastic))
 			if k % 2 == 0 then
 				Kit.part(
 					model,
 					"Crown",
-					Vector3.new(0.7, 1.3, 0.5),
-					at * CFrame.new(0, 1.2, 0),
+					Vector3.new(1, 1.8, 0.6),
+					at * CFrame.new(0, 1.7, 0),
 					look.crown,
 					opts(Enum.Material.SmoothPlastic)
 				)
 				Kit.part(
 					model,
 					"Gem",
-					Vector3.one * 0.6,
-					at * CFrame.new(0, 2, 0) * CFrame.Angles(math.pi / 4, 0, math.pi / 4),
+					Vector3.one * 0.9,
+					at * CFrame.new(0, 2.9, 0) * CFrame.Angles(math.pi / 4, 0, math.pi / 4),
 					if look.gems then look.gems[(k // 2) % #look.gems + 1] else 0xFF4D5E,
 					opts(Enum.Material.Neon)
 				)
@@ -1253,8 +1735,8 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 			Kit.part(
 				model,
 				"Halo",
-				Vector3.new(1.5, 0.4, 0.5),
-				haloAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 2.6),
+				Vector3.new(2, 0.6, 0.7),
+				haloAt * CFrame.Angles(0, a, 0) * CFrame.new(0, 0, 3.6),
 				look.halo,
 				opts(Enum.Material.Neon)
 			)
@@ -1454,13 +1936,13 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 		local capAt = hub * CFrame.new(sx * (W / 2 + 0.15), 0, 0)
 		if look.skull then
 			local face = capAt * CFrame.new(sx * 0.4, 0, 0)
-			Kit.part(wheel, "Hub", Vector3.new(1.6, 2.6, 2.6), face, 0xF2EEE0, opts(Enum.Material.SmoothPlastic))
+			Kit.part(wheel, "Hub", Vector3.new(1.6, 3.4, 3.4), face, 0xF2EEE0, opts(Enum.Material.SmoothPlastic))
 			for _, ez in { -0.6, 0.6 } do
 				Kit.part(
 					wheel,
 					"Eye",
-					Vector3.new(0.3, 0.7, 0.7),
-					face * CFrame.new(sx * 0.75, 0.3, ez),
+					Vector3.new(0.3, 1, 1),
+					face * CFrame.new(sx * 0.75, 0.4, ez),
 					look.neon or 0x1A1430,
 					opts(Enum.Material.Neon)
 				)
@@ -1500,7 +1982,7 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 			wheel,
 			"Planet",
 			hub,
-			0.24 * R,
+			0.3 * R,
 			planet.body,
 			opts(if planet.glow then Enum.Material.Neon else Enum.Material.SmoothPlastic)
 		)
@@ -1589,7 +2071,7 @@ function Homes.buildWheel(Kit: any, MapConfig: any, home: Model, frame: CFrame, 
 
 	-- the tag over the wheel, in the level's colour (above the crown or halo when there is one)
 	local tagLift = if look.crown
-		then top - R - 2.2 + (if look.halo then 8 else 5)
+		then top - R - 2.2 + (if look.halo then 10 else 7.5)
 		elseif look.halo then top - R - 0.2
 		else R + 4
 	local tagAnchor = Kit.part(model, "Tag", Vector3.one, hub * CFrame.new(0, tagLift, 0), 0xFFFFFF, {

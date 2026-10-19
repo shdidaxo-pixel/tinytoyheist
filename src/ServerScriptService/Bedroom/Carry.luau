@@ -2,11 +2,11 @@
 -- Sleeping toys, stolen toys, and dragging them home.
 --   Every spot in Workspace.Bedroom.ToySpawns gets a sleeping toy: a blanket lump the size of the spot (S/M/L) hiding
 --   a toy from the Bedroom set, its rarity rolled with the plan's odds for that size. Epic and up leak a glow.
---   Hold the prompt to grab it (Large ones need Strength 5): you drag the bundle behind you, slower and noisier the
---   bigger it is (noise counts the floor, so creaky boards are loud; Sneak makes it quieter, Strength makes Large
---   ones faster). Walk into your own home and it goes in your pen to wake up (Pens.bank).
+--   Hold the prompt to grab it: you drag the bundle behind you, slower and noisier the bigger it is (noise counts the
+--   floor, so creaky boards are loud; Slow Mode halves both). Walk into your own home and it lies there waking up
+--   until you hatch it (Pens.bank).
 --   A stolen toy (Raids) is dragged the same way; it becomes yours only when it crosses your door.
---   A hazard (DropCarried), or the Drop Toy button, drops it where you stand (Grip can save it); anyone can grab it
+--   A hazard (DropCarried), or the Drop Toy button, drops it where you stand; anyone can grab it
 --   again. A dropped stolen toy slides back home after a while; an empty spot gets a new sleeping toy.
 -- Walk speed is set here too: the base plus Speed trained on the wheel, times the carry slow-down.
 -- The Player attributes Carrying (toy id) and CarrySize say what someone is dragging; the HUD and hazards read them.
@@ -169,7 +169,7 @@ function Carry.isCarrying(player: Player): boolean
 	return carrying[player] ~= nil
 end
 
--- Walk speed: the base plus trained Speed, slowed while dragging (Strength helps with Large toys)
+-- Walk speed: the base plus trained Speed, slowed while dragging; Slow Mode (a HUD switch) halves it and the noise
 function Carry.refreshSpeed(player: Player)
 	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if not humanoid then
@@ -179,11 +179,10 @@ function Carry.refreshSpeed(player: Player)
 	local speed = GameConfig.SPEED_BASE + (if p then p.SpeedPoints else 0)
 	local c = carrying[player]
 	if c then
-		local factor = Carry.SPEED[c.size] or 1
-		if c.size == "L" and p then
-			factor = math.min(0.95, factor * (1 + 0.05 * (p.Stats.Strength or 0)))
-		end
-		speed *= factor
+		speed *= Carry.SPEED[c.size] or 1
+	end
+	if player:GetAttribute("SlowMode") then
+		speed *= GameConfig.SLOW_MODE
 	end
 	if player:GetAttribute("Training") then
 		speed = 0
@@ -407,11 +406,6 @@ grab = function(player: Player, model: Model)
 		return
 	end
 	local size = model:GetAttribute("Size") :: string
-	local p = PlayerData.get(player)
-	if size == "L" and p and (p.Stats.Strength or 0) < GameConfig.LARGE_STRENGTH then
-		notice:FireClient(player, `You need Strength {GameConfig.LARGE_STRENGTH} to drag Large toys!`, "warn")
-		return
-	end
 	local id = model:GetAttribute("ToyId") :: string
 	local data = if ToyCatalog and id ~= "" then ToyCatalog.get(id) else nil
 	model:SetAttribute("Spawn", nil)
@@ -461,10 +455,14 @@ local function bank(player: Player)
 	if not c then
 		return
 	end
-	if Pens.isFull(player) then
+	local ok, why = Pens.canBank(player)
+	if c.kind == "Stolen" then
+		ok, why = Pens.hasRoom(player)
+	end
+	if not ok then
 		if not c.model:GetAttribute("FullWarned") then
 			c.model:SetAttribute("FullWarned", true)
-			notice:FireClient(player, "Your pen is full! Level up your home for more room.", "warn")
+			notice:FireClient(player, why or "No room at home!", "warn")
 		end
 		return
 	end
@@ -503,7 +501,7 @@ local function bank(player: Player)
 		c.model:Destroy()
 		return
 	end
-	notice:FireClient(player, "+1 toy! It's waking up...", "good")
+	notice:FireClient(player, "+1 toy! It's waking up: hatch it when it's ready", "good")
 end
 
 function Carry.start(bedroom: Model)
@@ -549,20 +547,19 @@ function Carry.start(bedroom: Model)
 		fill(point)
 	end
 
-	Events.DropCarried.Event:Connect(function(player: Player, _reason: string?, sentHome: boolean?)
-		if typeof(player) ~= "Instance" or not player:IsA("Player") or not carrying[player] then
-			return
+	Events.DropCarried.Event:Connect(function(player: Player)
+		if typeof(player) == "Instance" and player:IsA("Player") and carrying[player] then
+			drop(player)
 		end
-		-- Grip: a chance to hold on, unless you're being carried off home
-		local p = PlayerData.get(player)
-		local grip = if p then p.Stats.Grip or 0 else 0
-		if not sentHome and grip > 0 and rng:NextNumber() < 0.05 * grip then
-			notice:FireClient(player, "Grip! You held on to your toy.", "good")
-			return
-		end
-		drop(player)
 	end)
+	Pens.makeBlanket = makeBlanket
 	dropRequest.OnServerEvent:Connect(drop)
+	-- the HUD's Slow Mode switch
+	local slowRemote = PlayerData.remote("RemoteEvent", "SlowMode") :: RemoteEvent
+	slowRemote.OnServerEvent:Connect(function(player, on)
+		player:SetAttribute("SlowMode", if on == true then true else nil)
+		Carry.refreshSpeed(player)
+	end)
 
 	local function onCharacter(player: Player)
 		player.CharacterAdded:Connect(function(character)
@@ -630,9 +627,10 @@ function Carry.start(bedroom: Model)
 				end
 				local v = root.AssemblyLinearVelocity
 				if Vector3.new(v.X, 0, v.Z).Magnitude > 2 then
-					local p = PlayerData.get(player)
-					local sneak = if p then p.Stats.Sneak or 0 else 0
-					local points = (Carry.NOISE[c.size] or 1) * 0.5 * math.max(0, 1 - 0.03 * sneak)
+					local points = (Carry.NOISE[c.size] or 1) * 0.5
+					if player:GetAttribute("SlowMode") then
+						points *= GameConfig.SLOW_MODE
+					end
 					Events.MakeNoise:Fire(root.Position, points, "Drag")
 				end
 				local index = MapConfig.homeAt(root.Position)
@@ -655,9 +653,9 @@ function Carry.start(bedroom: Model)
 	end)
 end
 
--- A reward toy: a sleeping toy of `size` put straight into the player's pen to wake up
+-- A reward toy: a sleeping toy of `size` put straight into the player's home to wake up
 function Carry.giveSleeping(player: Player, size: string): boolean
-	if Pens.isFull(player) then
+	if not Pens.canBank(player) then
 		return false
 	end
 	local data = Carry.pickToy(size)

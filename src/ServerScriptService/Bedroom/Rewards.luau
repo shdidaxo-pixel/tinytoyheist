@@ -5,6 +5,7 @@
 -- Playtime gifts unlock by minutes played this session.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local GameConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("GameConfig")) :: any
 local PlayerData = require(script.Parent.PlayerData)
@@ -12,6 +13,7 @@ local Carry = require(script.Parent.Carry)
 local Pens = require(script.Parent.Pens)
 
 local Rewards = {}
+local notice: RemoteEvent
 
 local function today(): number
 	return os.time() // 86400
@@ -24,8 +26,8 @@ local function give(player: Player, r: any, boostMinutes: number?): (boolean, st
 	if not p then
 		return false, "Still loading..."
 	end
-	if r.kind == "Toy" and Pens.isFull(player) then
-		return false, "Your pen is full! Make room first."
+	if r.kind == "Toy" and not Pens.canBank(player) then
+		return false, "No room for another blanket: hatch yours first!"
 	end
 	local parts = {}
 	if r.kind == "Cash" or r.cash then
@@ -40,7 +42,7 @@ local function give(player: Player, r: any, boostMinutes: number?): (boolean, st
 	end
 	if r.kind == "Toy" then
 		Carry.giveSleeping(player, r.size or "M")
-		table.insert(parts, "a mystery toy in your home")
+		table.insert(parts, "a mystery blanket in your home")
 	end
 	PlayerData.changed(player)
 	return true, table.concat(parts, " and ")
@@ -68,6 +70,27 @@ local function claim(player: Player, what: string, arg: any): (boolean, string)
 			return true, `Day {streak}: {message}!`
 		end
 		return false, message
+	elseif what == "TestBlanket" then
+		-- Studio only, until the shop has real products: the Featured buttons put Large blankets in your home
+		if not RunService:IsStudio() then
+			return false, "Coming soon!"
+		end
+		local given = 0
+		for _ = 1, math.clamp(tonumber(arg) or 1, 1, 50) do
+			if not Carry.giveSleeping(player, "L") then
+				break
+			end
+			given += 1
+		end
+		local message = if given > 0
+			then `Test: {given} Large blanket{if given == 1 then "" else "s"} in your home`
+			else "No room for more blankets: hatch yours first!"
+		notice:FireClient(player, message, if given > 0 then "good" else "warn")
+		return given > 0, message
+	elseif what == "Tutorial" then
+		p.Tutorial = 1
+		PlayerData.changed(player)
+		return true, ""
 	elseif what == "Playtime" then
 		local n = tonumber(arg)
 		local gift = n and GameConfig.PLAYTIME[n]
@@ -93,6 +116,7 @@ local function claim(player: Player, what: string, arg: any): (boolean, string)
 end
 
 function Rewards.start(_bedroom: Model)
+	notice = ReplicatedStorage:WaitForChild("BedroomRemotes"):WaitForChild("Notice") :: RemoteEvent
 	local claimRemote = PlayerData.remote("RemoteFunction", "Claim") :: RemoteFunction
 	claimRemote.OnServerInvoke = function(player: Player, what: any, arg: any)
 		if typeof(what) ~= "string" then

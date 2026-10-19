@@ -55,8 +55,8 @@ function Raids.blocked(thief: Player, owner: Player): string?
 	if Carry.isCarrying(thief) then
 		return "You're already carrying a toy!"
 	end
-	if Pens.isFull(thief) then
-		return "Your pen is full! Level up your home first."
+	if not Pens.hasRoom(thief) then
+		return "Your inventory is full! Sell some toys first."
 	end
 	if #theirs.Toys < GameConfig.RAID.minToys then
 		return `{owner.DisplayName}'s home is too small to raid`

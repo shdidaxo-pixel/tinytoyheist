@@ -20,16 +20,21 @@ PlayerData.STORE = "TinyToyHeist_v1"
 PlayerData.AUTOSAVE = 60
 PlayerData.LOCK_STALE = 150 -- a lock older than this (seconds) belongs to a server that died
 
-export type Toy = { u: string, id: string, m: string?, s: string? } -- s: the blanket size it woke up at
+-- A toy you own. s: the blanket size it woke up at; e: equipped (in the pen; nil counts as yes); l: locked (Sell skips it)
+export type Toy = { u: string, id: string, m: string?, s: string?, e: boolean?, l: boolean? }
+-- A blanket waiting in your home: the toy inside is already rolled; w = os.time() when it can be hatched
+export type Blanket = { u: string, id: string, m: string?, s: string, w: number }
 export type Profile = {
 	Version: number,
 	Cash: number,
 	Earned: number,
 	HomeLevel: number,
+	WheelLevel: number, -- the Speed wheel's own level (bought separately from the home)
 	Stats: { [string]: number },
 	SpeedPoints: number,
 	SpeedProgress: number,
 	Toys: { Toy },
+	Blankets: { Blanket },
 	Index: { [string]: { [string]: boolean } },
 	Sets: { [string]: boolean }, -- room sets completed (reward paid)
 	Rebirths: number,
@@ -47,10 +52,12 @@ local function defaults(): Profile
 		Cash = GameConfig.START_CASH,
 		Earned = 0,
 		HomeLevel = 1,
+		WheelLevel = 1,
 		Stats = { Strength = 0, Sneak = 0, Grip = 0 },
 		SpeedPoints = 0,
 		SpeedProgress = 0,
 		Toys = {},
+		Blankets = {},
 		Index = {},
 		Sets = {},
 		Rebirths = 0,
@@ -159,6 +166,8 @@ end
 local function mirror(player: Player, p: Profile)
 	player:SetAttribute("Cash", p.Cash)
 	player:SetAttribute("HomeLevel", p.HomeLevel)
+	player:SetAttribute("WheelLevel", p.WheelLevel)
+	player:SetAttribute("Blankets", #p.Blankets)
 	player:SetAttribute("SpeedPoints", p.SpeedPoints)
 	player:SetAttribute("Rebirths", p.Rebirths)
 	player:SetAttribute("ToyCount", #p.Toys)

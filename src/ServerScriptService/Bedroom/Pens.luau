@@ -1,11 +1,14 @@
 --!strict
--- The toys in each player's home, built from their saved profile (PlayerData). When a player's data loads, their
--- home gets its level and every toy they own roams the pen; when they leave, the pen is cleared.
---   Banking a sleeping toy: the blanket lies in your pen with a wake-up timer over it (Small 5 s, Medium 20 s,
---   Large 60 s). Then it pops open: the toy, its rarity and its mutation (rolled at banking, so leaving early or
---   rejoining can't re-roll it). Waking toys don't earn yet.
---   Every toy in a pen carries a Steal prompt (the owner's client hides their own); Raids decides who may use it.
---   The Index (toy x mutation found) is kept here too, with the room-set rewards.
+-- Your toys and your home, built from your saved profile (PlayerData).
+--   Inventory: every toy you own is in profile.Toys. Equipped toys (e ~= false) roam your pen, earn money and can be
+--   stolen; the pen holds as many as the home level's slots. New toys equip themselves when there's a free slot
+--   (Dylan, 19 Oct: "auto equip it so the players don't have to"); otherwise they wait in the inventory. Locked
+--   toys (l = true) are skipped by Sell.
+--   Blankets: a sleeping toy you carry home lies in your home with a wake-up timer (Small 5 s, Medium 20 s, Large
+--   60 s, saved in profile.Blankets so it keeps counting while you're away). When it's ready you have to be there
+--   and hold E to hatch it: then the toy, its rarity and its mutation (rolled at banking, so rejoining can't re-roll
+--   them) pop out and go into your inventory.
+--   The Index (toy x mutation found) and the room-set rewards are kept here too.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,12 +26,15 @@ local PlayerData = require(script.Parent.PlayerData)
 local Homes = require(script.Parent.Homes)
 
 local Pens = {}
+-- Builds a blanket model (set by Carry, which owns the blanket look): (parent, size, at) -> Model
+Pens.makeBlanket = nil :: ((parent: Instance, size: string, at: CFrame) -> Model)?
 
 type Toy = PlayerData.Toy
+type Blanket = PlayerData.Blanket
 type State = {
 	hole: Model,
-	models: { [string]: Model }, -- awake toys in the pen, by uid
-	waking: { [string]: Model }, -- blankets waking up, by uid
+	models: { [string]: Model }, -- equipped toys in the pen, by uid
+	blankets: { [string]: Model }, -- blankets waking up or ready to hatch, by uid
 	out: { [string]: boolean }, -- being stolen right now (carried or dropped by a raider)
 }
 local states: { [Player]: State } = {}
@@ -47,6 +53,11 @@ end
 function Pens.state(player: Player): State?
 	return states[player]
 end
+
+local function isEquipped(t: Toy): boolean
+	return t.e ~= false
+end
+Pens.isEquipped = isEquipped
 
 -- Which player's pen a toy is roaming, and its model
 function Pens.findToy(uid: string): (Player?, Model?)
@@ -71,10 +82,36 @@ function Pens.find(player: Player, uid: string): (Toy?, number?)
 	return nil, nil
 end
 
+local function findBlanket(player: Player, uid: string): (Blanket?, number?)
+	local p = PlayerData.get(player)
+	if not p then
+		return nil, nil
+	end
+	for i, b in p.Blankets do
+		if b.u == uid then
+			return b, i
+		end
+	end
+	return nil, nil
+end
+
 -- Money a toy earns a second (before rebirth and boosts)
 function Pens.perSecond(entry: Toy): number
 	local data = ToyCatalog.get(entry.id)
 	return (if data then data.Money else 0) * Mutations.multiplier(entry.m)
+end
+
+-- How many toys the pen holds (the home level's slots)
+-- Room in the inventory for one more awake toy (a stolen one)
+function Pens.hasRoom(player: Player): (boolean, string?)
+	local p = PlayerData.get(player)
+	if not p or not states[player] then
+		return false, "Still loading..."
+	end
+	if #p.Toys + #p.Blankets >= GameConfig.INVENTORY_MAX then
+		return false, "Your inventory is full! Sell some toys."
+	end
+	return true, nil
 end
 
 function Pens.capacity(player: Player): number
@@ -83,12 +120,35 @@ function Pens.capacity(player: Player): number
 	return MapConfig.HOLE_LEVELS[math.clamp(level, 1, #MapConfig.HOLE_LEVELS)].slots
 end
 
-function Pens.isFull(player: Player): boolean
+function Pens.equippedCount(player: Player): number
 	local p = PlayerData.get(player)
-	return p == nil or #p.Toys >= Pens.capacity(player)
+	local n = 0
+	if p then
+		for _, t in p.Toys do
+			if isEquipped(t) then
+				n += 1
+			end
+		end
+	end
+	return n
 end
 
--- What every awake toy at home earns a second, before multipliers
+-- Can this player take another toy home? (false and why if not)
+function Pens.canBank(player: Player): (boolean, string?)
+	local p = PlayerData.get(player)
+	if not p or not states[player] then
+		return false, "Still loading..."
+	end
+	if #p.Blankets >= GameConfig.MAX_BLANKETS then
+		return false, "Hatch your blankets first! (hold E on them at home)"
+	end
+	if #p.Toys + #p.Blankets >= GameConfig.INVENTORY_MAX then
+		return false, "Your inventory is full! Sell some toys."
+	end
+	return true, nil
+end
+
+-- What every equipped toy at home earns a second, before multipliers
 function Pens.income(player: Player): number
 	local p = PlayerData.get(player)
 	local s = states[player]
@@ -127,7 +187,7 @@ local function penPoint(hole: Model, u: number?, v: number?): CFrame
 end
 Pens.penPoint = penPoint
 
--- A toy model for a saved toy: the prebuilt voxel model with its mutation, ready for a pen
+-- A toy model for a saved toy: the prebuilt voxel model with its mutation, at its blanket's size
 function Pens.buildToy(entry: Toy): Model?
 	local assets = ServerStorage:FindFirstChild("TinyToyHeistAssets")
 	local folder = assets and assets:FindFirstChild("Toys")
@@ -169,10 +229,10 @@ function Pens.buildToy(entry: Toy): Model?
 	return toy
 end
 
--- Put an awake toy in its owner's pen
+-- Put an equipped toy in its owner's pen
 local function show(player: Player, entry: Toy, at: CFrame?): Model?
 	local s = states[player]
-	if not s then
+	if not s or s.models[entry.u] then
 		return nil
 	end
 	local toy = Pens.buildToy(entry)
@@ -201,12 +261,20 @@ local function show(player: Player, entry: Toy, at: CFrame?): Model?
 	return toy
 end
 
+local function hide(player: Player, uid: string)
+	local s = states[player]
+	if s and s.models[uid] then
+		s.models[uid]:Destroy()
+		s.models[uid] = nil
+	end
+end
+
 local function sync(player: Player)
 	PlayerData.changed(player)
-	local s = states[player]
-	if s then
-		local income = Pens.income(player)
-		player:SetAttribute("BaseIncome", income)
+	if states[player] then
+		player:SetAttribute("BaseIncome", Pens.income(player))
+		player:SetAttribute("Equipped", Pens.equippedCount(player))
+		player:SetAttribute("Slots", Pens.capacity(player))
 	end
 end
 
@@ -238,47 +306,95 @@ local function discover(player: Player, entry: Toy)
 	end
 end
 
--- The wake-up: the blanket pops and the toy comes out
-local function reveal(player: Player, entry: Toy)
+-- Add a toy to the inventory, equipping it if the pen has room. Returns whether it was equipped.
+local function addToy(player: Player, entry: Toy, at: CFrame?): boolean
+	local p = PlayerData.get(player)
+	if not p then
+		return false
+	end
+	entry.e = Pens.equippedCount(player) < Pens.capacity(player)
+	table.insert(p.Toys, entry)
+	discover(player, entry)
+	if entry.e then
+		local toy = show(player, entry, at)
+		if toy then
+			toy:SetAttribute("RevealedAt", Workspace:GetServerTimeNow())
+		end
+	end
+	return entry.e == true
+end
+
+-- A blanket lying in a home: counting down, then waiting to be hatched (the owner holds E on it)
+local function placeBlanket(player: Player, b: Blanket, model: Model?)
 	local s = states[player]
 	if not s then
 		return
 	end
-	local blanket = s.waking[entry.u]
-	s.waking[entry.u] = nil
-	local at = if blanket then CFrame.new(blanket:GetPivot().Position) else nil
-	if blanket then
-		blanket:Destroy()
+	local blanket = model
+	if not blanket then
+		if not Pens.makeBlanket then
+			return
+		end
+		blanket = (Pens.makeBlanket :: any)(s.hole, b.s, CFrame.new())
 	end
-	if not Pens.find(player, entry.u) then
-		return -- sold or gone meanwhile
-	end
-	local toy = show(player, entry, at)
-	if toy then
-		toy:SetAttribute("RevealedAt", Workspace:GetServerTimeNow())
-	end
-	local data = ToyCatalog.get(entry.id)
-	revealRemote:FireClient(player, {
-		id = entry.id,
-		name = if data then data.Name else entry.id,
-		rarity = if data then data.Rarity else "Common",
-		mutation = entry.m,
-		perSecond = Pens.perSecond(entry),
-	})
-	if data and (data.Rarity == "Mythic" or data.Rarity == "Secret") then
-		for _, other in Players:GetPlayers() do
-			notice:FireClient(other, `{player.DisplayName} found a {data.Rarity} {data.Name}!`, "good")
+	local m = blanket :: Model
+	for _, d in m:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.Anchored = true
+			d.CanCollide = false
+			d.Massless = false
+		elseif d:IsA("WeldConstraint") or d:IsA("ProximityPrompt") then
+			d:Destroy()
 		end
 	end
-	sync(player)
+	local waking = s.hole:FindFirstChild("Waking") or Instance.new("Folder")
+	waking.Name = "Waking"
+	waking.Parent = s.hole
+	-- blankets lie along the front of the pen, the first ones in the middle
+	local k = #waking:GetChildren()
+	local u = 0.5 + (if k % 2 == 0 then 1 else -1) * (k + 1) // 2 * 0.16
+	m:PivotTo(penPoint(s.hole, math.clamp(u, 0.08, 0.92), 0.08) * CFrame.Angles(0, rng:NextNumber() * 0.6 - 0.3, 0))
+	local wake = GameConfig.WAKE_SECONDS[b.s] or 5
+	local left = math.max(0, b.w - os.time())
+	m:SetAttribute("Uid", b.u)
+	m:SetAttribute("Owner", player.UserId)
+	m:SetAttribute("Size", b.s)
+	m:SetAttribute("WakeAt", Workspace:GetServerTimeNow() + left)
+	m:SetAttribute("WakeSeconds", wake)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "HatchPrompt"
+	prompt.ActionText = "Hatch"
+	prompt.ObjectText = ({ S = "Small toy", M = "Medium toy", L = "Large toy" } :: any)[b.s] or "Toy"
+	prompt.HoldDuration = 0.8
+	prompt.MaxActivationDistance = 14
+	prompt.RequiresLineOfSight = false
+	prompt.Enabled = left <= 0
+	prompt.Parent = m.PrimaryPart
+	prompt.Triggered:Connect(function(who)
+		if who == player then
+			Pens.hatch(player, b.u)
+		end
+	end)
+	m.Name = "Blanket"
+	m.Parent = waking
+	s.blankets[b.u] = m
+	if left > 0 then
+		task.delay(left, function()
+			if prompt.Parent then
+				prompt.Enabled = true
+				m:SetAttribute("Ready", true)
+			end
+		end)
+	else
+		m:SetAttribute("Ready", true)
+	end
 end
 
--- A sleeping toy carried home (or a reward toy): it goes in the profile now, and wakes up in the pen after its
--- timer. `blanket` is the carried blanket (it lies in the pen while the toy wakes); `size` the blanket's size.
-function Pens.bank(player: Player, data: any, size: string, blanket: Model?): Toy?
+-- A sleeping toy carried home (or a reward toy): it lies in your home as a blanket until you hatch it.
+-- `blanket` is the carried blanket model, if any; `size` the blanket's size.
+function Pens.bank(player: Player, data: any, size: string, blanket: Model?): Blanket?
 	local p = PlayerData.get(player)
-	local s = states[player]
-	if not p or not s or Pens.isFull(player) then
+	if not p or not states[player] or not Pens.canBank(player) then
 		return nil
 	end
 	if p.Banked == 0 and ToyCatalog.get(GameConfig.FIRST_TOY) then
@@ -287,36 +403,156 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?): To
 	local mutation = if p.Banked == 0
 		then nil
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
-	local entry: Toy = { u = PlayerData.newUid(), id = data.Id, m = mutation, s = size }
-	table.insert(p.Toys, entry)
+	local b: Blanket = {
+		u = PlayerData.newUid(),
+		id = data.Id,
+		m = mutation,
+		s = size,
+		w = os.time() + (GameConfig.WAKE_SECONDS[size] or 5),
+	}
+	table.insert(p.Blankets, b)
 	p.Banked += 1
-	discover(player, entry)
-	local wake = GameConfig.WAKE_SECONDS[size] or 5
-	if blanket then
-		for _, d in blanket:GetDescendants() do
-			if d:IsA("BasePart") then
-				d.Anchored = true
-				d.CanCollide = false
-			elseif d:IsA("WeldConstraint") or d:IsA("ProximityPrompt") then
-				d:Destroy()
-			end
+	placeBlanket(player, b, blanket)
+	sync(player)
+	return b
+end
+
+-- Hold E on a ready blanket: the toy pops out into your inventory (and your pen, if there's room)
+function Pens.hatch(player: Player, uid: string): boolean
+	local p = PlayerData.get(player)
+	local s = states[player]
+	local b, i = findBlanket(player, uid)
+	if not p or not s or not b or not i then
+		return false
+	end
+	if os.time() < b.w then
+		return false
+	end
+	table.remove(p.Blankets, i)
+	local model = s.blankets[uid]
+	s.blankets[uid] = nil
+	local at = if model then CFrame.new(model:GetPivot().Position) else nil
+	if model then
+		model:Destroy()
+	end
+	local entry: Toy = { u = b.u, id = b.id, m = b.m, s = b.s }
+	local equipped = addToy(player, entry, at)
+	local data = ToyCatalog.get(entry.id)
+	revealRemote:FireClient(player, {
+		id = entry.id,
+		name = if data then data.Name else entry.id,
+		rarity = if data then data.Rarity else "Common",
+		mutation = entry.m,
+		size = entry.s,
+		perSecond = Pens.perSecond(entry),
+		equipped = equipped,
+	})
+	if not equipped then
+		notice:FireClient(player, "Your pen is full, so it went in your inventory.", "warn")
+	end
+	if data and (data.Rarity == "Mythic" or data.Rarity == "Secret") then
+		for _, other in Players:GetPlayers() do
+			notice:FireClient(other, `{player.DisplayName} found a {data.Rarity} {data.Name}!`, "good")
 		end
-		local waking = s.hole:FindFirstChild("Waking") or Instance.new("Folder")
-		waking.Name = "Waking"
-		waking.Parent = s.hole
-		blanket:PivotTo(penPoint(s.hole, rng:NextNumber(0.2, 0.8), rng:NextNumber(0.1, 0.5)))
-		blanket:SetAttribute("Uid", entry.u)
-		blanket:SetAttribute("Owner", player.UserId)
-		blanket:SetAttribute("WakeAt", Workspace:GetServerTimeNow() + wake)
-		blanket:SetAttribute("WakeSeconds", wake)
-		blanket.Parent = waking
-		s.waking[entry.u] = blanket
-		task.delay(wake, reveal, player, entry)
-	else
-		reveal(player, entry)
 	end
 	sync(player)
-	return entry
+	return true
+end
+
+-- Equip (into the pen) or unequip (back to the inventory) a toy
+function Pens.equip(player: Player, uid: string, on: boolean): (boolean, string)
+	local s = states[player]
+	local entry = Pens.find(player, uid)
+	if not s or not entry then
+		return false, "?"
+	end
+	if s.out[uid] then
+		return false, "Someone is stealing that toy!"
+	end
+	if on and not isEquipped(entry) then
+		if Pens.equippedCount(player) >= Pens.capacity(player) then
+			return false, "Your pen is full! Level up your home for more slots."
+		end
+		entry.e = true
+		show(player, entry)
+	elseif not on and isEquipped(entry) then
+		entry.e = false
+		hide(player, uid)
+	end
+	sync(player)
+	return true, if on then "Equipped" else "Unequipped"
+end
+
+-- Fill the pen with your best-earning toys
+function Pens.equipBest(player: Player): (boolean, string)
+	local p = PlayerData.get(player)
+	local s = states[player]
+	if not p or not s then
+		return false, "?"
+	end
+	local list = {}
+	for _, t in p.Toys do
+		if not s.out[t.u] then
+			table.insert(list, t)
+		end
+	end
+	table.sort(list, function(a, b)
+		return Pens.perSecond(a) > Pens.perSecond(b)
+	end)
+	local slots = Pens.capacity(player)
+	-- out toys keep their slot
+	for _ in s.out do
+		slots -= 1
+	end
+	for i, t in list do
+		local want = i <= slots
+		if want ~= isEquipped(t) then
+			t.e = want
+			if want then
+				show(player, t)
+			else
+				hide(player, t.u)
+			end
+		end
+	end
+	sync(player)
+	return true, "Equipped your best toys"
+end
+
+-- Put your best unequipped toys into any free pen slots (after a home level up)
+function Pens.fillFree(player: Player)
+	local p = PlayerData.get(player)
+	local s = states[player]
+	if not p or not s then
+		return
+	end
+	local waiting = {}
+	for _, t in p.Toys do
+		if not isEquipped(t) then
+			table.insert(waiting, t)
+		end
+	end
+	table.sort(waiting, function(a, b)
+		return Pens.perSecond(a) > Pens.perSecond(b)
+	end)
+	for _, t in waiting do
+		if Pens.equippedCount(player) >= Pens.capacity(player) then
+			break
+		end
+		t.e = true
+		show(player, t)
+	end
+	sync(player)
+end
+
+function Pens.setLock(player: Player, uid: string, on: boolean): (boolean, string)
+	local entry = Pens.find(player, uid)
+	if not entry then
+		return false, "?"
+	end
+	entry.l = if on then true else nil
+	sync(player)
+	return true, if on then "Locked" else "Unlocked"
 end
 
 -- Take a toy out of the pen for a raider (it stays in the owner's profile until it reaches the thief's home)
@@ -344,7 +580,7 @@ function Pens.restore(player: Player, uid: string)
 	end
 	s.out[uid] = nil
 	local entry = Pens.find(player, uid)
-	if entry and not s.models[uid] then
+	if entry and isEquipped(entry) and not s.models[uid] then
 		show(player, entry)
 	end
 	sync(player)
@@ -361,65 +597,73 @@ function Pens.remove(player: Player, uid: string): Toy?
 	table.remove(p.Toys, i)
 	if s then
 		s.out[uid] = nil
-		if s.models[uid] then
-			s.models[uid]:Destroy()
-			s.models[uid] = nil
-		end
-		if s.waking[uid] then
-			s.waking[uid]:Destroy()
-			s.waking[uid] = nil
-		end
+		hide(player, uid)
 	end
 	sync(player)
 	return entry
 end
 
--- Give a toy that already woke up somewhere else (a stolen one) to a player: straight into the pen, awake
+-- Give a toy that already woke up somewhere else (a stolen one) to a player: into the inventory, equipped if room
 function Pens.give(player: Player, entry: Toy): boolean
-	local p = PlayerData.get(player)
-	if not p or not states[player] then
+	if not PlayerData.get(player) or not states[player] then
 		return false
 	end
-	local copy: Toy = { u = PlayerData.newUid(), id = entry.id, m = entry.m, s = entry.s }
-	table.insert(p.Toys, copy)
-	discover(player, copy)
-	local toy = show(player, copy)
-	if toy then
-		toy:SetAttribute("RevealedAt", Workspace:GetServerTimeNow())
-	end
+	addToy(player, { u = PlayerData.newUid(), id = entry.id, m = entry.m, s = entry.s })
 	sync(player)
 	return true
 end
 
--- Rebuild a player's pen from their profile (after a rebirth or a level change it stays the same)
+-- Build a player's home from their profile: equipped toys in the pen and their blankets
 local function fill(player: Player)
 	local p = PlayerData.get(player)
 	local s = states[player]
 	if not p or not s then
 		return
 	end
+	-- older saves had no equip flag: equip up to the pen's slots
+	local equipped = 0
 	for _, entry in p.Toys do
-		if not s.models[entry.u] and not s.waking[entry.u] and not s.out[entry.u] then
-			show(player, entry)
+		if entry.e == nil then
+			entry.e = equipped < Pens.capacity(player)
+		end
+		if isEquipped(entry) then
+			equipped += 1
+			if not s.out[entry.u] then
+				show(player, entry)
+			end
+		end
+	end
+	for _, b in p.Blankets do
+		if not s.blankets[b.u] then
+			placeBlanket(player, b)
 		end
 	end
 end
 
--- Throw away the pen and build it again from the profile (after a save wipe)
+local function wipeWorld(s: State)
+	for _, m in s.models do
+		m:Destroy()
+	end
+	for _, b in s.blankets do
+		b:Destroy()
+	end
+	local waking = s.hole:FindFirstChild("Waking")
+	if waking then
+		waking:ClearAllChildren()
+	end
+end
+
+-- Throw away the home's toys and build them again from the profile (after a save wipe)
 function Pens.reload(player: Player)
 	local p = PlayerData.get(player)
 	local s = states[player]
 	if not p or not s then
 		return
 	end
-	for _, m in s.models do
-		m:Destroy()
-	end
-	for _, b in s.waking do
-		b:Destroy()
-	end
-	s.models, s.waking, s.out = {}, {}, {}
+	wipeWorld(s)
+	s.models, s.blankets, s.out = {}, {}, {}
 	s.hole:SetAttribute("Level", p.HomeLevel)
+	s.hole:SetAttribute("WheelLevel", p.WheelLevel)
 	fill(player)
 	sync(player)
 end
@@ -429,6 +673,14 @@ function Pens.setLevel(player: Player, level: number)
 	if s then
 		s.hole:SetAttribute("Level", level)
 	end
+	sync(player)
+end
+
+function Pens.setWheel(player: Player, level: number)
+	local s = states[player]
+	if s then
+		s.hole:SetAttribute("WheelLevel", level)
+	end
 end
 
 local function clear(player: Player)
@@ -437,15 +689,13 @@ local function clear(player: Player)
 		return
 	end
 	states[player] = nil
-	for _, m in s.models do
-		m:Destroy()
-	end
-	for _, b in s.waking do
-		b:Destroy()
-	end
+	wipeWorld(s)
 	s.hole:SetAttribute("Income", 0)
 	if s.hole:GetAttribute("Level") ~= 1 then
 		s.hole:SetAttribute("Level", 1)
+	end
+	if s.hole:GetAttribute("WheelLevel") ~= 1 then
+		s.hole:SetAttribute("WheelLevel", 1)
 	end
 end
 
@@ -470,8 +720,9 @@ function Pens.start(_bedroom: Model)
 		if not hole or not player.Parent then
 			return
 		end
-		states[player] = { hole = hole :: Model, models = {}, waking = {}, out = {} }
-		(hole :: Model):SetAttribute("Level", profile.HomeLevel)
+		states[player] = { hole = hole :: Model, models = {}, blankets = {}, out = {} }
+		(hole :: Model):SetAttribute("Level", profile.HomeLevel);
+		(hole :: Model):SetAttribute("WheelLevel", profile.WheelLevel)
 		fill(player)
 		sync(player)
 	end)

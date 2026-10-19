@@ -1,8 +1,9 @@
 --!strict
--- Spending: home levels, Strength / Sneak / Grip, rebirths and selling toys (GameRemotes.Buy, a RemoteFunction:
--- ("Home") / ("Stat", name) / ("Rebirth") / ("Sell", uid) -> ok, message). Speed is trained on your home's wheel:
--- press Train Speed and you run in the wheel (anchored on its RunPoint) gaining Speed points until you jump off or
--- press it again (GameRemotes.StopTraining).
+-- Spending and the inventory (GameRemotes.Buy, a RemoteFunction -> ok, message): ("Home") and ("Wheel") level up
+-- your home and your Speed wheel (separate upgrades), ("Sell", uid or {uids}), ("Equip" | "Unequip", uid),
+-- ("EquipBest"), ("Lock" | "Unlock", uid), and ("Rebirth") while rebirths are switched on (GameConfig.SHOW_REBIRTH).
+-- Speed is trained on your home's wheel: press Train Speed and you run in it (anchored on its RunPoint) gaining
+-- Speed points, faster on a better wheel, until you jump off or move (GameRemotes.StopTraining).
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
@@ -76,46 +77,44 @@ local function buy(player: Player, what: string, arg: any): (boolean, string)
 		end
 		p.HomeLevel = nextLevel
 		Pens.setLevel(player, nextLevel)
+		Pens.fillFree(player)
 		PlayerData.changed(player)
 		return true, `Home level {nextLevel}! Room for {MapConfig.HOLE_LEVELS[nextLevel].slots} toys`
-	elseif what == "Stat" then
-		local stat = GameConfig.STATS[arg]
-		if typeof(arg) ~= "string" or not stat then
-			return false, "?"
+	elseif what == "Wheel" then
+		local nextLevel = p.WheelLevel + 1
+		local cost = GameConfig.WHEEL_COST[nextLevel]
+		if not cost then
+			return false, "Your Speed wheel is max level!"
 		end
-		local level = p.Stats[arg] or 0
-		if level >= stat.max then
-			return false, `{arg} is maxed out!`
-		end
-		local cost = GameConfig.statCost(arg, level)
 		if not PlayerData.spend(player, cost) then
 			return false, "Not enough cash"
 		end
-		p.Stats[arg] = level + 1
+		p.WheelLevel = nextLevel
+		Pens.setWheel(player, nextLevel)
 		PlayerData.changed(player)
-		Carry.refreshSpeed(player)
-		return true, `{arg} {level + 1}!`
+		return true, `Speed wheel level {nextLevel}! Trains x{GameConfig.trainRate(nextLevel)} as fast`
 	elseif what == "Rebirth" then
+		if not GameConfig.SHOW_REBIRTH then
+			return false, "Rebirths aren't open yet"
+		end
 		local n = p.Rebirths + 1
 		if n > GameConfig.MAX_REBIRTHS then
 			return false, "No more rebirths (for now)!"
 		end
 		local cost = GameConfig.rebirthCost(n)
-		local rule = GameConfig.REBIRTH[n]
-		if rule and rule.strength and (p.Stats.Strength or 0) < rule.strength then
-			return false, `Rebirth {n} needs Strength {rule.strength}`
-		end
 		if p.Cash < cost then
 			return false, `Rebirth {n} needs {GameConfig.money(cost)}`
 		end
 		stopTraining(player)
 		p.Rebirths = n
 		p.Cash = 0
-		p.Stats = { Strength = 0, Sneak = 0, Grip = 0 }
 		p.SpeedPoints = 0
 		p.SpeedProgress = 0
 		p.HomeLevel = 1
+		p.WheelLevel = 1
 		Pens.setLevel(player, 1)
+		Pens.setWheel(player, 1)
+		Pens.equipBest(player)
 		PlayerData.changed(player)
 		Carry.refreshSpeed(player)
 		local mult = GameConfig.rebirthMultiplier(n)
@@ -124,19 +123,39 @@ local function buy(player: Player, what: string, arg: any): (boolean, string)
 		end
 		return true, `Rebirth {n}! You now earn x{mult} money`
 	elseif what == "Sell" then
+		-- one toy (uid) or many ({uid, ...}); locked toys and ones being stolen are skipped
+		local uids = if typeof(arg) == "string" then { arg } elseif typeof(arg) == "table" then arg else {}
+		local state = Pens.state(player)
+		local total, count = 0, 0
+		for _, uid in uids do
+			local entry = typeof(uid) == "string" and Pens.find(player, uid)
+			if entry and state and not state.out[uid] and not entry.l then
+				total += math.floor(Pens.perSecond(entry) * GameConfig.SELL_SECONDS)
+				count += 1
+				Pens.remove(player, uid)
+			end
+		end
+		if count == 0 then
+			return false, "Nothing to sell (locked toys are kept)"
+		end
+		PlayerData.addCash(player, total)
+		PlayerData.changed(player)
+		return true,
+			if count == 1
+				then `Sold for {GameConfig.money(total)}`
+				else `Sold {count} toys for {GameConfig.money(total)}`
+	elseif what == "Equip" or what == "Unequip" then
 		if typeof(arg) ~= "string" then
 			return false, "?"
 		end
-		local entry = Pens.find(player, arg)
-		local state = Pens.state(player)
-		if not entry or not state or state.out[arg] then
-			return false, "You can't sell that toy right now"
+		return Pens.equip(player, arg, what == "Equip")
+	elseif what == "EquipBest" then
+		return Pens.equipBest(player)
+	elseif what == "Lock" or what == "Unlock" then
+		if typeof(arg) ~= "string" then
+			return false, "?"
 		end
-		local price = math.floor(Pens.perSecond(entry) * GameConfig.SELL_SECONDS)
-		Pens.remove(player, arg)
-		PlayerData.addCash(player, price)
-		PlayerData.changed(player)
-		return true, `Sold for {GameConfig.money(price)}`
+		return Pens.setLock(player, arg, what == "Lock")
 	end
 	return false, "?"
 end
@@ -203,7 +222,7 @@ function Upgrades.start(_bedroom: Model)
 					stopTraining(player)
 					continue
 				end
-				p.SpeedProgress += 0.5 * GameConfig.trainRate(p.HomeLevel)
+				p.SpeedProgress += 0.5 * GameConfig.trainRate(p.WheelLevel)
 				local gained = false
 				while
 					p.SpeedPoints < GameConfig.SPEED_MAX_POINTS

@@ -9,49 +9,41 @@ local GameConfig = {}
 GameConfig.START_CASH = 0
 GameConfig.SELL_SECONDS = 20 -- a toy sells for 20 seconds of what it earns
 
--- Home levels: cost to reach each level (MapConfig.HOLE_LEVELS has the slots and look). Level 7 needs a rebirth.
+-- Home levels: cost to reach each level (MapConfig.HOLE_LEVELS has the slots and look).
 GameConfig.HOME_COST = { [2] = 500, [3] = 5_000, [4] = 50_000, [5] = 500_000, [6] = 5_000_000, [7] = 50_000_000 }
-GameConfig.HOME_REBIRTH = { [7] = 1 }
+GameConfig.HOME_REBIRTH = {} :: { [number]: number } -- rebirths are hidden for now (Dylan: "might be too soon")
+
+-- Inventory: the pen shows the equipped toys (home slots); the rest wait in the inventory
+GameConfig.INVENTORY_MAX = 100 -- toys and blankets you can own at once
+GameConfig.MAX_BLANKETS = 6 -- blankets waiting in your home to be hatched
+GameConfig.SHOW_REBIRTH = false
 
 -- Wake-up timer after banking, by blanket size
 GameConfig.WAKE_SECONDS = { S = 5, M = 20, L = 60, G = 180 } :: { [string]: number }
 GameConfig.FIRST_TOY = "PlushBunny" -- your very first toy is always an Uncommon Plush Bunny (the plan's first minute)
 
--- Stats ----------------------------------------------------------------------------------------------------------------
--- Strength, Sneak and Grip are bought with cash; each level costs 1.6x the last. Speed is trained on your wheel.
-GameConfig.STAT_GROWTH = 1.6
-GameConfig.STATS = {
-	Strength = { order = 1, max = 20, cost = 100, text = "+5% speed dragging Large toys" },
-	Sneak = { order = 2, max = 20, cost = 150, text = "-3% noise when you drag a toy" },
-	Grip = { order = 3, max = 10, cost = 500, text = "+5% chance to hold on when hit" },
-} :: { [string]: { order: number, max: number, cost: number, text: string } }
-GameConfig.STAT_ORDER = { "Strength", "Sneak", "Grip" }
-GameConfig.LARGE_STRENGTH = 5 -- Strength needed to grab a Large toy
-
--- cost of the next level of a stat when you're at `level`
-function GameConfig.statCost(stat: string, level: number): number
-	local s = GameConfig.STATS[stat]
-	return math.floor(s.cost * GameConfig.STAT_GROWTH ^ level + 0.5)
-end
-
--- Speed: your walk speed is BASE plus the points trained on your home's wheel. Each point takes a bit longer, and a
--- bigger wheel (higher home level) trains faster.
+-- Speed --------------------------------------------------------------------------------------------------------------
+-- The one stat (Dylan, 19 Oct: "you really just need speed"; Strength, Sneak and Grip are gone). Your walk speed is
+-- BASE plus the points trained on your home's Speed wheel. Each point takes a bit longer; a better wheel trains
+-- faster. The wheel has its own levels, bought separately from the home, so either can come first.
 GameConfig.SPEED_BASE = 16
-GameConfig.SPEED_MAX_POINTS = 34 -- walk speed 50
-function GameConfig.trainSeconds(points: number): number
-	return 2 + 0.6 * points
+GameConfig.SPEED_MAX_POINTS = 64 -- walk speed 80
+function GameConfig.trainSeconds(points: number): number -- seconds of running for the next point, at x1
+	return 2 + 0.5 * points
 end
-function GameConfig.trainRate(homeLevel: number): number
-	return 1 + 0.25 * (homeLevel - 1)
+GameConfig.WHEEL_COST = { [2] = 300, [3] = 2_500, [4] = 20_000, [5] = 150_000, [6] = 1_000_000, [7] = 8_000_000 }
+function GameConfig.trainRate(wheelLevel: number): number -- how much faster than x1 a wheel trains
+	return 1 + 0.5 * (wheelLevel - 1)
 end
 
 -- Carrying (these were in Carry.luau)
 GameConfig.CARRY_SPEED = { S = 0.95, M = 0.8, L = 0.6 } :: { [string]: number }
 GameConfig.CARRY_NOISE = { S = 0.5, M = 1, L = 2 } :: { [string]: number }
+GameConfig.SLOW_MODE = 0.5 -- Slow Mode: walk speed and drag noise x0.5
 
 -- Rebirth ("Growth Spurt"): resets cash, stats and home level; keeps toys and the Index.
 GameConfig.REBIRTH = {
-	{ cash = 50_000_000, strength = 18 },
+	{ cash = 50_000_000 },
 	{ cash = 500_000_000 },
 	{ cash = 5_000_000_000 },
 }

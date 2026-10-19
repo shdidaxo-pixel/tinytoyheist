@@ -1361,8 +1361,9 @@ local function tutorialStep(): (string?, BasePart?)
 	end
 	local home = myHome()
 	if me:GetAttribute("Carrying") then
-		local sign = home and home:FindFirstChild("Sign") :: BasePart?
-		return "Bring it home!", sign
+		-- point at the pen floor, not the sign floating above the home (Dylan, 19 Oct)
+		local pen = home and (home:FindFirstChild("Pen") or home:FindFirstChild("Sign")) :: BasePart?
+		return "Bring it home!", pen
 	end
 	local waking = home and home:FindFirstChild("Waking")
 	if waking and #waking:GetChildren() > 0 then

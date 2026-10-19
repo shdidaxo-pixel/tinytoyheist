@@ -17,7 +17,7 @@
 --      body, then spring back), looks around while it stands still, and now and then does a move. Rarer toys do more,
 --      and fancier ones: Common hops and stretches, Rare spins, Legendary flips, Mythic twirls in the air, Secret
 --      glitches. A fresh hatch (RevealedAt) plays a big happy jump. Carried off by a thief it struggles and flails;
---      dropped (StolenGlow) it shivers and looks about; held up in a player's hands (welded to their
+--      dropped (StolenGlow) it shivers and looks about; held up in a player's hands (HeldBy, or welded to their
 --      HumanoidRootPart, the hotbar) it sways calmly and looks about.
 -- Everything is in studs from the toy's Root size, so it works at any Model:ScaleTo scale. Moving the toy around
 -- (roaming a pen) is separate: move the model with PivotTo; the animation plays on top. How fast it's walking is
@@ -548,7 +548,11 @@ local function personality(st: State, now: number, dt: number): Layer
 	local loose = not carried and st.model:FindFirstChild("StolenGlow") ~= nil
 	-- held up in someone's hands (the hotbar): welded to a player but not being dragged off
 	local holder = root.AssemblyRootPart
-	local held = not carried and holder ~= nil and holder ~= root and holder.Name == "HumanoidRootPart"
+	local held = not carried
+		and (
+			st.model:GetAttribute("HeldBy") ~= nil
+			or (holder ~= nil and holder ~= root and holder.Name == "HumanoidRootPart")
+		)
 
 	-- how it's moving (the pen roam moves the model; we just watch)
 	local last = st.lastPos or pos

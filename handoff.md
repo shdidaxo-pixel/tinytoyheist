@@ -1,11 +1,71 @@
 # Tiny Toy Heist: Handoff
 
-Written 19 Oct 2026, at the end of the session that took the Kid's Bedroom from a written brief, through six rounds
-of concept renders, to an agreed layout (concept v6). Nothing in Roblox Studio has changed yet. The next job is to
-build v6 in Studio.
+First written 19 Oct 2026 for building the Kid's Bedroom (concept v6). The map is now built and playable: read
+"START HERE" first, then section 0. Sections 1 onwards are the original brief and history (full-size numbers; the
+map is built at those and shrunk to MapConfig.SCALE).
 
 Read this file top to bottom before touching the map. It is long on purpose: it holds every number, every decision
 and the reason behind it, every piece of Dylan's feedback in order, and a step-by-step plan for the Studio build.
+
+---
+
+## START HERE (next chat): bring in all the models and build the real game
+
+Updated 19 Oct 2026, ~12:00. The Kid's Bedroom is built, scaled and playable in Studio. The toy session has all 105
+voxel toys as models. The next chat's job is to **use those models everywhere and build the actual game mechanics**
+(economy, wake-up reveal, raids, saving, upgrades), working from Dylan's instructions. Wait for his first message
+before starting.
+
+### Where the game is right now
+- **Map**: `Workspace.Bedroom`, rebuilt by `tools/build-bedroom.luau` (+ `tools/bedroom/*`). It is built full size and
+  shrunk to `MapConfig.SCALE` = **0.65** (Dylan: "the map is too big ... takes too long"). Game code reads the
+  scaled numbers from `MapConfig`; `MapConfig.unscaled` is the full-size layout the builder and the spec use. The
+  player keeps normal size. Home bed → first toy is ~6 s at walk speed 16; home → hallway door ~45 s.
+- **The first toys sit right in front of the homes** (`MapConfig.SPAWN_ARCS`: one facing each home just past the safe
+  ring, a second ring between them), like Steal an Egg. Then rows down the carpet (Small), wood (Medium), creaky
+  (Large).
+- **The cat patrols the carpet in front of the homes** and comes running (15 studs/s, 12 s) when it hears a toy
+  being grabbed (`ServerStorage.BedroomEvents.ToyGrabbed`), so grabbing the first toy is a chase home.
+- **Working systems** (all play-tested, section 0 below has the detail): home claiming and spawning, floating signs,
+  door lock; sleeping toys under blankets, grab (hold E), drag home (slower and noisy by size), bank into your pen
+  where toys roam; drops from hazards and the Drop Toy button; the wake meter, Kid sitting up with the flashlight at
+  80, lights on and the Kid walking and grabbing when awake; train, cat, traps, loose boards, ducks, bricks, monitor
+  zone; HUD wake meter/timer/RUN!/Drop Toy; sounds.
+- **Toys**: `ServerStorage.TinyToyHeistAssets.Toys` has all 105 models (built by `tools/toys/build-toys.luau`, owned
+  by the toy session). API in section 15: clone, `PivotTo` a floor CFrame (pivot at feet, faces -Z), parent into
+  Workspace and `TinyToyHeistToys/ToyClient` animates it. `Mutations.roll/apply`, `ToyVFX.revealBurst/popIn`,
+  `ToyVFX.addGlowTell`. Data: `ReplicatedStorage.Shared.Toys.ToyCatalog` (Id, Name, Set, Rarity, Money, Size, ...).
+
+### What's not built yet (the likely next jobs; confirm order with Dylan)
+1. **Economy**: money per second from each toy in your pen (`toy.Money` × mutation multiplier), the cash pile filling
+   up and walk-over collect, the HUD's cash and quest (the HUD still runs a demo loop for those:
+   `TinyToyHeistUI/Hud.client.luau`, bottom "Demo loop" block).
+2. **Wake-up reveal**: banked toys currently appear awake at once. The plan: a wake timer over the toy (Small 5 s,
+   Medium 20 s, Large 60 s), then `revealBurst`, rarity and a mutation roll.
+3. **Home levels**: costs from the plan (L2 $500 ... L7 $50M + Rebirth), capacity already in `MapConfig.HOLE_LEVELS`;
+   setting a home's `Level` attribute already rebuilds its look and wheel (`Homes.relevel`).
+4. **Stats and the Speed wheel**: training on the wheel (`Hole#.TrainingWheel.Wheel` prompt "Train Speed",
+   `RunPoint`), Speed/Strength/Sneak/Grip from the plan.
+5. **Raids**: steal from other pens (hold 2 s on a roaming toy; `PenRoam.pose(seed, serverTime, ...)` tells the server
+   where a toy is), the lock button already works.
+6. **Saving** (DataStore): toys, cash, levels, stats; when a player leaves, clear their pen.
+7. **The Index** and rewards/shop hookups (UI exists, not wired).
+8. Other rooms (the hallway door is blocked 150 studs in) and Giant/Large toys.
+
+### How to work here (the rules that bit this session)
+- CLAUDE.md: StyLua + Selene before every commit; small commits with explicit paths; push to origin main.
+- **Rojo** must be running (`rojo serve default.project.json`) and connected in Studio (Plugins > Rojo > Connect). If
+  Studio stops syncing, check `rojo.exe` is running. A brand-new top-level service node needs a reconnect.
+- **Saving the place**: tools can't save. Dylan allowed using his PC: bring Studio to the front, click the viewport,
+  send Ctrl+S (PowerShell `System.Windows.Forms.SendKeys`), then copy the open file (currently
+  `places/TinyToyHeist-savev6.rbxl`) over `places/TinyToyHeist-Latest.rbxl` and commit that one only.
+- Rebuild the map from the command bar (Edit mode):
+  `local m = game.ServerStorage.TinyToyHeistTools.BuildBedroom:Clone(); print(require(m)); m:Destroy()`
+- Spec: `local s = game.ServerStorage.TinyToyHeistTests["MapConfig.spec"]:Clone(); print(require(s)(game.ReplicatedStorage.Shared:Clone()))`
+- Screen captures: one at a time (parallel ones time out); set `workspace.CurrentCamera.FieldOfView = 55` to match
+  the renders. SurfaceGuis can render blank on the first capture after a rebuild; capture again.
+- Play-test grabs with `user_keyboard_input` (hold E) in Play mode; `character_navigation` walks but doesn't jump.
+- Dylan reads quickly: short, plain updates. He decides; you recommend.
 
 ---
 

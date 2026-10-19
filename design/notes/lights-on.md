@@ -73,3 +73,18 @@ the motor, `Thud` for the bump). Effects use the VFX library (`shake`, `flash`, 
 ## Test
 
 Server command bar while playing: `workspace.Bedroom.GiantKid:SetAttribute("WakeMeter", 100)`.
+
+## Play test (19 Oct, 17:29–17:45, Studio, solo)
+
+Captures in `design/studio-lightson/` (car on its charger, the LIGHTS ON warning, "The Kid spotted you!", an
+overview with his eyes, the car and the timer).
+
+- Warning: "LIGHTS ON! HIDE! He gets up in N" counts down; then the red "LIGHTS ON 0:45" timer; "LIGHTS OUT" after.
+- His eyes swept the run, found a player standing still at (-60, 760) within 5 s, locked on and caught them.
+- The cat bit a player on the carpet and threw them to (-43, 34): the safe ring right in front of their home.
+- The RC car drove out at lights on and chased. Found: it got pinned on the desk and dithered by its charger.
+  Fixed (8eb160c): it now plans a route round the furniture corners, slides free if pinned, and parks. Checked with
+  a maths run in Studio (it reaches every test spot in 2–9 s); a live re-check is queued.
+- Dylan's screenshot: the cat's head looked twisted into its body during the bite/throw. That's the bite and throw
+  poses in CatView (animations session), reported to them.
+- Not tested yet: an endgame-speed player escaping his eyes, two players at once.

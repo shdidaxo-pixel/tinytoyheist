@@ -73,6 +73,8 @@ local function dizzy(character: Model, seconds: number)
 		stars[i] = img
 	end
 	VFX.animate(seconds, function(t)
+		-- the offset turns with the head, so take the tumble back out: the stars stay above it, never in the floor
+		gui.StudsOffsetWorldSpace = head.CFrame:VectorToObjectSpace(Vector3.new(0, 2.2, 0))
 		local a = os.clock() * 6
 		for i, img in stars do
 			local k = a + i * math.pi * 2 / 3

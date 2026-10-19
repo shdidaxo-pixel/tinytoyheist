@@ -125,7 +125,7 @@ local function onReveal(info: any)
 	local copy = snapshot
 	snapshot = nil
 	local sizeMult = tonumber(info.sizeMult) or 1
-	local function burst(at: Vector3)
+	local function burst(at: Vector3, height: number?)
 		Moments.fire("HatchBurst", { rarity = info.rarity, mutation = info.mutation, sizeMult = sizeMult })
 		local toys = VFX.hatchEnd()
 		local toy = toys[1]
@@ -134,6 +134,7 @@ local function onReveal(info: any)
 			mutation = info.mutation,
 			sizeMult = sizeMult,
 			mine = true,
+			scale = math.max(1, (height or 5) / 4), -- as big as the blanket it came out of
 		})
 		for _, t in toys do
 			pcall(ToyVFX.popIn, t, 0.5)

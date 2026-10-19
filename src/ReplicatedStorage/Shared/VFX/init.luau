@@ -206,6 +206,11 @@ local function animate(seconds: number, fn: (p: number, dt: number) -> (), done:
 	end
 	loop = RunService.Heartbeat:Connect(function(dt)
 		local now = os.clock()
+		if VFX.frozen then
+			for _, j in jobs do
+				j.t0 += dt -- held still (VFX.freeze, for captures)
+			end
+		end
 		local i = 1
 		while i <= #jobs do
 			local j = jobs[i]
@@ -231,6 +236,17 @@ local function animate(seconds: number, fn: (p: number, dt: number) -> (), done:
 	end)
 end
 VFX.animate = animate
+
+-- For captures: hold every running effect still (particles and frame jobs), then let go.
+VFX.frozen = false
+function VFX.freeze(on: boolean)
+	VFX.frozen = on
+	for _, d in Workspace:GetDescendants() do
+		if d:IsA("ParticleEmitter") and d:FindFirstAncestor("VFX") then
+			d.TimeScale = if on then 0 else 1
+		end
+	end
+end
 
 local function easeOut(p: number, k: number?): number
 	return 1 - (1 - p) ^ (k or 3)
@@ -298,7 +314,10 @@ local function anchor(pos: Vector3, size: number?, life: number?): Part
 	p.Shape = Enum.PartType.Ball
 	p.CFrame = CFrame.new(pos)
 	p.Parent = fxFolder()
-	Debris:AddItem(p, life or 4)
+	-- cleaned up by the frame loop (not Debris) so VFX.freeze holds it too
+	animate(life or 4, function() end, function()
+		p:Destroy()
+	end)
 	return p
 end
 
@@ -432,13 +451,14 @@ function VFX.beams(at: any, color: Color3 | ColorSequence, n: number, seconds: n
 		beam.FaceCamera = true
 		beam.Segments = 1
 		beam.Color = colorSeq(color)
-		beam.Transparency = seq({ { 0, 0.1 }, { 0.7, 0.35 }, { 1, 1 } })
+		beam.Transparency = seq({ { 0, 0 }, { 0.75, 0.2 }, { 1, 1 } })
+		beam.Brightness = 2
 		beam.Width0 = 0
 		beam.Width1 = 0
 		beam.Parent = holder
 		local angle = (i / n) * math.pi * 2 + math.random() * 0.4
 		local tilt = 0.12 + math.random() * 0.35
-		table.insert(list, { beam = beam, a1 = a1, angle = angle, tilt = tilt, w = h * (0.25 + math.random() * 0.25) })
+		table.insert(list, { beam = beam, a1 = a1, angle = angle, tilt = tilt, w = h * (0.5 + math.random() * 0.5) })
 	end
 	animate(life, function(t)
 		local grow = easeOut(math.min(1, t * 4), 3)
@@ -793,39 +813,93 @@ export type BurstOpts = {
 }
 
 -- The flipbook starburst + glow ball + sparks + light that every burst starts with
+-- A neon ball that blows up and fades: the cartoon "pop" every burst starts with
+local function orb(pos: Vector3, from: number, to: number, color: Color3, seconds: number)
+	local p = Instance.new("Part")
+	p.Name = "VfxOrb"
+	p.Shape = Enum.PartType.Ball
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Size = Vector3.one * from
+	p.CFrame = CFrame.new(pos)
+	p.Transparency = 0.15
+	p.Parent = fxFolder()
+	animate(seconds, function(t)
+		local e = easeOut(t, 3)
+		p.Size = Vector3.one * (from + (to - from) * e)
+		p.Transparency = 0.15 + 0.85 * t ^ 0.7
+	end, function()
+		p:Destroy()
+	end)
+end
+VFX.orb = orb
+
+-- The pop every burst starts with: neon orb, flipbook starburst, glow, speed-line sparks shooting out, sparkles, light
 local function core(pos: Vector3, h: number, color: Color3 | ColorSequence, power: number, life: number?): Part
 	local holder = anchor(pos, h * 0.8, life or 4)
-	local c3 = if typeof(color) == "Color3" then color else WHITE
+	local c3 = if typeof(color) == "Color3" then color else Color3.fromRGB(255, 120, 200)
+	orb(pos, h * 0.4, h * (1.6 + power * 0.45), c3, 0.3 + power * 0.03)
 	emitter(holder, "Burst", {
-		Color = colorSeq(color, true),
-		Lifetime = NumberRange.new(0.45),
-		FlipbookFramerate = NumberRange.new(16 / 0.45),
+		Color = colorSeq(color),
+		LightEmission = 0.25,
+		Brightness = 1.6,
+		Lifetime = NumberRange.new(0.5),
+		FlipbookFramerate = NumberRange.new(16 / 0.5),
 		Speed = NumberRange.new(0),
 		LockedToPart = true,
-		Size = NumberSequence.new(h * (1.6 + power * 0.5)),
+		Size = NumberSequence.new(h * (2.2 + power * 0.7)),
 		Rotation = NumberRange.new(0, 360),
-		ZOffset = h * 0.5,
+		ZOffset = h * 0.6,
+	}):Emit(1)
+	emitter(holder, "Burst", {
+		Color = ColorSequence.new(WHITE),
+		Lifetime = NumberRange.new(0.35),
+		FlipbookFramerate = NumberRange.new(16 / 0.35),
+		Speed = NumberRange.new(0),
+		LockedToPart = true,
+		Size = NumberSequence.new(h * (0.9 + power * 0.2)),
+		Rotation = NumberRange.new(0, 360),
+		ZOffset = h * 0.7,
 	}):Emit(1)
 	emitter(holder, "Glow", {
 		Color = colorSeq(color),
-		Lifetime = NumberRange.new(0.5),
+		Lifetime = NumberRange.new(0.6),
 		Speed = NumberRange.new(0),
 		LockedToPart = true,
-		Size = seq({ { 0, h * 1.2 }, { 1, h * (2.5 + power) } }),
-		Transparency = seq({ { 0, 0.15 }, { 1, 1 } }),
+		Size = seq({ { 0, h * 1.2 }, { 1, h * (2 + power * 0.6) } }),
+		Transparency = seq({ { 0, 0.6 }, { 1, 1 } }),
 		ZOffset = h * 0.4,
 	}):Emit(1)
+	-- speed lines: stretched glows flying out along their velocity
+	emitter(holder, "Glow", {
+		Color = colorSeq(color),
+		LightEmission = 0.5,
+		Brightness = 2,
+		Orientation = Enum.ParticleOrientation.VelocityParallel,
+		Squash = NumberSequence.new(2.6),
+		Lifetime = NumberRange.new(0.3, 0.5),
+		Speed = NumberRange.new(h * 6, h * (9 + power * 2)),
+		SpreadAngle = Vector2.new(180, 180),
+		Drag = 5,
+		Size = seq({ { 0, h * 0.45 }, { 1, h * 0.1 } }),
+	}):Emit(count(10 + power * 6))
 	emitter(holder, "Sparkle", {
 		Color = colorSeq(color, true),
-		Lifetime = NumberRange.new(0.5, 0.9),
-		Speed = NumberRange.new(h * 1.5, h * (3 + power)),
+		Brightness = 1.5,
+		Lifetime = NumberRange.new(0.6, 1.1),
+		Speed = NumberRange.new(h * 2, h * (4 + power)),
 		SpreadAngle = Vector2.new(180, 180),
 		Drag = 4,
-		Size = seq({ { 0, h * 0.35, h * 0.1 }, { 1, 0 } }),
+		Size = seq({ { 0, h * 0.6, h * 0.2 }, { 1, 0 } }),
 		Rotation = NumberRange.new(0, 360),
 		RotSpeed = NumberRange.new(-180, 180),
 	}):Emit(count(8 + power * 6))
-	pointLight(holder, c3, 2 + power * 2, h * 4, 0.6 + power * 0.15)
+	pointLight(holder, c3, 3 + power * 2, h * 5, 0.7 + power * 0.15)
 	return holder
 end
 
@@ -878,57 +952,43 @@ local function rays(pos: Vector3, h: number, color: Color3 | ColorSequence, seco
 		Speed = NumberRange.new(0),
 		LockedToPart = true,
 		Size = seq({ { 0, h * 1 }, { 0.15, h * 4.5 }, { 1, h * 5 } }),
-		Transparency = seq({ { 0, 1 }, { 0.1, 0.25 }, { 0.7, 0.45 }, { 1, 1 } }),
+		LightEmission = 0.4,
+		Transparency = seq({ { 0, 1 }, { 0.1, 0.45 }, { 0.7, 0.6 }, { 1, 1 } }),
 		RotSpeed = NumberRange.new(40),
 		Rotation = NumberRange.new(0, 360),
 		ZOffset = -h,
 	}):Emit(1)
 end
 
+-- World confetti: paper squares, stars and hearts, each emitter its own colour (a particle's Color is over its
+-- life, not per particle), so it's a real mix: the rarity colour plus the party colours
 local function confettiWorld(pos: Vector3, h: number, n: number, color: Color3?)
 	local holder = anchor(pos + Vector3.new(0, h * 0.4, 0), 1, 4)
-	local colors = if color
-		then ColorSequence.new({
-			ColorSequenceKeypoint.new(0, color),
-			ColorSequenceKeypoint.new(0.5, WHITE),
-			ColorSequenceKeypoint.new(1, color),
-		})
-		else RAINBOW
-	local function bits(tex: string, k: number, size: number)
-		emitter(holder, tex, {
-			Color = colors,
-			LightEmission = 0.3,
-			LightInfluence = 0.3,
+	local palette = table.clone(CONFETTI_COLORS)
+	if color then
+		table.insert(palette, color)
+		table.insert(palette, color)
+	end
+	local per = math.max(1, math.floor(count(n) / #palette + 0.5))
+	for i, c in palette do
+		local tex = if i % 3 == 0 then "Star" elseif i % 5 == 0 then "Heart" else "Square"
+		emitter(holder, if tex == "Square" then "Glow" else tex, {
+			Texture = if tex == "Square" then "rbxasset://textures/particles/SquareParticle.png" else nil,
+			Color = ColorSequence.new(c),
+			LightEmission = 0.2,
+			LightInfluence = 0.4,
 			Lifetime = NumberRange.new(1.6, 2.4),
-			Speed = NumberRange.new(h * 2.2, h * 4),
-			SpreadAngle = Vector2.new(55, 55),
+			Speed = NumberRange.new(h * 2.5, h * 4.5),
+			SpreadAngle = Vector2.new(60, 60),
 			EmissionDirection = Enum.NormalId.Top,
 			Acceleration = Vector3.new(0, -h * 2.2, 0),
-			Drag = 1.6,
-			Size = NumberSequence.new(h * size),
+			Drag = 1.5,
+			Size = NumberSequence.new(h * (if tex == "Square" then 0.17 else 0.3)),
 			Transparency = seq({ { 0, 0 }, { 0.8, 0 }, { 1, 1 } }),
 			Rotation = NumberRange.new(0, 360),
-			RotSpeed = NumberRange.new(-360, 360),
-		}):Emit(count(k))
+			RotSpeed = NumberRange.new(-400, 400),
+		}):Emit(per)
 	end
-	bits("Star", n * 0.35, 0.16)
-	bits("Heart", n * 0.15, 0.13)
-	local sq = emitter(holder, "Glow", {
-		Texture = "rbxasset://textures/particles/SquareParticle.png",
-		Color = colors,
-		LightEmission = 0,
-		LightInfluence = 0.5,
-		Lifetime = NumberRange.new(1.6, 2.4),
-		Speed = NumberRange.new(h * 2.2, h * 4.2),
-		SpreadAngle = Vector2.new(60, 60),
-		EmissionDirection = Enum.NormalId.Top,
-		Acceleration = Vector3.new(0, -h * 2.2, 0),
-		Drag = 1.6,
-		Size = NumberSequence.new(h * 0.09),
-		Rotation = NumberRange.new(0, 360),
-		RotSpeed = NumberRange.new(-400, 400),
-	})
-	sq:Emit(count(n * 0.5))
 end
 
 local function coins(pos: Vector3, h: number, n: number)
@@ -1046,7 +1106,7 @@ BURSTS.Hatch = function(pos, h, o)
 		lightning(mid, h, color, 10 + (tier.n - 5) * 6, 1.2)
 		-- a second wave a beat later
 		task.delay(0.35, function()
-			core(mid, h * 1.3, c, power + 1)
+			orb(mid, h * 0.5, h * (3 + power * 0.6), color, 0.4)
 			floorDecal(pos, "Shock", color, h * 2, h * 10, 1, { rainbow = secret })
 		end)
 		-- a pillar that stays a moment
@@ -1166,7 +1226,7 @@ end
 -- The hatch build-up (pass a local copy of the blanket; it's destroyed at the end): it shakes harder and harder, glows white then the rarity colour,
 -- sucks sparkles in, light beams creep out, the screen edges close in; then `done` (where the burst goes).
 
-function VFX.hatchCharge(blanket: Model, rarity: string?, done: (at: Vector3) -> ())
+function VFX.hatchCharge(blanket: Model, rarity: string?, done: (at: Vector3, height: number) -> ())
 	local tier = VFX.tier(rarity)
 	local seconds = tier.build * (if low() then 0.6 else 1)
 	local color = VFX.rarityColor(rarity)
@@ -1287,7 +1347,7 @@ function VFX.hatchCharge(blanket: Model, rarity: string?, done: (at: Vector3) ->
 		pull.Enabled = false
 		glow.Enabled = false
 		suck:Destroy()
-		done(rest.Position)
+		done(rest.Position, h)
 	end)
 	return seconds
 end

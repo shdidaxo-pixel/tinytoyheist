@@ -3,6 +3,7 @@
 -- Settings and Your Toys panels. Numbers are placeholders until the game systems exist; the layout matches the
 -- Figma page "In-game UI (Steal An Egg style)" at a 1280 x 720 reference size.
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
 
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
 local P = UIKit.Palettes
@@ -553,43 +554,110 @@ do
 	}).LayoutOrder =
 		99
 
-	-- Category tabs down the right side of the panel jump to each section (like the Steal An Egg shops).
+	-- Category tabs down the right side of the panel jump to each section (like the Steal An Egg shops). Each is a
+	-- chunky colour tile with rays behind a detailed picture and its name tucked into the bottom. The tab for the
+	-- section you're looking at grows, lights up with a white ring and gets a bobbing arrow pointing into the shop;
+	-- the others dim a little. It follows the scroll, so the tabs double as a "you are here".
 	local tabs = UIKit.new("Frame", {
 		Name = "Tabs",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(84, 360),
-		Position = UDim2.new(1, 10, 0, 70),
+		Size = UDim2.fromOffset(92, 440),
+		Position = UDim2.new(1, 14, 0, 74),
 	}, p.pop)
-	list(tabs, 10, Enum.HorizontalAlignment.Center)
+	list(tabs, 18, Enum.HorizontalAlignment.Center)
+	type Tab = { key: string, scale: UIScale, dim: Frame, ring: UIStroke, arrow: ImageLabel }
+	local tabList: { Tab } = {}
+	local quick = TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+	local current: string? = nil
+	local function selectTab(key: string)
+		if key == current then
+			return
+		end
+		current = key
+		for _, t in tabList do
+			local on = t.key == key
+			TweenService:Create(t.scale, quick, { Scale = if on then 1.07 else 1 }):Play()
+			TweenService:Create(t.dim, quick, { BackgroundTransparency = if on then 1 else 0.8 }):Play()
+			TweenService:Create(t.ring, quick, { Transparency = if on then 0 else 1 }):Play()
+			t.arrow.Visible = on
+		end
+	end
 	for i, tab in
 		{
-			{ "Featured", "Featured", img("Gift"), UIKit.Rarity.Mythic },
-			{ "Passes", "Passes", img("Bolt"), UIKit.Yellow },
-			{ "Speed", "Speed Packs", img("Shoe"), UIKit.Rarity.Rare },
-			{ "Cash", "Cash Packs", img("Cash"), UIKit.CashGreen },
+			{ "Featured", "Featured", img("Gift"), P.red, 60 },
+			{ "Passes", "Passes", img("BoltBig"), P.gold, 68 },
+			{ "Speed", "Speed Packs", img("SpeedPack1v2"), P.blue, 84 },
+			{ "Cash", "Cash Packs", img("CashPack1v2"), P.green, 84 },
 		} :: { { any } }
 	do
-		local holder = UIKit.new("Frame", {
-			Name = tab[1],
-			BackgroundTransparency = 1,
-			Size = UDim2.fromOffset(84, 76),
-			LayoutOrder = i,
-		}, tabs)
-		UIKit.icon(holder, tab[3], 52, UDim2.fromScale(0.5, 0), Vector2.new(0.5, 0))
-		UIKit.text(
-			holder,
-			tab[1],
-			17,
-			{ color = tab[4], position = UDim2.fromOffset(42, 52), anchor = Vector2.new(0.5, 0) }
-		)
+		local holder, face = UIKit.block(tabs, {
+			name = tab[1],
+			size = UDim2.fromOffset(88, 92),
+			palette = tab[4],
+			lip = 5,
+			gloss = true,
+			layoutOrder = i,
+		})
+		local scale = UIKit.new("UIScale", { Name = "Selected" }, face)
+		UIKit.burst(clip(face, 4), UDim2.fromScale(0.5, 0.4), 130, 0.28)
+		local pic = UIKit.icon(face, tab[3], tab[5], UDim2.fromScale(0.5, 0.4), mid, 5)
+		UIKit.hoverWiggle(face, pic)
+		UIKit.text(face, tab[1], 16, {
+			position = UDim2.new(0.5, 0, 1, -4),
+			anchor = Vector2.new(0.5, 1),
+			stroke = 3,
+			z = 7,
+		})
+		local dim = UIKit.new("Frame", {
+			Name = "Dim",
+			BackgroundColor3 = UIKit.Ink,
+			BackgroundTransparency = 0.8,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 8,
+		}, face)
+		UIKit.corner(dim, 4)
+		local ring = UIKit.new("UIStroke", {
+			Name = "Ring",
+			Color = UIKit.White,
+			Thickness = 3,
+			Transparency = 1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		}, dim)
+		-- the down arrow turned to point left, into the shop
+		local arrow = UIKit.icon(holder, img("Arrow"), 30, UDim2.new(0, -20, 0.5, 0), mid, 9)
+		arrow.Rotation = 90
+		arrow.Visible = false
+		TweenService:Create(
+			arrow,
+			TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+			{ Position = UDim2.new(0, -26, 0.5, 0) }
+		):Play()
+		table.insert(tabList, { key = tab[2], scale = scale, dim = dim, ring = ring, arrow = arrow })
 		UIKit.clickable(holder, function()
 			local target = jump[tab[2]]
 			if target then
+				selectTab(tab[2])
 				local y = target.AbsolutePosition.Y - scroll.AbsolutePosition.Y + scroll.CanvasPosition.Y - 6
 				UIKit.tween(scroll, 0.3, { CanvasPosition = Vector2.new(0, math.max(0, y)) })
 			end
 		end)
 	end
+	-- follow the scroll: the active tab is the last section whose title has passed the middle of the list
+	scroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+		local top = scroll.AbsolutePosition.Y + scroll.AbsoluteSize.Y * 0.45
+		local key = tabList[1].key
+		for _, t in tabList do
+			local target = jump[t.key]
+			if target and target.AbsolutePosition.Y <= top then
+				key = t.key
+			end
+		end
+		if scroll.CanvasPosition.Y >= scroll.AbsoluteCanvasSize.Y - scroll.AbsoluteWindowSize.Y - 2 then
+			key = tabList[#tabList].key
+		end
+		selectTab(key)
+	end)
+	selectTab(tabList[1].key)
 end
 
 -- Daily Rewards: a 7-day streak with a big Day 7 jackpot (from @hallodi.roblox).

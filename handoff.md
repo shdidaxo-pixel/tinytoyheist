@@ -65,7 +65,7 @@ gets aggressive).
 | `tests/MapConfig.spec.luau` | Unchanged. Tests the OLD numbers. Must be rewritten with MapConfig. |
 | Studio place | Unchanged this session. `places/TinyToyHeist-Latest.rbxl` was last committed before this session (commit a9973aa). |
 | UI (`TinyToyHeistUI`) | Unchanged this session. |
-| Git | All work committed on `main`. **There is no git remote**, so nothing has been pushed (see section 13). |
+| Git | All work committed on `main` and pushed to GitHub: https://github.com/shdidaxo-pixel/tinytoyheist (private, `origin`). |
 
 ### What to do next, in order
 
@@ -1158,8 +1158,8 @@ These are render artefacts, not design decisions. Don't copy them into Studio.
 
 ### Git
 
-- Branch `main`, no remote (`git remote -v` is empty). **"Push" isn't possible until a remote exists.** Ask Dylan
-  whether to create a private GitHub repo (with `gh repo create`) or add an existing remote.
+- Branch `main`, tracking `origin/main` at https://github.com/shdidaxo-pixel/tinytoyheist. Push after each commit when Dylan
+  wants it pushed. The GitHub CLI (`gh`) isn't installed; plain `git push` works with the saved login.
 - `places/TinyToyHeist-Latest.rbxl.lock` exists while Studio has the place open; don't commit the lock.
 
 ### Studio MCP

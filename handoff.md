@@ -80,7 +80,9 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
   Studio stops syncing, check `rojo.exe` is running. A brand-new top-level service node needs a reconnect.
 - **Saving the place**: tools can't save. Dylan allowed using his PC: bring Studio to the front, click the viewport,
   send Ctrl+S (PowerShell `System.Windows.Forms.SendKeys`), then copy the open file (currently
-  `places/TinyToyHeist-savev6.rbxl`) over `places/TinyToyHeist-Latest.rbxl` and commit that one only.
+  `places/TinyToyHeist-savev6.rbxl`) over `places/TinyToyHeist-Latest.rbxl` and commit that one only. **Since it was
+  published (19 Oct), Studio has the cloud place open, so Ctrl+S saves to Roblox, not to the file.** Ask Dylan for
+  File > Save to File As > `places/TinyToyHeist-Latest.rbxl` instead.
 - Rebuild the map from the command bar (Edit mode):
   `local m = game.ServerStorage.TinyToyHeistTools.BuildBedroom:Clone(); print(require(m)); m:Destroy()`
 - Spec: `local s = game.ServerStorage.TinyToyHeistTests["MapConfig.spec"]:Clone(); print(require(s)(game.ReplicatedStorage.Shared:Clone()))`

@@ -128,8 +128,8 @@ local function lock(hole: Model)
 	end)
 end
 
--- Demo toys for the pens (Studio only): real voxel toys from the toy set when they're in the place, otherwise
--- little placeholder figures.
+-- Demo toys for the pens (Studio only): real voxel toys (ServerStorage.TinyToyHeistAssets.Toys, or built from the
+-- toy data) when the place has them, otherwise little placeholder figures.
 local function demoToy(index: number, k: number, rng: Random): Model?
 	local size = if k % 5 == 4 then "L" elseif k % 2 == 1 then "M" else "S"
 	local ok, toy = pcall(function()
@@ -148,7 +148,14 @@ local function demoToy(index: number, k: number, rng: Random): Model?
 		if #choices == 0 then
 			choices = ToyCatalog.list()
 		end
-		return ToyBuilder.build(choices[rng:NextInteger(1, #choices)])
+		local data = choices[rng:NextInteger(1, #choices)]
+		-- the prebuilt model when the toy session has exported it, otherwise build it now
+		local assets = ServerStorage:FindFirstChild("TinyToyHeistAssets")
+		local prebuilt = assets and assets:FindFirstChild("Toys") and assets.Toys:FindFirstChild(data.Id)
+		if prebuilt and prebuilt:IsA("Model") then
+			return prebuilt:Clone()
+		end
+		return ToyBuilder.build(data)
 	end)
 	if ok and toy then
 		toy:SetAttribute("Size", toy:GetAttribute("Size") or size)

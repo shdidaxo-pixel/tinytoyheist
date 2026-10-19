@@ -722,251 +722,6 @@ do
 	selectTab(tabList[1].key)
 end
 
--- Reward cards (Daily and Playtime), built like the shop's pack cards: a ray background in the card's colour, a
--- light inner rim, a dark border, a detailed picture that wiggles on hover, and Gotham labels.
-local function rewardCard(parent: Instance, name: string, size: Vector2, position: UDim2, colour: string): Frame
-	local cardFrame = UIKit.new("Frame", {
-		Name = name,
-		BackgroundColor3 = UIKit.Ink,
-		Size = UDim2.fromOffset(size.X, size.Y),
-		Position = position,
-		ZIndex = 3,
-	}, parent)
-	UIKit.corner(cardFrame, 6)
-	UIKit.stroke(cardFrame, UIKit.Ink, 4, true)
-	local bg = UIKit.new("ImageLabel", {
-		Name = "Background",
-		BackgroundTransparency = 1,
-		Image = img("PassCard_Reward" .. colour),
-		ScaleType = Enum.ScaleType.Crop,
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = 1,
-	}, cardFrame)
-	UIKit.corner(bg, 6)
-	local rim = UIKit.new("Frame", {
-		Name = "Rim",
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, -6, 1, -6),
-		Position = UDim2.fromOffset(3, 3),
-		ZIndex = 2,
-	}, cardFrame)
-	UIKit.corner(rim, 4)
-	UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.5, Thickness = 2 }, rim)
-	return cardFrame
-end
-
--- A small dark pill at the top of a card ("DAY 3", "5 MIN").
-local function chip(parent: Instance, text: string, y: number, color: Color3?): TextLabel
-	local t = UIKit.text(parent, text, 14, {
-		color = color,
-		stroke = 0,
-		position = UDim2.new(0.5, 0, 0, y),
-		anchor = Vector2.new(0.5, 0),
-		z = 6,
-	})
-	t.BackgroundColor3 = UIKit.Ink
-	t.BackgroundTransparency = 0.4
-	UIKit.corner(t, 10)
-	UIKit.new("UIPadding", {
-		PaddingLeft = UDim.new(0, 10),
-		PaddingRight = UDim.new(0, 10),
-		PaddingTop = UDim.new(0, 3),
-		PaddingBottom = UDim.new(0, 3),
-	}, t)
-	return t
-end
-
--- The bar under a reward: CLAIMED (green + tick), CLAIM! (green, pulsing), a countdown (dark + clock) or LOCKED
--- (grey + padlock).
-local function rewardStatus(parent: Instance, state: string, text: string, size: Vector2, position: UDim2): Frame
-	local holder = UIKit.button(parent, text, {
-		palette = if state == "claimed" or state == "ready"
-			then P.green
-			elseif state == "timer" then P.grey
-			else P.light,
-		icon = if state == "claimed"
-			then img("Check")
-			elseif state == "timer" then img("Clock")
-			elseif state == "locked" then img("Lock")
-			else nil,
-		size = UDim2.fromOffset(size.X, size.Y),
-		position = position,
-		textSize = 18,
-		iconSize = 22,
-		iconGap = 5,
-	})
-	holder.ZIndex = 4
-	if state == "ready" then
-		UIKit.pulse(holder:FindFirstChild("Face") :: Frame, 0.06, 0.6)
-	end
-	return holder
-end
-
--- Today's card gets a gold ring.
-local function goldRing(cardFrame: Frame)
-	local s = cardFrame:FindFirstChildOfClass("UIStroke")
-	if s then
-		s.Color = UIKit.Yellow
-		s.Thickness = 4
-	end
-end
-
--- Daily Rewards: a 7-day streak with a big Day 7 jackpot (from @hallodi.roblox).
-do
-	local p = UIKit.panel(gui, "DAILY REWARDS", P.magenta, Vector2.new(720, 500))
-	panels.Daily = p
-	local b = p.body
-	UIKit.text(p.header, "STREAK 1/7", 20, { position = UDim2.new(1, -240, 0, 6) })
-	local bar = UIKit.new("Frame", {
-		BackgroundColor3 = hex("5A1450"),
-		Size = UDim2.fromOffset(170, 16),
-		Position = UDim2.new(1, -240, 0, 38),
-		ZIndex = 8,
-	}, p.header)
-	UIKit.corner(bar, 8)
-	UIKit.stroke(bar, UIKit.Ink, 2.5, true)
-	local fill =
-		UIKit.new("Frame", { BackgroundColor3 = hex("5BE36A"), Size = UDim2.fromScale(1 / 7, 1), ZIndex = 9 }, bar)
-	UIKit.corner(fill, 8)
-	UIKit.shade(fill, hex("5BE36A"))
-	-- { chip, reward, picture, card colour, status, status text, reward colour }
-	local days: { { any } } = {
-		{ "DAY 1!", "$2,500", img("CashPack1v2"), "Blue", "claimed", "CLAIMED", UIKit.CashGreen },
-		{ "TOMORROW", "3 FLASHLIGHTS", img("Flashlight2"), "Red", "timer", "12:05:07" },
-		{ "DAY 3", "$6,000", img("CashPack2v2"), "Green", "locked", "LOCKED", UIKit.CashGreen },
-		{ "DAY 4", "x2 SPEED 10m", img("BoltBig"), "Purple", "locked", "LOCKED" },
-		{ "DAY 5", "3 DECOYS", img("Decoy2"), "Pink", "locked", "LOCKED" },
-		{ "DAY 6", "LUCKY BLANKET", img("Featured_hero"), "Gold", "locked", "LOCKED" },
-	}
-	for i, d in days do
-		local col = if i <= 4 then i - 1 else i - 5
-		local row = if i <= 4 then 0 else 1
-		local t =
-			rewardCard(b, "Day " .. i, Vector2.new(160, 180), UDim2.fromOffset(16 + col * 172, 78 + row * 192), d[4])
-		chip(t, d[1], 8, if i == 1 then UIKit.Yellow else nil)
-		UIKit.text(t, d[2], 16, {
-			color = d[7] or UIKit.White,
-			stroke = 3,
-			position = UDim2.new(0.5, 0, 0, 32),
-			anchor = Vector2.new(0.5, 0),
-			z = 6,
-		})
-		local pic = UIKit.icon(t, d[3], 92, UDim2.fromOffset(80, 94), mid, 5)
-		UIKit.hoverWiggle(t, pic)
-		if i == 1 then
-			goldRing(t)
-			UIKit.sparkle(t, UDim2.fromOffset(24, 70), 16)
-			UIKit.sparkle(t, UDim2.fromOffset(138, 84), 13)
-		end
-		rewardStatus(t, d[5], d[6], Vector2.new(144, 34), UDim2.fromOffset(8, 136))
-	end
-	-- Day 7: the jackpot, a wide orange card with a rainbow edge and three prizes
-	local jp = rewardCard(b, "Day 7", Vector2.new(334, 180), UDim2.fromOffset(16 + 2 * 172, 78 + 192), "Jackpot")
-	local edge = jp:FindFirstChildOfClass("UIStroke")
-	if edge then
-		edge.Color = UIKit.White
-		UIKit.new("UIGradient", {
-			Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, hex("FF4D5E")),
-				ColorSequenceKeypoint.new(0.25, hex("FFD43B")),
-				ColorSequenceKeypoint.new(0.5, hex("5BE36A")),
-				ColorSequenceKeypoint.new(0.75, hex("3DA5FF")),
-				ColorSequenceKeypoint.new(1, hex("B45CFF")),
-			}),
-			Rotation = 20,
-		}, edge)
-	end
-	chip(jp, "DAY 7", 8)
-	local jackpotHolder = UIKit.new("Frame", {
-		Name = "Jackpot",
-		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(200, 30),
-		Position = UDim2.fromOffset(167, 47),
-		AnchorPoint = mid,
-		ZIndex = 6,
-	}, jp)
-	UIKit.text(jackpotHolder, "JACKPOT!", 28, { stroke = 4, position = center, anchor = mid, z = 6 })
-	UIKit.pulse(jackpotHolder, 0.06, 0.7)
-	local prizes: { { any } } = {
-		{ img("CashPack3v2"), "$15K", UIKit.CashGreen },
-		{ toy("kingduck"), "Mythic toy", UIKit.White },
-		{ img("BoltBig"), "x3", UIKit.White },
-	}
-	for k, prize in prizes do
-		local x = 62 + (k - 1) * 105
-		UIKit.hoverWiggle(jp, UIKit.icon(jp, prize[1], 70, UDim2.fromOffset(x, 88), mid, 5))
-		chip(jp, prize[2], 112, prize[3]).Position = UDim2.fromOffset(x, 112)
-	end
-	UIKit.sparkle(jp, UDim2.fromOffset(28, 40), 18)
-	UIKit.sparkle(jp, UDim2.fromOffset(306, 44), 20)
-	rewardStatus(jp, "locked", "LOCKED", Vector2.new(318, 34), UDim2.fromOffset(8, 136))
-	UIKit.text(b, "NEXT REWARD IN 12:05:07", 20, { position = UDim2.new(0.5, 0, 1, -40), anchor = Vector2.new(0.5, 0) })
-end
-
--- Playtime Rewards: ten gifts that unlock the longer you play (from @hallodi.roblox).
-do
-	local p = UIKit.panel(gui, "PLAYTIME REWARDS", P.orange, Vector2.new(760, 496))
-	panels.Playtime = p
-	local b = p.body
-	UIKit.text(p.header, "CLAIMED 0/10", 18, { position = UDim2.new(1, -240, 0, 6) })
-	local bar = UIKit.new("Frame", {
-		BackgroundColor3 = hex("7A2A08"),
-		Size = UDim2.fromOffset(170, 16),
-		Position = UDim2.new(1, -240, 0, 38),
-		ZIndex = 8,
-	}, p.header)
-	UIKit.corner(bar, 8)
-	UIKit.stroke(bar, UIKit.Ink, 2.5, true)
-	-- { played, reward, picture, countdown }; cash piles grow with the time played
-	local gifts: { { any } } = {
-		{ "1 MIN", "$1,000", img("CashPack1v2"), "READY" },
-		{ "5 MIN", "x2", img("Flashlight2"), "2:30" },
-		{ "8 MIN", "$2,000", img("CashPack2v2"), "5:30" },
-		{ "12 MIN", "x1", img("Decoy2"), "9:30" },
-		{ "15 MIN", "x3", img("Pencil2"), "12:30" },
-		{ "20 MIN", "$4,000", img("CashPack3v2"), "17:30" },
-		{ "25 MIN", "5m", img("BoltBig"), "22:30" },
-		{ "30 MIN", "x1", img("Gift"), "27:30" },
-		{ "40 MIN", "$8,000", img("CashPack4v2"), "37:30" },
-		{ "50 MIN", "TOY", toy("teddyknight"), "47:30" },
-	}
-	local colours = { "Blue", "Gold", "Red", "Purple", "Green" }
-	for i, g in gifts do
-		local c, r = (i - 1) % 5, (i - 1) // 5
-		local x, y = 16 + c * 146, 78 + r * 186
-		local ready = i == 1
-		local t = rewardCard(b, g[1], Vector2.new(136, 130), UDim2.fromOffset(x, y), colours[c + 1])
-		chip(t, g[1], 6)
-		local pic = UIKit.icon(t, g[3], 88, UDim2.fromOffset(68, 66), mid, 5)
-		UIKit.hoverWiggle(t, pic)
-		UIKit.text(t, g[2], 19, {
-			color = if string.sub(g[2], 1, 1) == "$" then UIKit.CashGreen else UIKit.White,
-			stroke = 3,
-			position = UDim2.new(1, -8, 1, -5),
-			anchor = Vector2.new(1, 1),
-			z = 6,
-		})
-		if ready then
-			goldRing(t)
-			UIKit.sparkle(t, UDim2.fromOffset(18, 36), 16)
-			UIKit.sparkle(t, UDim2.fromOffset(118, 50), 12)
-		end
-		rewardStatus(
-			b,
-			if ready then "ready" else "timer",
-			if ready then "CLAIM!" else g[4],
-			Vector2.new(136, 34),
-			UDim2.fromOffset(x, y + 138)
-		)
-	end
-	UIKit.text(
-		b,
-		"PLAYED TODAY 2:29   |   NEXT GIFT IN 2:30",
-		20,
-		{ position = UDim2.new(0.5, 0, 1, -36), anchor = Vector2.new(0.5, 0) }
-	)
-end
-
 -- Settings: On / Off toggles (from @turiptoroblox).
 do
 	local p = UIKit.panel(gui, "Settings", P.blue, Vector2.new(560, 400))
@@ -1018,111 +773,6 @@ do
 	end
 end
 
--- Your Toys: tabs, a grid with rarity borders and a detail card (like the ZeroDev UI Pack inventory).
-do
-	local p = UIKit.panel(gui, "Your Toys", P.violet, Vector2.new(860, 520))
-	panels.Toys = p
-	local b = p.body
-	local _, cap = UIKit.block(p.header, {
-		name = "Capacity",
-		size = UDim2.fromOffset(96, 36),
-		position = UDim2.new(1, -70, 0.5, 0),
-		anchor = Vector2.new(1, 0.5),
-		color = UIKit.Panel,
-		edge = UIKit.Ink,
-		lip = 0,
-		gloss = false,
-		strokeWidth = 3,
-	})
-	UIKit.text(cap, "12/20", 20, { position = center, anchor = mid })
-	for i, name in { "All", "Small", "Medium", "Large" } do
-		UIKit.button(b, name, {
-			palette = if i == 1 then P.cyan else P.grey,
-			size = UDim2.fromOffset(110, 40),
-			position = UDim2.fromOffset(16 + (i - 1) * 118, 78),
-			textSize = 20,
-		})
-	end
-	local owned = {
-		{ "cosmicteddy", "Legendary" },
-		{ "robodino", "Epic" },
-		{ "jack", "Rare" },
-		{ "racer", "Rare" },
-		{ "bunny", "Uncommon" },
-		{ "soldier", "Uncommon" },
-		{ "frog", "Uncommon" },
-		{ "duck", "Common" },
-		{ "sock", "Common" },
-		{ "mouse", "Common" },
-		{ "chicken", "Common" },
-		{ "duck", "Common" },
-	}
-	for i = 1, 18 do
-		local c, r = (i - 1) % 6, (i - 1) // 6
-		local item = owned[i]
-		local holder, s = UIKit.tile(b, {
-			name = "Slot " .. i,
-			size = UDim2.fromOffset(82, 82),
-			position = UDim2.fromOffset(16 + c * 90, 132 + r * 92),
-			top = if item then hex("3A3648") else hex("1E1B26"),
-			bottom = if item then hex("2A2636") else hex("16131C"),
-			edge = if item then UIKit.Rarity[item[2]] else hex("0B0910"),
-		})
-		if item then
-			UIKit.backing(s, center, 80, 0.3)
-			UIKit.hoverWiggle(s, UIKit.icon(s, toy(item[1]), 66, center, mid))
-			UIKit.clickable(holder)
-		end
-		if i == 1 then
-			UIKit.stroke(s, UIKit.White, 3, true)
-		end
-	end
-	local _, det = UIKit.tile(b, {
-		name = "Detail",
-		size = UDim2.fromOffset(284, 424),
-		position = UDim2.fromOffset(560, 80),
-		top = hex("1E1B26"),
-		bottom = hex("15121C"),
-	})
-	UIKit.burst(clip(det, 6), UDim2.fromOffset(142, 76), 230, 0.22)
-	UIKit.hoverWiggle(det, UIKit.icon(det, toy("cosmicteddy"), 150, UDim2.fromOffset(142, 76), mid))
-	UIKit.sparkle(det, UDim2.fromOffset(52, 40), 18)
-	UIKit.sparkle(det, UDim2.fromOffset(232, 30), 14)
-	UIKit.text(det, "Cosmic Teddy", 28, { position = UDim2.fromOffset(142, 150), anchor = Vector2.new(0.5, 0) })
-	local tag = UIKit.new("Frame", {
-		BackgroundColor3 = UIKit.Yellow,
-		Size = UDim2.fromOffset(120, 30),
-		Position = UDim2.fromOffset(82, 190),
-		ZIndex = 5,
-	}, det)
-	UIKit.corner(tag, 6)
-	UIKit.stroke(tag, hex("6A4A06"), 2.5, true)
-	UIKit.text(tag, "Legendary", 17, { stroke = 2, position = center, anchor = mid, z = 6 })
-	UIKit.text(det, "$1,500/s", 30, {
-		font = UIKit.Fonts.number,
-		color = UIKit.CashGreen,
-		position = UDim2.fromOffset(142, 228),
-		anchor = Vector2.new(0.5, 0),
-	})
-	UIKit.text(det, "Bedroom set", 15, {
-		font = UIKit.Fonts.body,
-		color = hex("BDB8D0"),
-		stroke = 0,
-		position = UDim2.fromOffset(142, 274),
-		anchor = Vector2.new(0.5, 0),
-	})
-	UIKit.button(
-		det,
-		"Place in hole",
-		{ palette = P.green, size = UDim2.fromOffset(252, 50), position = UDim2.fromOffset(16, 300), textSize = 22 }
-	)
-	UIKit.button(
-		det,
-		"Sell · $30K",
-		{ palette = P.gold, size = UDim2.fromOffset(252, 50), position = UDim2.fromOffset(16, 360), textSize = 22 }
-	)
-end
-
 ---------------------------------------------------------------------------------------------------------------------
 -- HUD, laid out like Break and Steal an Egg.
 local hud: { [string]: any } = {}
@@ -1165,8 +815,8 @@ do
 	runHolder.Visible = false
 	hud.run = runHolder
 
-	-- Left menu: Shop, Index, Slow Mode, and the x2 Speed offer.
-	local left = group("Menu", Vector2.new(0, 0.5), UDim2.new(0, 14, 0.5, 0), Vector2.new(190, 280))
+	-- Left menu: Shop, Index, Upgrades, Slow Mode, and the x2 Speed offer.
+	local left = group("Menu", Vector2.new(0, 0.5), UDim2.new(0, 14, 0.5, 0), Vector2.new(190, 360))
 	list(left, 10)
 	local leftList = left:FindFirstChildOfClass("UIListLayout") :: UIListLayout
 	leftList.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -1185,7 +835,17 @@ do
 		size = UDim2.fromOffset(176, 54),
 		layoutOrder = 2,
 		onClick = function()
-			open("Toys")
+			open("Index")
+		end,
+	})
+	UIKit.button(left, "Upgrades", {
+		palette = P.green,
+		icon = img("Plus"),
+		size = UDim2.fromOffset(176, 54),
+		textSize = 24,
+		layoutOrder = 3,
+		onClick = function()
+			open("Upgrades")
 		end,
 	})
 	-- Slow Mode: a slide switch. Off = red with the knob on the left; on = green with the knob on the right.
@@ -1194,7 +854,7 @@ do
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0.45,
 		Size = UDim2.fromOffset(176, 38),
-		LayoutOrder = 3,
+		LayoutOrder = 4,
 	}, left)
 	UIKit.corner(slow, 4)
 	UIKit.stroke(slow, UIKit.Ink, 3, true)
@@ -1249,7 +909,7 @@ do
 		Name = "x2 Speed",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(176, 110),
-		LayoutOrder = 4,
+		LayoutOrder = 5,
 		Visible = false,
 	}, left)
 	local rainbow = UIKit.new("Frame", {
@@ -1353,6 +1013,7 @@ do
 	rewards.LayoutOrder = 2
 	local badge = UIKit.badge(rewards, "1", UDim2.new(1, -4, 0, 4)) -- top-right corner, clear of the button below
 	UIKit.pulse(badge, 0.15, 0.5)
+	hud.giftBadge = badge -- GameUI shows how many rewards are ready to claim
 	UIKit.square(right, img("Clock"), P.pink, 60, function()
 		open("Playtime")
 	end).LayoutOrder = 3
@@ -1391,7 +1052,7 @@ do
 		local t = UIKit.text(row, value, textPx, { font = UIKit.Fonts.number, color = color, stroke = 3.5 })
 		return ic, t
 	end
-	local shoe = stat(1, img("Shoe"), "10", UIKit.White, 46, 36)
+	local shoe, speedText = stat(1, img("Shoe"), "16", UIKit.White, 46, 36)
 	UIKit.icon(shoe, img("Plus"), 20, UDim2.new(1, -8, 1, -8), nil, 6)
 	local _, cashText = stat(2, img("Cash"), "$150", UIKit.CashGreen, 54, 42)
 	-- earning rate and speed multiplier sit beside the numbers, like "$147 +$14" and "200 (x2)"
@@ -1401,6 +1062,7 @@ do
 	local mult = UIKit.text(shoe.Parent :: Instance, "(x2)", 26, { font = UIKit.Fonts.number, color = hex("D9DCE4") })
 	mult.LayoutOrder = 5
 	hud.cash, hud.statsGroup = cashText, statsGroup
+	hud.rate, hud.speed, hud.mult = rate, speedText, mult
 
 	-- Bottom-right: the Giant's wake meter and timer.
 	local wake = group("Wake", Vector2.new(1, 1), UDim2.new(1, -14, 1, -14), Vector2.new(260, 70))
@@ -1508,57 +1170,8 @@ task.spawn(function()
 	end
 end)
 
--- Demo loop (placeholder until the game systems exist): cycles the quest, shows RUN! while "carrying", ticks the
--- cash with "+$" pops and posts notifications, so every animation can be seen in a playtest.
-task.spawn(function()
-	local cash, earned = 150, 0
-	local steps = {
-		{ "Carpet Zone", false },
-		{ "Grab a sleeping toy", false },
-		{ "Drag it to your hole", true },
-		{ "Place it in your hole", false },
-		{ "Train Speed on your wheel", false },
-	}
-	local step = 1
-	local seconds = 0
-	while gui.Parent do
-		task.wait(1)
-		seconds += 1
-		if step <= #steps then
-			if seconds % 4 == 0 then
-				hud.quest.Text = steps[step][1]
-				hud.zone.Visible = step == 1
-				hud.setTraining(step == 5)
-				UIKit.bump(hud.quest)
-				if step == 4 then
-					UIKit.floatUp(
-						hud.notify,
-						"Successfully placed Robot Dino!",
-						24,
-						UIKit.White,
-						UDim2.fromScale(0.5, 1)
-					)
-				end
-				step += 1
-			end
-		else
-			hud.setTraining(false)
-			local oldCash, oldEarned = cash, earned
-			cash += 3
-			earned = math.min(100, earned + 3)
-			UIKit.countTo(hud.cash, oldCash, cash, 0.6, function(x)
-				return "$" .. math.floor(x + 0.5)
-			end)
-			UIKit.countTo(hud.quest, oldEarned, earned, 0.6, function(x)
-				return string.format("Earn $%d/$100", math.floor(x + 0.5))
-			end)
-			UIKit.floatUp(hud.statsGroup, "+$3", 32, UIKit.CashGreen, UDim2.fromOffset(300, 100), UIKit.Fonts.number)
-			if earned >= 100 then
-				step = 1
-				earned = 0
-			end
-		end
-	end
-end)
+-- The game itself: cash, income, the quest, the reveal card and the Upgrades, Your Toys, Index, Daily and Playtime
+-- panels (GameUI.luau), from the real game state.
+require(script.Parent:WaitForChild("GameUI")).start({ gui = gui, panels = panels, open = open, hud = hud })
 
 UIKit.start()

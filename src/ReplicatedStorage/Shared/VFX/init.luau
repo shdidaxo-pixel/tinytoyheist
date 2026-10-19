@@ -583,10 +583,22 @@ function VFX.shake(strength: number, seconds: number?)
 	end
 	shakeBound = true
 	local RunServiceAny = RunService :: any
+	-- The camera scripts may build the next frame from the current CFrame, so last frame's wobble is taken off
+	-- before they run and a fresh one put on after: the shake can never add up or leave the camera tilted.
+	local applied = CFrame.identity
+	RunServiceAny:BindToRenderStep("VFXShakeUndo", Enum.RenderPriority.Camera.Value - 1, function()
+		local cam = Workspace.CurrentCamera
+		if cam and applied ~= CFrame.identity then
+			cam.CFrame = cam.CFrame * applied:Inverse()
+		end
+		applied = CFrame.identity
+	end)
 	RunServiceAny:BindToRenderStep("VFXShake", Enum.RenderPriority.Camera.Value + 1, function(dt: number)
 		local cam = Workspace.CurrentCamera
 		if trauma <= 0 or not cam then
 			RunServiceAny:UnbindFromRenderStep("VFXShake")
+			RunServiceAny:UnbindFromRenderStep("VFXShakeUndo")
+			applied = CFrame.identity
 			shakeBound = false
 			return
 		end
@@ -595,8 +607,9 @@ function VFX.shake(strength: number, seconds: number?)
 		local rx = math.noise(t, 0.3) * 0.045 * s
 		local ry = math.noise(t, 7.1) * 0.045 * s
 		local rz = math.noise(t, 13.7) * 0.06 * s
-		cam.CFrame = cam.CFrame * CFrame.Angles(rx, ry, rz)
-		trauma = math.max(0, trauma - traumaDecay * dt)
+		applied = CFrame.Angles(rx, ry, rz)
+		cam.CFrame = cam.CFrame * applied
+		trauma = math.max(0, trauma - traumaDecay * math.min(dt, 0.1))
 	end)
 end
 
@@ -1007,7 +1020,8 @@ local function confettiWorld(pos: Vector3, h: number, n: number, color: Color3?)
 			EmissionDirection = Enum.NormalId.Top,
 			Acceleration = Vector3.new(0, -h * 2.2, 0),
 			Drag = 1.5,
-			Size = NumberSequence.new(h * (if tex == "Square" then 0.17 else 0.3)),
+			-- paper-sized, even on a giant burst
+			Size = NumberSequence.new(if tex == "Square" then math.min(h * 0.12, 1.4) else math.min(h * 0.2, 2.2)),
 			Transparency = seq({ { 0, 0 }, { 0.8, 0 }, { 1, 1 } }),
 			Rotation = NumberRange.new(0, 360),
 			RotSpeed = NumberRange.new(-400, 400),

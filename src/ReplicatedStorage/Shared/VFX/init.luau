@@ -206,10 +206,11 @@ local function animate(seconds: number, fn: (p: number, dt: number) -> (), done:
 	end
 	loop = RunService.Heartbeat:Connect(function(dt)
 		local now = os.clock()
-		if VFX.frozen then
+		if VFX.frozen or Workspace:GetAttribute("VFXFrozen") == true then
 			for _, j in jobs do
 				j.t0 += dt -- held still (VFX.freeze, for captures)
 			end
+			dt = 0 -- and the ones that move by dt (confetti) stay put too
 		end
 		local i = 1
 		while i <= #jobs do
@@ -237,10 +238,12 @@ local function animate(seconds: number, fn: (p: number, dt: number) -> (), done:
 end
 VFX.animate = animate
 
--- For captures: hold every running effect still (particles and frame jobs), then let go.
+-- For captures: hold every running effect still (particles and frame jobs), then let go. The command bar and MCP
+-- get their own copy of this module when they require it, so the game's copy hears it through a Workspace attribute.
 VFX.frozen = false
 function VFX.freeze(on: boolean)
 	VFX.frozen = on
+	Workspace:SetAttribute("VFXFrozen", on)
 	for _, d in Workspace:GetDescendants() do
 		if d:IsA("ParticleEmitter") and d:FindFirstAncestor("VFX") then
 			d.TimeScale = if on then 0 else 1

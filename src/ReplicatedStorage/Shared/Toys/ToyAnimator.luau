@@ -245,7 +245,7 @@ type JointInfo = {
 	h: number, -- height above the feet, as a fraction of the toy's height
 	side: number, -- -1 / 1: which side of the toy it's on
 	role: string, -- "Body", "Head", "Arm", "Leg", "Flop" (ears, tail, hat: they lag behind) or "Other"
-	child: boolean, -- hangs straight off the Body (squash moves it)
+	child: boolean, -- sits on top of the Body (a head, or anything high up): the squash sinks it in
 }
 type State = {
 	model: Model,
@@ -360,20 +360,43 @@ function ToyAnimator.start(model: Model)
 			parentOf[pivot.Name] = pg
 		end
 	end
-	-- every joint's rest frame in the toy's space (read with all transforms cleared)
+	-- every joint's rest frame in the toy's space, worked out from the joints alone (Root -> C0 -> C1 down the
+	-- chain). Never from where the parts are right now: a toy that was already posed, or whose parts hadn't caught
+	-- up with their joints yet, gave skewed frames, and the squash and look-around then pushed groups off the body.
 	local info: { [string]: JointInfo } = {}
-	local rootCf = root.CFrame
 	local height = math.max(root.Size.Y, 0.1)
+	local jointOf: { [BasePart]: Motor6D } = {}
 	for _, j in joints do
 		j.Transform = CFrame.identity
+		if j.Part1 then
+			jointOf[j.Part1] = j
+		end
+	end
+	local restOf: { [BasePart]: CFrame } = { [root] = CFrame.identity }
+	local function partRest(part: BasePart, depth: number): CFrame?
+		local known = restOf[part]
+		if known then
+			return known
+		end
+		local j = jointOf[part]
+		if not j or not j.Part0 or depth > 20 then
+			return nil
+		end
+		local above = partRest(j.Part0, depth + 1)
+		if not above then
+			return nil
+		end
+		local cf = above * j.C0 * j.C1:Inverse()
+		restOf[part] = cf
+		return cf
 	end
 	for name, j in joints do
 		local part0 = j.Part0
-		if not part0 then
+		local above = part0 and partRest(part0, 0)
+		if not above then
 			continue
 		end
-		local world = part0.CFrame * j.C0
-		local rel = rootCf:ToObjectSpace(world)
+		local rel = above * j.C0
 		local rot = rel.Rotation
 		local role = if name == "Body"
 			then "Body"
@@ -389,7 +412,7 @@ function ToyAnimator.start(model: Model)
 			h = (rel.Position.Y + height / 2) / height,
 			side = if rel.Position.X < -0.01 then -1 else 1,
 			role = role,
-			child = parentOf[name] == "Body",
+			child = parentOf[name] == "Body" and (role == "Head" or (rel.Position.Y + height / 2) / height > 0.7),
 		}
 	end
 
@@ -624,7 +647,7 @@ local function personality(st: State, now: number, dt: number): Layer
 		y = 0.08 * math.max(0, math.sin(t * 3.1 + st.seed)) ^ 8
 		arms = 0.25 + 0.1 * math.sin(t * 37)
 		if now >= st.nextLook then
-			st.lookGoal = (math.random() * 2 - 1) * 1.1
+			st.lookGoal = (math.random() * 2 - 1) * 0.8
 			st.tiltGoal = (math.random() * 2 - 1) * 0.15
 			st.nextLook = now + 0.4 + math.random() * 0.6
 		end
@@ -657,7 +680,7 @@ local function personality(st: State, now: number, dt: number): Layer
 			if math.random() < 0.35 then
 				st.lookGoal, st.tiltGoal = 0, 0
 			else
-				st.lookGoal = (math.random() * 2 - 1) * 0.8 * p.look
+				st.lookGoal = (math.random() * 2 - 1) * math.min(0.45 * p.look, 0.7)
 				st.tiltGoal = (math.random() * 2 - 1) * 0.18
 			end
 			st.nextLook = now + (1.2 + math.random() * 2) / p.look

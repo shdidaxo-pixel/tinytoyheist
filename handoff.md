@@ -84,7 +84,7 @@ Numbers are in `src/ReplicatedStorage/Shared/GameConfig.luau`; server code in `s
   send Ctrl+S (PowerShell `System.Windows.Forms.SendKeys`), then copy the open file (currently
   `places/TinyToyHeist-savev6.rbxl`) over `places/TinyToyHeist-Latest.rbxl` and commit that one only. **Since it was
   published (19 Oct), Studio has the cloud place open, so Ctrl+S saves to Roblox, not to the file.** Ask Dylan for
-  File > Save to File As > `places/TinyToyHeist-Latest.rbxl` instead.
+  File > **Download a Copy** > `places/TinyToyHeist-Latest.rbxl` instead (this Studio version has no "Save to File As").
 - Rebuild the map from the command bar (Edit mode):
   `local m = game.ServerStorage.TinyToyHeistTools.BuildBedroom:Clone(); print(require(m)); m:Destroy()`
 - Spec: `local s = game.ServerStorage.TinyToyHeistTests["MapConfig.spec"]:Clone(); print(require(s)(game.ReplicatedStorage.Shared:Clone()))`

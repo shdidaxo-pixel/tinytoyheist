@@ -154,7 +154,7 @@ do
 		local _, t = UIKit.tile(card, {
 			name = o[1],
 			size = UDim2.fromOffset(px, px),
-			position = UDim2.fromOffset(14 + (i - 1) * 108, if big then 84 else 112),
+			position = UDim2.fromOffset(22 + (i - 1) * 108, if big then 84 else 112), -- 5 x 100 + 128 + gaps = 668, centred
 			top = hex("3A2F5A"),
 			bottom = hex("1E1630"),
 			edge = UIKit.Rarity[o[1]],
@@ -177,7 +177,7 @@ do
 		})
 	end
 	for i, buy in { { "3,499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
-		local x = 14 + (i - 1) * 176
+		local x = 8 + (i - 1) * 176 -- 4 groups of 168 + 8 gaps = 696, centred in the 712-wide card
 		buyRow(card, buy[1], UDim2.fromOffset(x, 240), 168)
 		UIKit.text(
 			card,

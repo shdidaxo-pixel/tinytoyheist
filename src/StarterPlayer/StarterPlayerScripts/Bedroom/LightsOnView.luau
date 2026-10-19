@@ -265,6 +265,110 @@ function LightsOnView.start(bedroom: Model)
 	local bangText = label(bang, "!", 56, Color3.fromRGB(255, 70, 80), 30)
 	bangText.Size = UDim2.fromScale(1, 1)
 
+	---------------------------------------------------------------------------------------------------------------
+	-- The cat's bite (Cat.luau, the CatBite moment): everyone sees CHOMP at the cat, the whoosh and the landing;
+	-- the bitten mouse's own screen holds it in the cat's mouth, shaking, then flies it in an arc to where it lands.
+	local catModel = bedroom:WaitForChild("Hazards"):WaitForChild("Cat")
+	local function mouth(): CFrame
+		local head = catModel:FindFirstChild("Head") :: BasePart?
+		if not head then
+			return (catModel :: any):GetPivot()
+		end
+		-- the cat faces its local +X; the mouth is at the front of the head, a little low
+		return head.CFrame * CFrame.new(head.Size.X * 0.55, -head.Size.Y * 0.2, 0)
+	end
+	local function onBite(data: any)
+		if typeof(data) ~= "table" or typeof(data.landing) ~= "Vector3" then
+			return
+		end
+		local bite, flight = tonumber(data.bite) or 0.6, tonumber(data.flight) or 1
+		local landing: Vector3 = data.landing
+		local height = tonumber(data.height) or 40
+		local victim = Players:GetPlayerByUserId(tonumber(data.victim) or 0)
+		local at = mouth().Position
+		if Sounds then
+			pcall(Sounds.play, "Snap", at, { pitch = 0.7 })
+			pcall(Sounds.play, "Hiss", at)
+		end
+		if VFX then
+			pcall(VFX.popText, "CHOMP!", at + Vector3.new(0, 6, 0), {
+				color = Color3.fromRGB(255, 140, 40),
+				size = 46,
+				duration = 1,
+			})
+			pcall(VFX.burst, "Poof", at, { scale = 1.6 })
+		end
+		task.delay(bite, function()
+			if Sounds then
+				pcall(Sounds.play, "Pounce", mouth().Position, { pitch = 0.8 })
+			end
+		end)
+		task.delay(bite + flight, function()
+			if Sounds then
+				pcall(Sounds.play, "Thud", landing, { volume = 0.9 })
+			end
+			if VFX then
+				pcall(VFX.burst, "Poof", landing, { scale = 2.5 })
+				pcall(VFX.burst, "Shockwave", landing, { scale = 1.4 })
+			end
+		end)
+		if victim ~= player then
+			return
+		end
+		-- it's me: in the mouth, shaking; then the throw
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not root then
+			return
+		end
+		if VFX then
+			pcall(VFX.shake, 0.5, bite)
+			pcall(VFX.flash, Color3.fromRGB(255, 140, 40), 0.3, 0.3)
+		end
+		local started = os.clock()
+		local from: Vector3? = nil
+		local spinAxis = Vector3.new(math.random() - 0.5, 0.2, math.random() - 0.5)
+		local connection: RBXScriptConnection
+		connection = RunService.RenderStepped:Connect(function()
+			local t = os.clock() - started
+			if not root.Parent then
+				connection:Disconnect()
+				return
+			end
+			root.AssemblyLinearVelocity = Vector3.zero
+			root.AssemblyAngularVelocity = Vector3.zero
+			if t < bite then
+				-- dangling from its mouth, shaken side to side
+				local m = mouth()
+				root.CFrame = m
+					* CFrame.new(0, -1, math.sin(t * 38) * 1.4)
+					* CFrame.Angles(math.sin(t * 38) * 0.6, 0, math.pi / 2)
+			elseif t < bite + flight then
+				from = from or root.Position
+				local u = (t - bite) / flight
+				local p = (from :: Vector3):Lerp(landing + Vector3.new(0, 3, 0), u)
+					+ Vector3.new(0, height * 4 * u * (1 - u), 0)
+				root.CFrame = CFrame.new(p) * CFrame.fromAxisAngle(spinAxis.Unit, u * 4 * math.pi)
+			else
+				root.CFrame = CFrame.new(landing + Vector3.new(0, 3, 0))
+				connection:Disconnect()
+				if VFX then
+					pcall(VFX.shake, 0.45, 0.35)
+				end
+			end
+		end)
+	end
+	task.spawn(function()
+		local m = Shared:WaitForChild("VFX", 30)
+		local bus = m and m:WaitForChild("Moments", 10)
+		if bus and bus:IsA("ModuleScript") then
+			local ok, Moments = pcall(require, bus)
+			if ok then
+				(Moments :: any).on("CatBite", onBite)
+			end
+		end
+	end)
+
 	local shown = Vector3.zero
 	local wasWatched = false
 	local lastTick = -1

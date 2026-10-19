@@ -15,6 +15,10 @@ the cat is faster and there's an RC car driving around bumping everyone and the 
      grabs whoever he reaches, like before.
    - **The cat**: chases at 60 (was 26), aims where you're going (cuts you off), pounces longer and faster, barely
      rests.
+     **Its pounce is a bite** (Dylan, 19 Oct): it holds you in its mouth and shakes you (0.6 s, CHOMP!), flicks
+     its head and throws you in an arc (0.8–1.8 s) to the middle of the safe ring right in front of **your own
+     home** (no home: the nearest bit of the ring). Toy dropped, 3 s grace after landing. Recommendation: land in
+     front of your home, not in the home: you see your base, you're safe, and you're one step from the run again.
    - **The RC car**: leaves its charger by the desk and tears round the floor going for the nearest mouse
      (carriers first). Fast but turns wide; a hit = knocked down, toy dropped, 1.6 s stun.
 3. **Lights out** (Kid `BackToBed`): "LIGHTS OUT", the car drives back to its charger.
@@ -34,6 +38,7 @@ The safe ring and the homes are always safe: the eyes, cat and car never target 
 | Kid's eyes: give up | 1 s out of them | `Giant.GAZE.LOSE` |
 | Cat chase (lights on) | 60 (was 26); pounce 85 studs/s | `Cat.ANGRY.stalk`, `Cat.ANGRY_LEAP_SPEED` |
 | RC car | top 72, turns 2.1 rad/s | `RCCar.SPEED`, `RCCar.TURN` |
+| Cat bite | hold 0.6 s, flick 0.35 s, flight 0.8–1.8 s, 3 s grace after landing | `Cat.BITE`, `Cat.THROW`, `Cat.FLIGHT`, `Cat.LAND_GRACE` |
 
 **Who gets through**: you shake his eyes only if you're faster than follow + spot / catch time = 95 + 14 / 0.8
 ≈ **113 studs/s** (after the carry slow-down). With today's Speed curve (`GameConfig.walkSpeed`):
@@ -53,7 +58,8 @@ The cat (60) and car (72) are easy to outrun at those speeds; they're what stop 
 | File | What |
 | --- | --- |
 | `src/ServerScriptService/Bedroom/Giant.luau` | `Giant.GAZE` + the eyes loop (attributes `Gaze`, `GazeAt`, `GazeTarget`, `GazeLock`, `GazeRadius`, `SpottedAt`) |
-| `src/ServerScriptService/Bedroom/Cat.luau` | lights-on speed, lead (cut-off), faster pounce, shorter rest |
+| `src/ServerScriptService/Bedroom/Cat.luau` | lights-on speed, lead (cut-off), faster pounce, shorter rest; the bite and throw (states `Bite`, `Throw`, attribute `BiteTarget`, moment `CatBite`) |
+| `src/ServerScriptService/Bedroom/Knock.luau` | `Knock.protect(player, seconds)`: the landing grace |
 | `src/ServerScriptService/Bedroom/RCCar.luau` | the car's driver (attributes on `Hazards.RCCar`: `State` Docked/Driving/Bumped/Return, `Pose`, `Speed`, `Steer`) |
 | `src/StarterPlayer/StarterPlayerScripts/Bedroom/RCCarView.luau` | moves the car, spinning/steering wheels, antenna whip, headlights, dust, motor sound, bump bonk, charger light |
 | `src/StarterPlayer/StarterPlayerScripts/Bedroom/LightsOnView.luau` | LIGHTS ON warning + countdown, the timer, the eyes' beam and floor spot, "!" over who he's watching, HE SEES YOU |

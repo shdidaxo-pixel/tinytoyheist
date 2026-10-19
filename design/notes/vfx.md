@@ -73,6 +73,7 @@ Server code fires to clients with the server module `ServerScriptService.Bedroom
 | `KidWake` | client: GiantKid `State` → Awake | `{}` |
 | `KidSleep` | client: back to Asleep | `{}` |
 | `RareSpawn` | client: a Legendary+ blanket appears on the floor | `{ blanket, rarity }` |
+| `CatBite` | server → all (Cat.luau, lights on): the cat bites a mouse and throws it home (LightsOnView flies the victim, plays chomp/whoosh/landing) | `{ victim: userId, bite: s, flight: s, landing: Vector3, height }` |
 | `UIClick` | client: a button wired with `VFX.uiPress` was clicked | `{ button }` |
 
 If you add a moment, add a row here.

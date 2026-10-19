@@ -172,7 +172,7 @@ function RCCarView.start(bedroom: Model)
 				local cf
 				if bit.wheel then
 					local c = centres[bit.wheel]
-					local turn = if c.Position.Z < 0 then CFrame.Angles(0, -steerShown * 0.5, 0) else CFrame.identity
+					local turn = if c.Position.Z < 0 then CFrame.Angles(0, steerShown * 0.5, 0) else CFrame.identity
 					cf = current * c * turn * CFrame.Angles(-spin, 0, 0) * bit.offset
 				elseif bit.antenna then
 					cf = body * antenna * bit.offset

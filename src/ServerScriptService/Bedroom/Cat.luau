@@ -2,16 +2,23 @@
 -- The cat. It patrols an ellipse on the wood band. It notices a mouse nearby that's carrying a toy or running, stalks
 -- it and pounces: a hit knocks you over and you drop your toy. With the lights on (the Kid awake) it's aggressive:
 -- it hunts every mouse in the run wherever they are, runs nearly as fast as one, pounces from further and rests
--- less. It never comes into the safe zone or the homes.
+-- less. With the lights on a pounce that lands is a BITE (Dylan, 19 Oct: "when it's light, the cat bites on you and
+-- throws you back to the safe area or your base"): it holds you in its mouth and shakes (Bite), flicks its head
+-- (Throw) and you fly in an arc to the safe ring in front of your home, toy dropped, with a moment's grace after
+-- landing. The victim's screen flies the arc (LightsOnView, from the CatBite moment); the server checks they landed.
+-- It never comes into the safe zone or the homes.
 -- The server works out where it is and writes it to the Cat's "Pose" attribute; clients move the model smoothly.
--- Attributes on Hazards.Cat: State (Patrol, Stalk, Pounce, Rest, Groom), Aggressive, Pose (CFrame of its Root).
+-- Attributes on Hazards.Cat: State (Patrol, Stalk, Pounce, Bite, Throw, Rest, Groom), Aggressive, Pose (CFrame of
+-- its Root), BiteTarget (UserId of the mouse in its mouth, 0 = none).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local MapConfig = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("MapConfig")) :: any
 local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
+local Moments = require(script.Parent.Moments)
 
 local Cat = {}
 local S = MapConfig.SCALE -- the room (and the cat) are shrunk; distances that come from its size shrink too
@@ -32,6 +39,35 @@ Cat.HEARS_GRAB = 700 -- it hears a toy being grabbed this far away (full-size st
 Cat.ALERT_TIME = 12 -- and comes for that mouse for this long
 Cat.RUN = 15 -- how fast it comes: just slower than a mouse with a Small toy, faster than with a bigger one
 Cat.FAST = 12 -- a mouse moving faster than this catches its eye (calm)
+-- the lights-on bite and throw
+Cat.BITE = 0.6 -- seconds it holds you in its mouth, shaking
+Cat.THROW = 0.35 -- seconds of the head flick that lets you go
+Cat.FLIGHT = { min = 0.8, max = 1.8, speed = 220 } -- seconds in the air: distance / speed, kept between min and max
+Cat.LAND_GRACE = 3 -- seconds after landing when nothing can knock you again
+
+-- Where a bitten mouse lands: the middle of the safe ring, in front of its own home (or the nearest bit of the ring)
+local function landingFor(player: Player, from: Vector3): Vector3
+	local cz = MapConfig.HOME_CURVE_CENTER_Z
+	local r = (MapConfig.SAFE_RADIUS + MapConfig.HOME_CURVE_RADIUS) / 2
+	local holes = Workspace:FindFirstChild("Bedroom") and (Workspace :: any).Bedroom:FindFirstChild("Holes")
+	if holes then
+		for _, hole in holes:GetChildren() do
+			local index = hole:GetAttribute("HoleIndex")
+			if hole:GetAttribute("Owner") == player.UserId and typeof(index) == "number" then
+				local front = MapConfig.homeFront(index)
+				local dir = Vector3.new(front.X, 0, front.Z - cz).Unit
+				return Vector3.new(dir.X * r, 0, cz + dir.Z * r)
+			end
+		end
+	end
+	-- no home: the bit of the ring nearest the cat, kept within the arc of homes
+	local a = math.deg(math.atan2(from.Z - cz, from.X))
+	if from.Z >= cz then
+		a = if from.X < 0 then 191.25 else 348.75
+	end
+	a = math.clamp(a % 360, 191.25, 348.75)
+	return Vector3.new(math.cos(math.rad(a)) * r, 0, cz + math.sin(math.rad(a)) * r)
+end
 
 -- Keep a point where the cat may walk: inside the run, away from the homes, off the furniture
 local function allowed(p: Vector3): Vector3
@@ -92,6 +128,8 @@ function Cat.start(bedroom: Model)
 	local leapFrom, leapDir, leapAt = position, facing, 0
 	local leapSpeed = Cat.LEAP_SPEED
 	local restUntil = 0
+	local biteUntil = 0
+	cat:SetAttribute("BiteTarget", 0)
 	local groomUntil, nextGroom = 0, os.clock() + 15
 
 	local function setPose(hop: number, tilt: number)
@@ -206,23 +244,80 @@ function Cat.start(bedroom: Model)
 				position = allowed(leapFrom + leapDir * leapSpeed * Cat.LEAP_TIME * math.min(u, 1))
 				hop = math.sin(math.min(u, 1) * math.pi) * 12 * S
 				tilt = 0.18 * math.sin(math.min(u, 1) * math.pi)
-				-- anyone under the cat as it lands gets knocked over
+				-- anyone under the cat as it lands gets knocked over; with the lights on, the first one is bitten
 				for _, player in Players:GetPlayers() do
 					local root = Knock.root(player)
-					if root and inPlay(root.Position) then
+					if root and inPlay(root.Position) and state == "Pounce" then
 						local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
 						if (flat - position).Magnitude <= Cat.HIT_RADIUS and root.Position.Y < 30 * S + 6 then
-							Knock.hit(
-								player,
-								position - leapDir * 10,
-								{ message = "The cat got you!", push = 70, stun = 1.8 }
-							)
+							if aggressive then
+								local landing = landingFor(player, position)
+								local mouth = position + leapDir * 14 * S
+								local flight = math.clamp(
+									(landing - mouth).Magnitude / Cat.FLIGHT.speed,
+									Cat.FLIGHT.min,
+									Cat.FLIGHT.max
+								)
+								local total = Cat.BITE + flight
+								if
+									Knock.hit(player, position, {
+										message = "The cat bit you!",
+										push = 0,
+										stun = total + 0.5,
+									})
+								then
+									Knock.protect(player, total + Cat.LAND_GRACE)
+									Moments.fire("all", "CatBite", {
+										victim = player.UserId,
+										bite = Cat.BITE,
+										flight = flight,
+										landing = landing,
+										height = math.clamp((landing - mouth).Magnitude * 0.3, 18, 110),
+									})
+									state = "Bite"
+									biteUntil = os.clock() + Cat.BITE
+									cat:SetAttribute("BiteTarget", player.UserId)
+									-- make sure they land: if their screen didn't fly them there, put them there
+									task.delay(total + 0.4, function()
+										local r = Knock.root(player)
+										if
+											r
+											and (Vector3.new(r.Position.X, 0, r.Position.Z) - landing).Magnitude
+												> 25
+										then
+											(player.Character :: Model):PivotTo(
+												CFrame.new(landing + Vector3.new(0, 4, 0))
+											)
+										end
+									end)
+								end
+							else
+								Knock.hit(
+									player,
+									position - leapDir * 10,
+									{ message = "The cat got you!", push = 70, stun = 1.8 }
+								)
+							end
 						end
 					end
 				end
-				if u >= 1 then
+				if u >= 1 and state == "Pounce" then
 					state = "Rest"
 					restUntil = os.clock() + (if aggressive then Cat.REST * 0.3 else Cat.REST)
+					target = nil
+				end
+			elseif state == "Bite" then
+				-- holding the mouse and shaking it (CatView), then the flick
+				tilt = math.sin(os.clock() * 40) * 0.05
+				if os.clock() >= biteUntil then
+					state = "Throw"
+					biteUntil = os.clock() + Cat.THROW
+				end
+			elseif state == "Throw" then
+				if os.clock() >= biteUntil then
+					cat:SetAttribute("BiteTarget", 0)
+					state = "Rest"
+					restUntil = os.clock() + Cat.REST * 0.3
 					target = nil
 				end
 			elseif state == "Rest" then

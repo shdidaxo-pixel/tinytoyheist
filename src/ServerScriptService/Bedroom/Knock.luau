@@ -35,6 +35,11 @@ function Knock.ready(player: Player): boolean
 	return os.clock() - (lastHit[player] or -math.huge) >= Knock.GRACE
 end
 
+-- Nothing can knock this player for the next `seconds` (the cat's throw: the flight and a moment after landing)
+function Knock.protect(player: Player, seconds: number)
+	lastHit[player] = math.max(lastHit[player] or -math.huge, os.clock() + seconds - Knock.GRACE)
+end
+
 function Knock.hit(player: Player, from: Vector3, options: Options): boolean
 	local root = Knock.root(player)
 	if not root or not Knock.ready(player) then

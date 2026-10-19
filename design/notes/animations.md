@@ -52,3 +52,9 @@ poses come from the same code), the Kid lying back down at the end of BackToBed,
   looks about, no walking or tricks (a fresh Hatch still plays).
 - **Holding pose** (PlayerAnim): Player attribute `Holding` (a toy uid) = both arms forward hugging the toy from
   below, bobbing with the walk; a cheer or a knock-down takes over the arms.
+
+## Checked in Studio (19 Oct, evening, TinyToyHeist-V7.rbxl)
+Walk cycle, held toy idle + holding pose (simulated hold: a toy welded at the chest with HeldBy, local Holding),
+the Kid lying back down, the ducks, and the cat bite/throw after the head fix (head turns about its middle now,
+collar left out, no grooming while angry). Capture: `design/animations/03-walk-hold-kid-duck-bite.mp4`.
+Still not seen: two players at once.

@@ -87,4 +87,8 @@ Suggested post text: "I made a Roblox game where you're mouse-sized and steal to
   ($X/s) and its mutation (and size: Big / Huge / Giant, which today is the only tag shown). Today you only see
   the size tag and the "+$144" income pops, so you can't tell toys apart or see what's worth stealing. (Dylan, 19 Oct:
   "make the name and money and mutations display above the toy". Noted, not built yet.)
+- **RC car keeps chasing.** After the RC car bumps into someone it stops chasing; it should go straight after the
+  next mouse (or the same one) and keep chasing for as long as the lights are on. (Dylan, 19 Oct: "when the rc car
+  bumps into someone, it doesnt chase again, make it so it is always chasing". Noted, not built yet; see
+  `Bedroom/RCCar.luau`.)
 - The SHOWCASE / BACK button (Studio and Dylan only) covers the "BLANKETS 6/6" heading on the right.

@@ -236,6 +236,28 @@ local function ask(player: Player, action: any, key: any, giftUserId: any): (boo
 	return true, nil
 end
 
+-- Studio tests (GameDebug "buy" / "pass"): run a purchase through the real receipt code without Robux. Products that
+-- aren't created yet get a stand-in id for the test.
+function Shop.debugBuy(player: Player, key: string, purchaseId: string, giftUserId: number?): string
+	local item = Monetization.byKey[key]
+	if not item then
+		return "no such key"
+	end
+	local isPass = Monetization.pass(key) ~= nil
+	local id = if isPass then item.giftId else item.id
+	if id == 0 then
+		id = -#key * 1000 - string.byte(key, -1)
+		Monetization.byProductId[id] = { kind = if isPass then "GiftPass" else "Product", key = key }
+	end
+	if giftUserId then
+		intents[player] = { id = id, target = giftUserId, at = os.clock() }
+	end
+	return processReceipt({ PlayerId = player.UserId, ProductId = id, PurchaseId = purchaseId }).Name
+end
+function Shop.debugPass(player: Player, key: string, on: boolean)
+	player:SetAttribute(Monetization.attribute(key), if on then true else nil)
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 
 function Shop.start(_bedroom: Model)

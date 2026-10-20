@@ -22,6 +22,7 @@ local Upgrades = {}
 
 local notice: RemoteEvent
 local ticks: { [Player]: number } = {} -- training ticks so far this run
+local jitter = Random.new()
 
 local function stopTraining(player: Player)
 	if not player:GetAttribute("Training") then
@@ -232,7 +233,9 @@ function Upgrades.start(_bedroom: Model)
 				if player:GetAttribute("PassSpeed") then
 					gain *= Monetization.SPEED_PASS -- x2 Speed pass
 				end
-				p.Speed += gain
+				-- a whole number a little above or below the wheel's rate, so Speed climbs by uneven amounts and the
+				-- total doesn't always end in 00 (Dylan, 19 Oct); the average stays the wheel's rate
+				p.Speed = math.floor(p.Speed + gain * jitter:NextNumber(0.85, 1.15) + 0.5)
 				player:SetAttribute("Speed", p.Speed)
 				ticks[player] = (ticks[player] or 0) + 1
 				if ticks[player] % 10 == 0 then

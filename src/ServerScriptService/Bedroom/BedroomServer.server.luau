@@ -76,6 +76,14 @@ if game:GetService("RunService"):IsStudio() then
 			end
 			local Pens = require(script.Parent.Pens) :: any
 			Pens.reload(player)
+		elseif command == "buy" then
+			-- a Robux purchase through the real receipt code: arg = { key = "Speed1", id = "test1", gift = userId? }
+			local Shop = require(script.Parent.Shop) :: any
+			return Shop.debugBuy(player, arg.key, arg.id or tostring(os.clock()), arg.gift)
+		elseif command == "pass" then
+			-- arg = { key = "Cash", on = true }: own a pass (or not) for this session
+			local Shop = require(script.Parent.Shop) :: any
+			Shop.debugPass(player, arg.key, arg.on)
 		elseif command == "set" and profile then
 			for k, v in arg do
 				(profile :: any)[k] = v

@@ -482,14 +482,16 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?, wak
 	if not p or not states[player] or not Pens.canBank(player) then
 		return nil
 	end
-	if p.Banked == 0 and ToyCatalog.get(GameConfig.FIRST_TOY) then
+	-- (a bought Mystery Blanket, with its own wake time, always keeps the toy rolled with the shown odds)
+	local first = p.Banked == 0 and wakeOverride == nil
+	if first and ToyCatalog.get(GameConfig.FIRST_TOY) then
 		data = ToyCatalog.get(GameConfig.FIRST_TOY) -- the first toy is always the Plush Bunny
 	end
-	local mutation = if p.Banked == 0
+	local mutation = if first
 		then nil
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
 	-- bigger blankets and rarer toys take longer to wake; the first toy ever is quick (the tutorial)
-	local wake = wakeOverride or ToySize.wakeSeconds(size, data.Rarity, p.Banked == 0)
+	local wake = wakeOverride or ToySize.wakeSeconds(size, data.Rarity, first)
 	local b: Blanket = {
 		u = PlayerData.newUid(),
 		id = data.Id,

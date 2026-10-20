@@ -84,8 +84,10 @@ overview with his eyes, the car and the timer).
 - The cat bit a player on the carpet and threw them to (-43, 34): the safe ring right in front of their home.
 - The RC car drove out at lights on and chased. Found: it got pinned on the desk and dithered by its charger.
   Fixed (8eb160c): it now plans a route round the furniture corners, slides free if pinned, and parks. Checked with
-  a maths run in Studio (it reaches every test spot in 2–9 s); a live re-check is queued.
+  a maths run in Studio (it reaches every test spot in 2–9 s), and live at 20:00: it drove out past the desk and
+  came home round the chair and desk to its charger in about 12 s.
 - Dylan's screenshot: the cat's head looked twisted into its body during the bite/throw. That's the bite and throw
   poses in CatView. Fixed by the animations session (ce4a102, 8b96cbb): the head turns about its own middle, the
-  collar stays put; to see live on the next Play.
+  collar stays put. Seen live on 19 Oct at 20:00: the head is upright, collar in place
+  (`design/studio-lightson/5-cat-bite-pose-fixed.jpg`).
 - Not tested yet: an endgame-speed player escaping his eyes, two players at once.

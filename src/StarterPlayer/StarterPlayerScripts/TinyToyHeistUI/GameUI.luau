@@ -1254,7 +1254,8 @@ local function drawBlankets(group: Frame)
 		HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
 	}, holder)
-	local title = UIKit.text(holder, `BLANKETS {#list}/{GameConfig.MAX_BLANKETS}`, 16, { stroke = 3 })
+	local max = GameConfig.MAX_BLANKETS + (if me:GetAttribute("PassSlots") then 5 else 0) -- +5 Blanket Slots pass
+	local title = UIKit.text(holder, `BLANKETS {#list}/{max}`, 16, { stroke = 3 })
 	title.LayoutOrder = 0
 	local sorted = table.clone(list)
 	table.sort(sorted, function(a, b)

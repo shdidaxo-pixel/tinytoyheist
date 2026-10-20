@@ -71,6 +71,27 @@ Monetization.Passes = {
 		price = 799,
 		icon = "PassVIP3",
 	},
+	{
+		key = "FastHatch",
+		name = "Fast Hatch",
+		description = "Every blanket wakes up twice as fast. Forever!",
+		price = 249,
+		icon = "Clock",
+	},
+	{
+		key = "Slots",
+		name = "+5 Blanket Slots",
+		description = "Keep 11 blankets waking up in your home instead of 6.",
+		price = 149,
+		icon = "PassSlots",
+	},
+	{
+		key = "SuperLock",
+		name = "Super Lock",
+		description = "Your door lock lasts twice as long (90 seconds).",
+		price = 99,
+		icon = "Lock",
+	},
 } :: { Pass }
 
 -- Developer products --------------------------------------------------------------------------------------------------
@@ -123,7 +144,21 @@ Monetization.Products = {
 	{ key = "Cash4", name = "+$20M Cash", kind = "Cash", amount = 20_000_000, price = 999, icon = "CashPack4v2" },
 	{ key = "Cash5", name = "+$100M Cash", kind = "Cash", amount = 100_000_000, price = 1999, icon = "CashPack5v2" },
 	{ key = "WakeAll", name = "Wake All Blankets", kind = "WakeAll", amount = 0, price = 29, icon = "Clock" },
+	{ key = "Skip", name = "Skip the Wait", kind = "Skip", amount = 0, price = 15, icon = "Clock" },
+	{ key = "CashBoost", name = "x2 Cash for 15 Minutes", kind = "Boost", amount = 15, price = 49, icon = "Cash" },
+	{
+		key = "ServerLuck",
+		name = "x2 Server Luck for 15 Minutes",
+		kind = "ServerLuck",
+		amount = 15,
+		price = 99,
+		icon = "PassLuck3",
+	},
+	{ key = "Lullaby", name = "Lullaby", kind = "Lullaby", amount = 0, price = 39, icon = "Moon" },
 } :: { Product }
+
+-- Products that change the whole server: no gift button (everyone gets them anyway)
+Monetization.SERVER_WIDE = { ServerLuck = true, Lullaby = true } :: { [string]: boolean }
 
 local productDescriptions = {
 	Mystery = "Mystery blankets delivered to your home. Odds: Common 45%, Uncommon 30%, Rare 15%, Epic 7%, "
@@ -131,6 +166,10 @@ local productDescriptions = {
 	Speed = "Instantly adds Speed to your total.",
 	Cash = "Instantly adds cash to your wallet.",
 	WakeAll = "Every blanket waiting in your home wakes up right now, ready to hatch.",
+	Skip = "One blanket in your home wakes up right now, ready to hatch.",
+	Boost = "Double money from all your toys for 15 minutes. Stacks with everything.",
+	ServerLuck = "Everyone in the server gets x2 luck for 15 minutes: rarer toys and more mutations.",
+	Lullaby = "Sings the Giant Kid back to sleep right now and empties the wake meter, for the whole server.",
 }
 
 Monetization.byKey = {} :: { [string]: Pass | Product }

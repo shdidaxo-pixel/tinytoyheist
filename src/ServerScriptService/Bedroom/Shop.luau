@@ -2,17 +2,21 @@
 -- Robux: game passes and developer products (the list is Shared/Monetization).
 --   Passes: owned if Roblox says you bought it (checked on join and when a purchase finishes) or someone gifted it to
 --   you (profile.Passes). Ownership is the Player attribute Pass<Key> ("PassCash", ...): the systems that give the
---   perks read it (Economy: Cash and VIP, Upgrades: Speed, Carry/Pens: Luck) and so does the HUD.
+--   perks read it (Economy: Cash and VIP, Upgrades: Speed, Carry/Pens: Luck, Fast Hatch and Slots, Homes: Super Lock)
+--   and so does the HUD.
 --   Products: MarketplaceService.ProcessReceipt grants them. Each PurchaseId is remembered in profile.Receipts and
 --   the profile is saved before the purchase is confirmed, so a receipt is never granted twice or lost.
 --   Buying: the client asks GameRemotes.Shop ("Buy", key, giftUserId?) and the server prompts the purchase, so it
 --   knows who a gift is for. A gift goes to that player if they're still here (a pass gift for a pass they already
 --   own is refused before the prompt), otherwise back to the buyer.
 --   Mystery Blankets you can't fit yet wait in profile.MysteryOwed and arrive as your blanket slots free up.
+--   Skip: the Wake now prompt on a sleeping blanket buys it for that blanket. Server Luck and Lullaby change the whole
+--   server (Workspace attribute ServerLuckUntil; Giant.lullaby) and are announced to everyone.
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
@@ -21,6 +25,7 @@ local PlayerData = require(script.Parent.PlayerData)
 local Pens = require(script.Parent.Pens)
 local Carry = require(script.Parent.Carry)
 local Moments = require(script.Parent.Moments)
+local Giant = require(script.Parent.Giant)
 
 local Shop = {}
 Shop.RECEIPTS_KEPT = 100
@@ -28,7 +33,7 @@ Shop.INTENT_SECONDS = 120 -- a gift choice is forgotten after this long without 
 
 local notice: RemoteEvent
 -- what each player asked to buy last: product id -> who gets it
-local intents: { [Player]: { id: number, target: number, at: number } } = {}
+local intents: { [Player]: { id: number, target: number, at: number, uid: string? } } = {}
 local lastAsk: { [Player]: number } = {}
 
 local function say(player: Player?, text: string, kind: string?)
@@ -68,7 +73,7 @@ end
 -- Granting
 
 -- Give a product's contents to `player`. Returns a short description for the notice.
-local function grantProduct(player: Player, product: any): string
+local function grantProduct(player: Player, product: any, uid: string?, buyer: Player): string
 	local p = PlayerData.get(player) :: any
 	if product.kind == "Cash" then
 		PlayerData.addCash(player, product.amount)
@@ -84,6 +89,24 @@ local function grantProduct(player: Player, product: any): string
 	elseif product.kind == "WakeAll" then
 		local woken = Pens.wakeAll(player)
 		return if woken > 0 then "all your blankets woke up" else "Wake All (nothing was asleep)"
+	elseif product.kind == "Skip" then
+		return if Pens.wakeOne(player, uid) then "a blanket woke up" else "a Skip for your next blanket"
+	elseif product.kind == "Boost" then
+		p.BoostUntil = math.max(os.time(), p.BoostUntil) + product.amount * 60
+		return `x2 cash for {product.amount} minutes`
+	elseif product.kind == "ServerLuck" then
+		local untilTime = math.max(os.time(), (Workspace:GetAttribute("ServerLuckUntil") :: number?) or 0)
+			+ product.amount * 60
+		Workspace:SetAttribute("ServerLuckUntil", untilTime)
+		Workspace:SetAttribute("ServerLuckBy", buyer.DisplayName)
+		notice:FireAllClients(`{buyer.DisplayName} turned on x2 Server Luck for everyone!`, "good")
+		return `x2 Server Luck for {product.amount} minutes`
+	elseif product.kind == "Lullaby" then
+		if Giant.lullaby then
+			Giant.lullaby()
+		end
+		notice:FireAllClients(`{buyer.DisplayName} sang the Giant Kid back to sleep!`, "good")
+		return "a Lullaby: the Kid is fast asleep"
 	end
 	return product.name
 end
@@ -134,7 +157,7 @@ local function processReceipt(receipt: any): Enum.ProductPurchaseDecision
 			setOwned(receiver, what.key)
 			return pass.name .. " pass"
 		end
-		return grantProduct(receiver, Monetization.byKey[what.key])
+		return grantProduct(receiver, Monetization.byKey[what.key], intent and intent.uid, buyer)
 	end)
 	if not ok then
 		warn(`Shop: couldn't grant {what.key} to {receiver.Name}: {result}`)
@@ -168,7 +191,7 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Buying (GameRemotes.Shop)
 
-local function ask(player: Player, action: any, key: any, giftUserId: any): (boolean, string?)
+local function ask(player: Player, action: any, key: any, giftUserId: any, uid: string?): (boolean, string?)
 	if typeof(action) ~= "string" or typeof(key) ~= "string" then
 		return false, "?"
 	end
@@ -219,6 +242,17 @@ local function ask(player: Player, action: any, key: any, giftUserId: any): (boo
 	if item.id == 0 then
 		return false, "Coming soon!"
 	end
+	if item.kind == "Lullaby" then
+		local kid = Workspace:FindFirstChild("Bedroom") and Workspace.Bedroom:FindFirstChild("GiantKid")
+		if
+			kid
+			and kid:GetAttribute("State") == "Asleep"
+			and ((kid:GetAttribute("WakeMeter") :: number?) or 0) < 1
+			and ((kid:GetAttribute("WakesAt") :: number?) or 0) - Workspace:GetServerTimeNow() > 120
+		then
+			return false, "The Kid is fast asleep already"
+		end
+	end
 	if item.kind == "WakeAll" and not target then
 		local p = PlayerData.get(player) :: any
 		local asleep = false
@@ -231,7 +265,7 @@ local function ask(player: Player, action: any, key: any, giftUserId: any): (boo
 			return false, "No blankets are asleep right now"
 		end
 	end
-	intents[player] = { id = item.id, target = if target then giftUserId else player.UserId, at = now }
+	intents[player] = { id = item.id, target = if target then giftUserId else player.UserId, at = now, uid = uid }
 	MarketplaceService:PromptProductPurchase(player, item.id)
 	return true, nil
 end
@@ -276,6 +310,14 @@ function Shop.start(_bedroom: Model)
 	end
 
 	MarketplaceService.ProcessReceipt = processReceipt
+
+	-- Wake now on a sleeping blanket at home: buy a Skip for that blanket
+	Pens.onSkip = function(player: Player, uid: string)
+		local ok, result, message = pcall(ask, player, "Buy", "Skip", nil, uid)
+		if ok and not result and message then
+			say(player, message, "warn")
+		end
+	end
 
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, passId, purchased)
 		local pass = Monetization.byPassId[passId]

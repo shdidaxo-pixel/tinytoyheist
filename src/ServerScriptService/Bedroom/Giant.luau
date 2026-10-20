@@ -24,6 +24,7 @@ local Events = require(script.Parent.Events)
 local Knock = require(script.Parent.Knock)
 
 local Giant = {}
+Giant.lullaby = nil :: (() -> boolean)? -- set by Giant.start
 Giant.SLEEP = 240
 Giant.STIR = 10 -- the warning: lights on, "LIGHTS ON! HIDE!", he sits up
 Giant.AWAKE = 45 -- lights on and he's out of bed, looking for mice (was 60; Dylan locked it in, 19 Oct)
@@ -66,6 +67,25 @@ function Giant.start(bedroom: Model)
 	kid:SetAttribute("Flashlight", false)
 	kid:SetAttribute("WakesAt", now() + Giant.SLEEP)
 	setState("Asleep")
+
+	-- Lullaby (a Robux product, Bedroom/Shop): he goes back to bed now and sleeps a full nap; the meter empties.
+	-- Returns false if there's nothing to calm (asleep with an empty meter and a long nap ahead).
+	function Giant.lullaby(): boolean
+		local state = kid:GetAttribute("State")
+		local meter = kid:GetAttribute("WakeMeter") :: number
+		if state == "Asleep" and meter < 1 and (kid:GetAttribute("WakesAt") :: number) - now() > Giant.SLEEP * 0.5 then
+			return false
+		end
+		kid:SetAttribute("WakeMeter", 0)
+		kid:SetAttribute("Flashlight", false)
+		if state == "Stirring" or state == "Awake" then
+			kid:SetAttribute("WakesAt", now() + Giant.SLEEP + Giant.BACK_TO_BED)
+			setState("BackToBed", Giant.BACK_TO_BED)
+		else
+			kid:SetAttribute("WakesAt", math.max(kid:GetAttribute("WakesAt") :: number, now() + Giant.SLEEP))
+		end
+		return true
+	end
 
 	-- Noise from anywhere in the game
 	Events.MakeNoise.Event:Connect(function(position: Vector3, points: number, kind: string?)

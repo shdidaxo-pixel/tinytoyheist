@@ -26,7 +26,10 @@ $passes = @(
 	@{ key = "Speed"; name = "x2 Speed"; price = 99; icon = "PassSpeed3"; description = "Train Speed twice as fast on your Speed wheel. Forever!" },
 	@{ key = "Cash"; name = "x2 Cash"; price = 499; icon = "PassCash3"; description = "Every toy in your pen earns double money. Forever!" },
 	@{ key = "Luck"; name = "x2 Luck"; price = 399; icon = "PassLuck3"; description = "Every blanket rolls twice and you keep the rarer toy, plus double mutation luck." },
-	@{ key = "VIP"; name = "VIP"; price = 799; icon = "PassVIP3"; description = "VIP chat tag and +50% cash from your toys." }
+	@{ key = "VIP"; name = "VIP"; price = 799; icon = "PassVIP3"; description = "VIP chat tag and +50% cash from your toys." },
+	@{ key = "FastHatch"; name = "Fast Hatch"; price = 249; icon = "Clock"; description = "Every blanket wakes up twice as fast. Forever!" },
+	@{ key = "Slots"; name = "+5 Blanket Slots"; price = 149; icon = "PassSlots"; description = "Keep 11 blankets waking up in your home instead of 6." },
+	@{ key = "SuperLock"; name = "Super Lock"; price = 99; icon = "Lock"; description = "Your door lock lasts twice as long (90 seconds)." }
 )
 $products = @(
 	@{ key = "Mystery1"; name = "1 Mystery Blanket"; price = 99; icon = "Featured_hero"; description = $mystery },
@@ -43,7 +46,11 @@ $products = @(
 	@{ key = "Cash3"; name = "+`$2M Cash"; price = 459; icon = "CashPack3v2"; description = "Instantly adds cash to your wallet." },
 	@{ key = "Cash4"; name = "+`$20M Cash"; price = 999; icon = "CashPack4v2"; description = "Instantly adds cash to your wallet." },
 	@{ key = "Cash5"; name = "+`$100M Cash"; price = 1999; icon = "CashPack5v2"; description = "Instantly adds cash to your wallet." },
-	@{ key = "WakeAll"; name = "Wake All Blankets"; price = 29; icon = "Clock"; description = "Every blanket waiting in your home wakes up right now, ready to hatch." }
+	@{ key = "WakeAll"; name = "Wake All Blankets"; price = 29; icon = "Clock"; description = "Every blanket waiting in your home wakes up right now, ready to hatch." },
+	@{ key = "Skip"; name = "Skip the Wait"; price = 15; icon = "Clock"; description = "One blanket in your home wakes up right now, ready to hatch." },
+	@{ key = "CashBoost"; name = "x2 Cash for 15 Minutes"; price = 49; icon = "Cash"; description = "Double money from all your toys for 15 minutes. Stacks with everything." },
+	@{ key = "ServerLuck"; name = "x2 Server Luck for 15 Minutes"; price = 99; icon = "PassLuck3"; description = "Everyone in the server gets x2 luck for 15 minutes: rarer toys and more mutations." },
+	@{ key = "Lullaby"; name = "Lullaby"; price = 39; icon = "Moon"; description = "Sings the Giant Kid back to sleep right now and empties the wake meter, for the whole server." }
 )
 foreach ($p in $passes) {
 	$products += @{ key = "Gift" + $p.key; name = "Gift: " + $p.name; price = $p.price; icon = $p.icon; description = "Gift the " + $p.name + " pass to another player." }

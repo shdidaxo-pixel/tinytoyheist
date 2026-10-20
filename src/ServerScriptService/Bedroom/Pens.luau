@@ -136,13 +136,27 @@ function Pens.equippedCount(player: Player): number
 	return n
 end
 
+-- Blankets that can wait at home at once: GameConfig.MAX_BLANKETS, more with the Blanket Slots pass
+Pens.SLOTS_PASS = 5
+Pens.FAST_HATCH = 0.5 -- Fast Hatch pass: wake-up timers x0.5
+Pens.onSkip = nil :: ((Player, string) -> ())? -- set by Shop: someone pressed Wake now on a sleeping blanket
+
+function Pens.maxBlankets(player: Player): number
+	return GameConfig.MAX_BLANKETS + (if player:GetAttribute("PassSlots") then Pens.SLOTS_PASS else 0)
+end
+
+-- Server Luck (a Robux product anyone can buy for the whole server): x2 luck for everyone until ServerLuckUntil
+function Pens.serverLuck(): boolean
+	return ((Workspace:GetAttribute("ServerLuckUntil") :: number?) or 0) > os.time()
+end
+
 -- Can this player take another toy home? (false and why if not)
 function Pens.canBank(player: Player): (boolean, string?)
 	local p = PlayerData.get(player)
 	if not p or not states[player] then
 		return false, "Still loading..."
 	end
-	if #p.Blankets >= GameConfig.MAX_BLANKETS then
+	if #p.Blankets >= Pens.maxBlankets(player) then
 		return false, "Hatch your blankets first! (hold the Hatch button on them at home)"
 	end
 	if #p.Toys + #p.Blankets >= GameConfig.INVENTORY_MAX then
@@ -180,7 +194,38 @@ function Pens.luck(player: Player): number
 	if player:GetAttribute("PassLuck") then
 		luck *= 2 -- x2 Luck pass
 	end
+	if Pens.serverLuck() then
+		luck *= 2 -- Server Luck
+	end
 	return luck
+end
+
+-- Skip (a Robux product): one blanket wakes now. uid nil, or a blanket that's gone: the one waking last instead.
+-- Returns false if nothing is asleep (the Skip is then kept for the next blanket, profile.Skips).
+function Pens.wakeOne(player: Player, uid: string?): boolean
+	local p = PlayerData.get(player)
+	if not p then
+		return false
+	end
+	local pick: Blanket? = nil
+	for _, b in p.Blankets do
+		if b.w > os.time() then
+			if b.u == uid then
+				pick = b
+				break
+			end
+			if not pick or b.w > (pick :: Blanket).w then
+				pick = b
+			end
+		end
+	end
+	if not pick then
+		p.Skips = (p.Skips or 0) + 1
+		return false
+	end
+	(pick :: Blanket).w = os.time()
+	Pens.reload(player)
+	return true
 end
 
 -- Wake All (a Robux product): every blanket waiting at home is ready to hatch now
@@ -460,6 +505,27 @@ local function placeBlanket(player: Player, b: Blanket, model: Model?)
 			Pens.hatch(player, b.u)
 		end
 	end)
+	-- Skip the wait (Robux): a second prompt while it sleeps; Bedroom/Shop handles the purchase (Pens.onSkip)
+	local skip: ProximityPrompt? = nil
+	if left > 0 then
+		local made = Instance.new("ProximityPrompt")
+		made.Name = "SkipPrompt"
+		made.ActionText = "Wake now"
+		made.ObjectText = "{E002} Skip the wait"
+		made.KeyboardKeyCode = Enum.KeyCode.F
+		made.GamepadKeyCode = Enum.KeyCode.ButtonY
+		made.HoldDuration = 0
+		made.MaxActivationDistance = 14
+		made.RequiresLineOfSight = false
+		made.UIOffset = Vector2.new(0, 72)
+		made.Parent = m.PrimaryPart
+		made.Triggered:Connect(function(who)
+			if who == player and Pens.onSkip then
+				Pens.onSkip(player, b.u)
+			end
+		end)
+		skip = made
+	end
 	m.Name = "Blanket"
 	m.Parent = waking
 	s.blankets[b.u] = m
@@ -468,6 +534,9 @@ local function placeBlanket(player: Player, b: Blanket, model: Model?)
 			if prompt.Parent then
 				prompt.Enabled = true
 				m:SetAttribute("Ready", true)
+			end
+			if skip then
+				skip:Destroy()
 			end
 		end)
 	else
@@ -492,6 +561,14 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?, wak
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
 	-- bigger blankets and rarer toys take longer to wake; the first toy ever is quick (the tutorial)
 	local wake = wakeOverride or ToySize.wakeSeconds(size, data.Rarity, first)
+	if not first and player:GetAttribute("PassFastHatch") then
+		wake = math.max(1, math.floor(wake * Pens.FAST_HATCH)) -- Fast Hatch pass
+	end
+	if not first and (p.Skips or 0) > 0 then
+		-- a Skip bought when nothing was asleep: used on the next blanket
+		p.Skips -= 1
+		wake = 0
+	end
 	local b: Blanket = {
 		u = PlayerData.newUid(),
 		id = data.Id,

@@ -177,7 +177,9 @@ local function lock(hole: Model, player: Player)
 		end
 		return
 	end
-	hole:SetAttribute("LockedUntil", Workspace:GetServerTimeNow() + Homes.LOCK_TIME)
+	-- the Super Lock pass doubles it
+	local lockTime = Homes.LOCK_TIME * (if player:GetAttribute("PassSuperLock") then 2 else 1)
+	hole:SetAttribute("LockedUntil", Workspace:GetServerTimeNow() + lockTime)
 	HomeLook.setLocked(hole, true)
 	task.spawn(function()
 		while hole.Parent and hole:GetAttribute("Locked") do

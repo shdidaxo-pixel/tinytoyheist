@@ -109,7 +109,7 @@ local function promptRule(d: Instance, hole: Instance)
 		show = not mine
 	elseif d.Name == "TrainPrompt" then
 		show = mine and me:GetAttribute("Training") ~= true
-	elseif d.Name == "HatchPrompt" or d.Name == "LockPrompt" or d.Name == "IndexPrompt" then
+	elseif d.Name == "HatchPrompt" or d.Name == "SkipPrompt" or d.Name == "LockPrompt" or d.Name == "IndexPrompt" then
 		show = mine
 	end
 	d.MaxActivationDistance = if show then base :: number else 0

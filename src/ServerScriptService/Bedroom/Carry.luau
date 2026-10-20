@@ -95,14 +95,15 @@ function Carry.pickToy(size: string): any?
 	return nil
 end
 
--- x2 Luck pass (Monetization): the toy under a blanket you bring home is rolled again and you keep the rarer one
+-- Luck (Monetization): the toy under a blanket you bring home is rolled again and you keep the rarer one; once more
+-- for the x2 Luck pass and once more while Server Luck runs
 function Carry.lucky(player: Player, data: any, size: string): any
-	if not player:GetAttribute("PassLuck") then
-		return data
-	end
-	local other = Carry.pickToy(size)
-	if other and (table.find(RARITY_ORDER, other.Rarity) or 0) > (table.find(RARITY_ORDER, data.Rarity) or 0) then
-		return other
+	local rolls = (if player:GetAttribute("PassLuck") then 1 else 0) + (if Pens.serverLuck() then 1 else 0)
+	for _ = 1, rolls do
+		local other = Carry.pickToy(size)
+		if other and (table.find(RARITY_ORDER, other.Rarity) or 0) > (table.find(RARITY_ORDER, data.Rarity) or 0) then
+			data = other
+		end
 	end
 	return data
 end

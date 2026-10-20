@@ -149,7 +149,8 @@ do
 	-- plain white present on purple. Optional extras: a taller button with a small label ("50 Toys") tucked into
 	-- its bottom edge, and a rainbow face for the biggest deal.
 	-- `key` is what the buttons sell (Monetization): the price button buys it, the gift button gifts it to a player
-	-- in the server, the price is the live one from Roblox, and an owned pass says OWNED.
+	-- in the server, the price is the live one from Roblox, and an owned pass says OWNED. Server-wide products (Server
+	-- Luck, Lullaby) have no gift button: the price button takes the whole row.
 	type BuyExtras = { height: number?, label: string?, rainbow: boolean?, textSize: number?, key: string? }
 	local function buyRow(
 		parent: Instance,
@@ -161,7 +162,8 @@ do
 	): { Frame }
 		local x: BuyExtras = extras or {}
 		local h = x.height or 44
-		local gw = math.min(h, 44) -- the gift stays a 44 px column even when the price button is taller
+		local noGift = x.key ~= nil and ShopClient.Monetization.SERVER_WIDE[x.key] == true
+		local gw = if noGift then -6 else math.min(h, 44) -- the gift stays a 44 px column even when the price is taller
 		local giftHolder, giftFace = UIKit.block(parent, {
 			name = "Gift",
 			size = UDim2.fromOffset(gw, h),
@@ -176,6 +178,7 @@ do
 				openGift(x.key)
 			end
 		end)
+		giftHolder.Visible = not noGift
 		local priceHolder = UIKit.button(parent, price, {
 			palette = palette or P.green,
 			icon = img("Robux3"),
@@ -424,6 +427,9 @@ do
 		{ "x2 Cash", "Earn " .. green .. " money!", "PassCash3", "Cash", "Cash", "B8600A" },
 		{ "x2 Luck", "Rarer toys under the blankets!", "PassLuck3", "Luck", "Luck", "17702A" },
 		{ "VIP", "VIP tag and +50% cash!", "PassVIP3", "VIP", "VIP", "5418B8" },
+		{ "Fast Hatch", "Blankets wake " .. green .. " faster!", "Clock", "FastHatch", "RewardPink", "B0306A" },
+		{ "+5 Slots", "Keep 11 blankets waking at home!", "PassSlots", "Slots", "RewardPurple", "5418B8" },
+		{ "Super Lock", "Your lock lasts " .. green .. " longer!", "Lock", "SuperLock", "RewardRed", "8A1020" },
 	}
 	for i, ps in passList do
 		local cardFrame = UIKit.new("Frame", {
@@ -509,7 +515,7 @@ do
 		}, cardFrame)
 		UIKit.corner(rim, 4)
 		UIKit.new("UIStroke", { Color = UIKit.White, Transparency = 0.55, Thickness = 2 }, rim)
-		local pic = UIKit.icon(cardFrame, img(pk[2] .. "v2"), 0, UDim2.fromOffset(width / 2, 74), mid, 5)
+		local pic = UIKit.icon(cardFrame, img(pk[2]), 0, UDim2.fromOffset(width / 2, 74), mid, 5)
 		pic.Size = if width > 300 then UDim2.fromOffset(240, 180) else UDim2.fromOffset(212, 159)
 		if width > 300 then
 			pic.Position = UDim2.fromOffset(width / 2, 80)
@@ -686,19 +692,48 @@ do
 		return '<font color="#7CFF5A">' .. s .. "</font>"
 	end
 	packs("Speed Packs", hex("6AD8FF"), 5, "SpeedPack", {
-		{ g("+150K") .. " SPEED", "SpeedPack1", "Speed1" },
-		{ g("+1M") .. " SPEED", "SpeedPack2", "Speed2", "BEST SELLING!" },
-		{ g("+10M") .. " SPEED", "SpeedPack3", "Speed3" },
-		{ g("+50M") .. " SPEED", "SpeedPack4", "Speed4" },
-		{ g("+250M") .. " SPEED", "SpeedPack5", "Speed5", "BEST DEAL!" },
+		{ g("+150K") .. " SPEED", "SpeedPack1v2", "Speed1" },
+		{ g("+1M") .. " SPEED", "SpeedPack2v2", "Speed2", "BEST SELLING!" },
+		{ g("+10M") .. " SPEED", "SpeedPack3v2", "Speed3" },
+		{ g("+50M") .. " SPEED", "SpeedPack4v2", "Speed4" },
+		{ g("+250M") .. " SPEED", "SpeedPack5v2", "Speed5", "BEST DEAL!" },
 	}, doubleBanner)
 	packs("Cash Packs", hex("6AF26A"), 9, "CashPack", {
-		{ g("+$100K"), "CashPack1", "Cash1" },
-		{ g("+$500K"), "CashPack2", "Cash2", "BEST SELLING!" },
-		{ g("+$2M"), "CashPack3", "Cash3" },
-		{ g("+$20M"), "CashPack4", "Cash4" },
-		{ g("+$100M"), "CashPack5", "Cash5", "BEST DEAL!" },
+		{ g("+$100K"), "CashPack1v2", "Cash1" },
+		{ g("+$500K"), "CashPack2v2", "Cash2", "BEST SELLING!" },
+		{ g("+$2M"), "CashPack3v2", "Cash3" },
+		{ g("+$20M"), "CashPack4v2", "Cash4" },
+		{ g("+$100M"), "CashPack5v2", "Cash5", "BEST DEAL!" },
 	})
+	-- Boosts: one-off helpers. Server Luck and Lullaby change the whole server (no gift button); Skip wakes the
+	-- blanket that would wake last (the Wake now prompt on a blanket picks that one).
+	jump.Boosts = UIKit.section(scroll, "Boosts", hex("FF8AD8"), 13)
+	local boosts = UIKit.new("Frame", {
+		Name = "Boosts",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromOffset(712, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 14,
+	}, scroll)
+	UIKit.new("UIGridLayout", {
+		CellSize = UDim2.fromOffset(350, 210),
+		CellPadding = UDim2.fromOffset(12, 18),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	}, boosts)
+	UIKit.new("UIPadding", { PaddingTop = UDim.new(0, 16) }, boosts)
+	for i, bk in
+		{
+			{ { g("x2") .. " CASH  ·  15 MIN", "Cash", "CashBoost" }, "CashPack" },
+			{ { g("x2") .. " SERVER LUCK  ·  15 MIN", "PassLuck3", "ServerLuck", "FOR EVERYONE!" }, "Luck" },
+			{ { "LULLABY: KID SLEEPS NOW", "Moon", "Lullaby", "SHHH!" }, "RewardPurple" },
+			{ { "WAKE ALL BLANKETS", "Clock", "WakeAll" }, "RewardPink" },
+			{ { "SKIP ONE BLANKET", "Clock", "Skip" }, "RewardBlue" },
+		} :: { { any } }
+	do
+		packCard(boosts, bk[1], 350, bk[2], i)
+	end
+
 	UIKit.text(scroll, "Odds are shown on every random item.", 15, {
 		font = UIKit.Fonts.body,
 		color = hex("CFCFE0"),
@@ -934,6 +969,14 @@ do
 	UIKit.pulse(runHolder, 0.07, 0.35) -- the whole block (lip too) zooms in and out from its centre
 	runHolder.Visible = false
 	hud.run = runHolder
+	-- x2 Server Luck (someone bought it for everyone): a green countdown under the banner
+	hud.luck = UIKit.text(top, "", 24, {
+		color = hex("5BF25A"),
+		position = UDim2.new(0.5, 0, 0, 128),
+		anchor = Vector2.new(0.5, 0),
+		stroke = 3.5,
+	})
+	hud.luck.Visible = false
 
 	-- Left menu: Shop, Index, Upgrades, Slow Mode, and the x2 Speed offer.
 	local left = group("Menu", Vector2.new(0, 0.5), UDim2.new(0, 14, 0.5, 0), Vector2.new(190, 360))
@@ -1305,6 +1348,11 @@ task.spawn(function()
 		local bedroom = Workspace:FindFirstChild("Bedroom")
 		kid = kid or (bedroom and bedroom:FindFirstChild("GiantKid"))
 		local carrying = player:GetAttribute("Carrying") ~= nil
+		local luckLeft = ((Workspace:GetAttribute("ServerLuckUntil") :: number?) or 0) - Workspace:GetServerTimeNow()
+		hud.luck.Visible = luckLeft > 0
+		if luckLeft > 0 then
+			hud.luck.Text = string.format("x2 SERVER LUCK  %d:%02d", luckLeft // 60, math.floor(luckLeft % 60))
+		end
 		hud.run.Visible = carrying
 		hud.action.Visible = carrying
 		if kid then

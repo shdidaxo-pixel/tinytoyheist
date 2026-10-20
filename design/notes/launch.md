@@ -18,6 +18,13 @@ Everything sold is listed once in `src/ReplicatedStorage/Shared/Monetization.lua
 | Speed packs | 59 – 1999 | +150K / 1M / 10M / 50M / 250M Speed |
 | Cash packs | 59 – 1999 | +$100K / 500K / 2M / 20M / 100M |
 | Wake All | 29 | Every sleeping blanket at home is ready now (button under the blanket list) |
+| Fast Hatch pass | 249 | Every blanket wakes twice as fast |
+| +5 Blanket Slots pass | 149 | 11 blankets can wait at home instead of 6 |
+| Super Lock pass | 99 | Door lock lasts 90 s instead of 45 |
+| Skip the Wait | 15 | One blanket wakes now: the "Wake now" (F) prompt on any sleeping blanket at home; bought with nothing asleep, it's kept for the next blanket |
+| x2 Cash, 15 min | 49 | Stacks with the daily/playtime boosts |
+| x2 Server Luck, 15 min | 99 | Everyone in the server: an extra rarity re-roll and x2 mutation luck; announced, with a countdown on the HUD |
+| Lullaby | 39 | Sings the Kid back to sleep and empties the wake meter for the whole server (refused if he's already fast asleep) |
 | Gift: <pass> | same as pass | The purple gift buttons: pick a player in the server |
 
 Shown prices come live from Roblox, so changing a price on the Creator Hub is enough. Receipts are saved before

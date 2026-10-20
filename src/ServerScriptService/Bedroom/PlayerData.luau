@@ -48,6 +48,7 @@ export type Profile = {
 	Passes: { [string]: boolean }, -- game passes gifted to you (bought ones are checked with Roblox on join)
 	Receipts: { string }, -- the last Robux purchases granted (PurchaseIds), so a receipt is never granted twice
 	MysteryOwed: number, -- bought Mystery Blankets still to come (they arrive as blanket slots free up)
+	Skips: number, -- bought Skips waiting for a blanket (bought when nothing was asleep)
 }
 
 local function defaults(): Profile
@@ -73,6 +74,7 @@ local function defaults(): Profile
 		Passes = {},
 		Receipts = {},
 		MysteryOwed = 0,
+		Skips = 0,
 	}
 end
 PlayerData.defaults = defaults

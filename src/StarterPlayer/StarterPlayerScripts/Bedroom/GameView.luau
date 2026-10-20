@@ -51,13 +51,29 @@ local function watchWaking(blanket: Instance)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "WakeTimer"
 	gui.Size = UDim2.fromOffset(190, 74)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, 10, 0)
+	-- each row of blankets (Pens BLANKET_SPOTS: 3 in front, 4 staggered behind, more layers further in) floats its
+	-- timer higher than the row in front, so from the front a back timer never sits behind a front one's text
+	local slot = (blanket:GetAttribute("Slot") :: number?) or 1
+	local row = (if (slot - 1) % 7 >= 3 then 1 else 0) + ((slot - 1) // 7) * 2
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 10 + row * 7, 0)
 	gui.LightInfluence = 0
 	gui.MaxDistance = 160
 	gui.Adornee = main
+	-- a dark tag behind the text and bar: billboards draw back to front, so the nearer tag hides any timer behind it
+	-- (from a low angle they can still line up; without it the digits behind showed through "READY! Hold E")
+	local tag = Instance.new("Frame")
+	tag.Name = "Tag"
+	tag.BackgroundColor3 = INK
+	tag.BackgroundTransparency = 0.15
+	tag.Size = UDim2.new(1, 0, 1, 0)
+	tag.ZIndex = 0
+	tag.Parent = gui
+	local tagCorner = Instance.new("UICorner")
+	tagCorner.CornerRadius = UDim.new(0, 12)
+	tagCorner.Parent = tag
 	local label = textLabel(gui, "", Color3.new(1, 1, 1), UDim2.new(1, 0, 0, 46), UDim2.new())
 	local back = Instance.new("Frame")
-	back.BackgroundColor3 = INK
+	back.BackgroundColor3 = Color3.fromRGB(70, 64, 92) -- the empty bar, lighter than the tag behind it
 	back.Size = UDim2.new(1, -30, 0, 16)
 	back.Position = UDim2.fromOffset(15, 52)
 	back.Parent = gui

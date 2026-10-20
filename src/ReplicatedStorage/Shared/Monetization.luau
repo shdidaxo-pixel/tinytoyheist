@@ -1,7 +1,7 @@
 --!strict
 -- Everything sold for Robux: the game passes and the developer products (Mystery Blankets, Speed packs, Cash packs,
 -- Wake All, and a gift version of every pass). Server (Bedroom/Shop) and the shop UI both read it.
---   The Roblox ids live in ProductIds (written by tools/roblox-setup.py, which creates the passes and products on
+--   The Roblox ids live in ProductIds (written by tools/roblox-setup.ps1, which creates the passes and products on
 --   the Roblox site). An id of 0 means "not created yet": the button says so instead of prompting.
 --   `price` is only a fallback for the button: the shop shows the live price from Roblox once it has loaded.
 
@@ -40,7 +40,7 @@ end
 Monetization.CASH_PASS = 2 -- x2 Cash: all toy income
 Monetization.SPEED_PASS = 2 -- x2 Speed: Speed trained on the wheel
 Monetization.LUCK_ROLLS = 2 -- x2 Luck: every blanket rolls its rarity twice and keeps the better toy, x2 mutation luck
-Monetization.VIP_CASH = 1.5 -- VIP: +50% income, a VIP chat tag and a gold name
+Monetization.VIP_CASH = 1.5 -- VIP: +50% income and a VIP chat tag
 
 Monetization.Passes = {
 	{
@@ -67,7 +67,7 @@ Monetization.Passes = {
 	{
 		key = "VIP",
 		name = "VIP",
-		description = "VIP chat tag, a gold name and +50% cash from your toys.",
+		description = "VIP chat tag and +50% cash from your toys.",
 		price = 799,
 		icon = "PassVIP3",
 	},

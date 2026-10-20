@@ -1,4 +1,4 @@
--- Written by tools/roblox-setup.py: the Roblox ids of the game passes and developer products (Monetization.luau).
+-- Written by tools/roblox-setup.ps1: the Roblox ids of the game passes and developer products (Monetization.luau).
 -- 0 or missing = not created yet. Safe to edit by hand (paste an id from the Creator Hub).
 return {
 	Passes = {

@@ -140,3 +140,17 @@ If you add a moment, add a row here.
 - Not captured yet: phone size (pop text + reveal card). There's no Luau way to size the viewport; it needs Studio's
   Device emulator (Test tab) turned on by hand. Don't launch "Roblox Studio" from the Start menu with computer use:
   that runs the installer and closes the open Studio (happened 19 Oct, 17:25).
+
+## Mutation fixes (19 Oct, evening; Dylan's showcase screenshots)
+- **Rainbow not cycling**: `Mutations.animate` collected the toy's blocks once, on its first frame. With streaming on,
+  a far toy (the showcase, other players' pens) can start before its blocks arrive, so the list was empty for good.
+  Rainbow, Cosmic (orbit joint) and Glow (light) now look their parts up again about once a second until they have
+  them. Checked in Play at the showcase: the Rainbow duck's colours change between samples; all 10 mutations move.
+- **Showcase looks were stale**: the 140 showcase mutation toys were mutated when the showcase was built, so they had
+  the old looks; re-applied in Edit with the current `Mutations.apply`.
+- **Snow Globe Spirit**: the "blue box on a red pedestal" is that toy's own glass dome, not a mutation. Its octagon
+  walls stood 3.85 out (corners about 4.2), wider than its glass base (3.4) and the gold rim (3.9). Now 3.1 to 3.4
+  out, with the tree and snow swirl moved in. Rebuilt with `BuildToys.run({ only = { "SnowGlobeSpirit" } })` and
+  the showcase copy replaced.
+- Phone size: still not captured. Studio's Device emulator (Test tab) has to be switched on by hand; the screen text
+  and confetti scale with the screen by design (`min(width / 1280, height / 720)`, text never wider than 90%).

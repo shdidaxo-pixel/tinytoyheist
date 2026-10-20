@@ -1283,7 +1283,8 @@ do
 	UIKit.onLayout(function()
 		if UIKit.isTouch() then
 			statsGroup.AnchorPoint, statsGroup.Position = Vector2.new(0, 0), UDim2.fromOffset(14, 64)
-			wake.AnchorPoint, wake.Position = Vector2.new(1, 0), UDim2.new(1, -14, 0, 64)
+			-- below the corner buttons (Toys, Daily, Playtime, Settings), which sit at the same top-right spot
+			wake.AnchorPoint, wake.Position = Vector2.new(1, 0), UDim2.new(1, -14, 0, 124)
 			action.Position = UDim2.new(0.5, 0, 1, -24)
 		else
 			statsGroup.AnchorPoint, statsGroup.Position = Vector2.new(0, 1), UDim2.new(0, 14, 1, -14)

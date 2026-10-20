@@ -275,7 +275,9 @@ local function bounce(holder: GuiObject, hit: GuiButton)
 		TweenService:Create(scale, info, { Scale = v }):Play()
 	end
 	hit.MouseEnter:Connect(function()
-		to(1.05)
+		if not UIKit.isTouch() then -- on touch screens MouseLeave often never comes, so the button would stay big
+			to(1.05)
+		end
 	end)
 	hit.MouseLeave:Connect(function()
 		to(1)
@@ -284,7 +286,7 @@ local function bounce(holder: GuiObject, hit: GuiButton)
 		to(0.94)
 	end)
 	hit.MouseButton1Up:Connect(function()
-		to(1.05)
+		to(if UIKit.isTouch() then 1 else 1.05)
 	end)
 end
 
@@ -396,6 +398,9 @@ function UIKit.hoverWiggle(target: GuiObject, pic: GuiObject)
 		table.clear(playing)
 	end
 	target.MouseEnter:Connect(function()
+		if UIKit.isTouch() then
+			return -- no hover on touch screens (MouseLeave may never come)
+		end
 		stop()
 		pic.Rotation = baseRot - 8
 		local bob = TweenService:Create(
@@ -828,8 +833,13 @@ end
 
 function UIKit.start()
 	local function refresh()
-		for _, f in scaled do
-			f.scale.Scale = screenScale(f.fitSize)
+		for i = #scaled, 1, -1 do
+			local f = scaled[i]
+			if f.scale.Parent then
+				f.scale.Scale = screenScale(f.fitSize)
+			else
+				table.remove(scaled, i) -- its frame was destroyed (a closed reveal card)
+			end
 		end
 		for _, fn in layoutCallbacks do
 			fn()
@@ -843,8 +853,13 @@ function UIKit.start()
 	UserInputService.LastInputTypeChanged:Connect(refresh)
 	refresh()
 	RunService.RenderStepped:Connect(function(dt)
-		for _, r in spinning do
-			r.Rotation = (r.Rotation + 20 * dt) % 360
+		for i = #spinning, 1, -1 do
+			local r = spinning[i]
+			if r.Parent then
+				r.Rotation = (r.Rotation + 20 * dt) % 360
+			else
+				table.remove(spinning, i) -- destroyed with a redrawn panel
+			end
 		end
 	end)
 end

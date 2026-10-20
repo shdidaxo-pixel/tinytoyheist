@@ -236,7 +236,9 @@ function GameView.start(bedroom: Model)
 			local secs = math.ceil(left)
 			w.label.Text = if left > 0
 				then (if secs >= 60 then string.format("%d:%02d", secs // 60, secs % 60) else `{secs}s`)
-				elseif mine then "READY! Hold E"
+				elseif mine then (if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+					then "READY! Hold"
+					else "READY! Hold E")
 				else "READY!"
 			w.fill.Size = UDim2.fromScale(math.clamp(1 - left / total, 0, 1), 1)
 			if left <= 0 then
@@ -283,11 +285,18 @@ function GameView.start(bedroom: Model)
 		performance = me:GetAttribute("SettingPerformanceMode") == true
 		setParticles(not performance)
 	end)
-	RunService.Heartbeat:Connect(function()
+	local hideClock = 0
+	RunService.Heartbeat:Connect(function(dt)
 		local hide = me:GetAttribute("SettingHidePlayers") == true
 		if not hide and not hidden then
 			return
 		end
+		-- a few times a second is plenty (new characters and switching it off are picked up on the next pass)
+		hideClock += dt
+		if hide == hidden and hideClock < 0.3 then
+			return
+		end
+		hideClock = 0
 		hidden = hide
 		for _, other in Players:GetPlayers() do
 			if other ~= me and other.Character then

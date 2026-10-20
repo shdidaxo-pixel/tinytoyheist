@@ -143,7 +143,7 @@ function Pens.canBank(player: Player): (boolean, string?)
 		return false, "Still loading..."
 	end
 	if #p.Blankets >= GameConfig.MAX_BLANKETS then
-		return false, "Hatch your blankets first! (hold E on them at home)"
+		return false, "Hatch your blankets first! (hold the Hatch button on them at home)"
 	end
 	if #p.Toys + #p.Blankets >= GameConfig.INVENTORY_MAX then
 		return false, "Your inventory is full! Sell some toys."

@@ -133,6 +133,8 @@ local function remote(className: string, name: string): any
 end
 PlayerData.remote = remote
 local dataRemote = remote("RemoteEvent", "Data") :: RemoteEvent
+-- a client UI that connected late (the first profile went to another listener) asks for a fresh copy
+local dataRequest = remote("RemoteEvent", "DataRequest") :: RemoteEvent
 
 function PlayerData.get(player: Player): Profile?
 	local s = sessions[player]
@@ -404,6 +406,9 @@ local function leave(player: Player)
 end
 
 function PlayerData.start()
+	dataRequest.OnServerEvent:Connect(function(player)
+		PlayerData.changed(player)
+	end)
 	Players.PlayerAdded:Connect(join)
 	for _, player in Players:GetPlayers() do
 		task.spawn(join, player)

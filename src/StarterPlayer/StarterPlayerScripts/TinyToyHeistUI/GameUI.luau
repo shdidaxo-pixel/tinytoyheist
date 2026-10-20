@@ -1236,7 +1236,10 @@ end
 -- Your blankets: the ones waiting in your home, on the right edge, with their timers ("READY!" when you can hatch).
 local BLANKET_COLOUR = { S = hex("4DA8FF"), M = hex("9B7BFF"), L = hex("FF8A3D") } :: { [string]: Color3 }
 local wakeButton: Frame? = nil
-local function drawBlankets(holder: Frame)
+local function drawBlankets(group: Frame)
+	-- drawn into a List frame, so clearing it keeps the group's screen-fit UIScale
+	local holder: Frame = (group:FindFirstChild("List") :: Frame?)
+		or UIKit.new("Frame", { Name = "List", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1) }, group)
 	if wakeButton then
 		wakeButton.Parent = nil
 	end
@@ -1293,7 +1296,12 @@ local function drawBlankets(holder: Frame)
 			z = 5,
 		})
 	end
-	local hint = UIKit.text(holder, "Hold E on a ready one at home", 12, { font = UIKit.Fonts.body, stroke = 2 })
+	local hint = UIKit.text(
+		holder,
+		(if UIKit.isTouch() then "Tap and hold" else "Hold E") .. " on a ready one at home",
+		12,
+		{ font = UIKit.Fonts.body, stroke = 2 }
+	)
 	hint.LayoutOrder = 99
 	-- Wake All (Robux): every sleeping blanket is ready to hatch right away
 	local asleep = false
@@ -1345,7 +1353,9 @@ local function point(target: BasePart?)
 		end
 		return
 	end
-	if not pointer or pointer.from.Parent ~= root then
+	-- rebuilt when the character changed, or when the thing it pointed at was destroyed (a hatched blanket takes
+	-- the end attachment with it, and a destroyed attachment can't be moved)
+	if not pointer or pointer.from.Parent ~= root or pointer.to.Parent == nil then
 		point(nil)
 		local from = Instance.new("Attachment")
 		from.Name = "TutorialFrom"
@@ -1405,7 +1415,8 @@ local function tutorialStep(): (string?, BasePart?)
 	if waking and #waking:GetChildren() > 0 then
 		for _, b in waking:GetChildren() do
 			if b:IsA("Model") and b:GetAttribute("Ready") then
-				return "Hold E on your blanket to hatch it!", b.PrimaryPart
+				return (if UIKit.isTouch() then "Tap and hold" else "Hold E") .. " on your blanket to hatch it!",
+					b.PrimaryPart
 			end
 		end
 		local b = waking:GetChildren()[1] :: Model
@@ -1486,6 +1497,8 @@ function GameUI.start(ctx: Ctx)
 		end
 		Hotbar.update(p)
 	end);
+	-- the first profile may have gone to another script that listened first (Sounds): ask for our own copy
+	(remotes:WaitForChild("DataRequest") :: RemoteEvent):FireServer();
 	(remotes:WaitForChild("Reveal") :: RemoteEvent).OnClientEvent:Connect(function(info: any)
 		VFX.afterHatch(function() -- after the hatch charge-up and burst (VFX), if there is one
 			showReveal(ctx, info)
@@ -1544,8 +1557,19 @@ function GameUI.start(ctx: Ctx)
 	local band = hud.quest.Parent :: GuiObject
 	local lastQuest = ""
 	local doneAt: number? = nil
-	task.spawn(function()
+	local everySecond: () -> ()
+	task.defer(function() -- deferred: everySecond is defined just below
 		while ctx.gui.Parent do
+			-- an error in one tick must not stop the badges, blankets and tutorial for the rest of the session
+			local ok, err = pcall(everySecond)
+			if not ok then
+				warn("GameUI tick: " .. tostring(err))
+			end
+			task.wait(1)
+		end
+	end)
+	everySecond = function()
+		do
 			local q, target = tutorialStep()
 			band.Visible = q ~= nil
 			if q and q ~= lastQuest then
@@ -1569,9 +1593,8 @@ function GameUI.start(ctx: Ctx)
 			if hud.blankets then
 				drawBlankets(hud.blankets)
 			end
-			task.wait(1)
 		end
-	end)
+	end
 end
 
 return GameUI

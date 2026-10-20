@@ -18,10 +18,10 @@ function Music.start(bedroom: Model, Sounds: any)
 	local chase = Sounds.loop("MusicChase") :: Sound
 	local nightVolume, chaseVolume = night.Volume, chase.Volume
 	chase.Volume = 0
-	for _, s in { night, chase } do
-		if not s.IsLoaded then
-			s.Loaded:Wait()
-		end
+	-- wait for both tracks, but not forever: one that never loads mustn't keep the other silent
+	local deadline = os.clock() + 10
+	while not (night.IsLoaded and chase.IsLoaded) and os.clock() < deadline do
+		task.wait(0.2)
 	end
 	night:Play()
 	chase:Play()

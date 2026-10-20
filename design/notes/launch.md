@@ -75,3 +75,12 @@ sound ids (StepCarpet, RevealRare, Meow, Hiss) may need permission for the group
 sound can be added in TikTok. 1) Steal from a giant (33 s), 2) Don't wake him (19 s), 3) Giant Mythic hatch (24 s).
 Suggested post text: "I made a Roblox game where you're mouse-sized and steal toys from a giant kid 🧸 #roblox
 #robloxgames #stealabrainrot #gamedev #indiegame".
+
+## To do (Dylan's notes)
+
+- **Full home → blanket goes to the inventory.** When all blanket slots at home are full, a blanket you bring home
+  (or a reward / Mystery Blanket) shouldn't be refused: it goes into your inventory as a sleeping blanket, and you
+  hatch it later (put it back in a free slot, then it wakes as usual). Today `Pens.canBank` says "Hatch your blankets
+  first!" and the carried blanket stays with you; Mystery Blankets already wait in `MysteryOwed`. (Dylan, 19 Oct:
+  "if theres no space, js move it to my inventory so i can hatch it later." Noted, not built yet.)
+- The SHOWCASE / BACK button (Studio and Dylan only) covers the "BLANKETS 6/6" heading on the right.

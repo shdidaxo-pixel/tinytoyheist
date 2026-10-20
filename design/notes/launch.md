@@ -83,4 +83,8 @@ Suggested post text: "I made a Roblox game where you're mouse-sized and steal to
   hatch it later (put it back in a free slot, then it wakes as usual). Today `Pens.canBank` says "Hatch your blankets
   first!" and the carried blanket stays with you; Mystery Blankets already wait in `MysteryOwed`. (Dylan, 19 Oct:
   "if theres no space, js move it to my inventory so i can hatch it later." Noted, not built yet.)
+- **Name tag over every pen toy.** Like Steal a Brainrot: above each toy in a pen, its name, its money a second
+  ($X/s) and its mutation (and size: Big / Huge / Giant, which today is the only tag shown). Today you only see
+  the size tag and the "+$144" income pops, so you can't tell toys apart or see what's worth stealing. (Dylan, 19 Oct:
+  "make the name and money and mutations display above the toy". Noted, not built yet.)
 - The SHOWCASE / BACK button (Studio and Dylan only) covers the "BLANKETS 6/6" heading on the right.

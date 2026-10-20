@@ -58,3 +58,14 @@ Walk cycle, held toy idle + holding pose (simulated hold: a toy welded at the ch
 the Kid lying back down, the ducks, and the cat bite/throw after the head fix (head turns about its middle now,
 collar left out, no grooming while angry). Capture: `design/animations/03-walk-hold-kid-duck-bite.mp4`.
 Still not seen: two players at once.
+
+## Broken-toy screenshots (19 Oct, night)
+- Fixed in ToyAnimator (f8c1452): joint rest frames now come from the joints alone (Root -> C0 -> C1), never from
+  where the parts are, which could be stale and skew the squash/look-around; the squash only sinks heads and groups
+  in the top 30% (it used to slide every group on the Body, so panels, doors, faces and props on 68 toys slid down
+  their bodies); heads look around less (max about 40 deg).
+- Checked: all 350 stored and showcase toy models have parts matching their joints; on the old code a 10 s scan at
+  the showcase flagged only designed idles (spins, the slinky); after the fix a pass along the rows looks clean.
+- Screenshot 1 is Pawn Knight as designed (horse head offset on a chess pawn, matches its icon). Screenshot 3's eye
+  shine slivers are the designed tilted sparkle on 64 toys' eyes. Screenshot 4 couldn't be pinned to one toy; the
+  old squash sliding a panel group is the likely cause.

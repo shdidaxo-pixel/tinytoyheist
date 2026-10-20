@@ -11,14 +11,25 @@ local UIKit = {}
 
 UIKit.REF = Vector2.new(1280, 720)
 
--- Local preview images live in Studio's content folder (copied from assets/ui/). Before publishing, upload
--- assets/ui/*.png and replace this prefix with the uploaded rbxassetid:// ids.
+-- Pictures: live servers use the uploaded ids (Shared/ImageIds); Studio uses the local copies in its content folder
+-- (copied from assets/tth2/), which always load, even while a new upload waits for moderation. Set
+-- UPLOADED_IN_STUDIO to check the uploaded ones in Studio.
+local ImageIds = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("ImageIds")) :: any
 local ASSET = "rbxasset://textures/TTH2/" -- bump the folder name when pictures change; Studio caches by path
-function UIKit.image(name: string): string
+local UPLOADED_IN_STUDIO = false
+local useUploaded = UPLOADED_IN_STUDIO or not RunService:IsStudio()
+local function picture(name: string): string
+	local id = ImageIds[name]
+	if id and useUploaded then
+		return "rbxassetid://" .. id
+	end
 	return ASSET .. name .. ".png"
 end
+function UIKit.image(name: string): string
+	return picture(name)
+end
 function UIKit.toy(id: string): string
-	return ASSET .. "toys/" .. id .. ".png"
+	return picture("toys/" .. id)
 end
 
 local function hex(h: string): Color3

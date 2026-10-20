@@ -95,6 +95,18 @@ function Carry.pickToy(size: string): any?
 	return nil
 end
 
+-- x2 Luck pass (Monetization): the toy under a blanket you bring home is rolled again and you keep the rarer one
+function Carry.lucky(player: Player, data: any, size: string): any
+	if not player:GetAttribute("PassLuck") then
+		return data
+	end
+	local other = Carry.pickToy(size)
+	if other and (table.find(RARITY_ORDER, other.Rarity) or 0) > (table.find(RARITY_ORDER, data.Rarity) or 0) then
+		return other
+	end
+	return data
+end
+
 -- A sleeping toy's blanket (the look is tools/bedroom/Blanket.luau, from the concept renders), its bottom centre at
 -- `at`. PrimaryPart "Lump" is an invisible box over it, for the prompt and the glow tell.
 function Carry.makeBlanket(parent: Instance, size: string, at: CFrame): Model
@@ -115,6 +127,7 @@ type Carried = {
 	uid: string?, -- Stolen: the toy's id in the owner's profile
 }
 local carrying: { [Player]: Carried } = {}
+local lastPos: { [Player]: Vector3 } = {} -- where each carrier was last tick (the teleport check)
 -- Stolen toys lying on the floor: model -> { owner, uid }
 local loose: { [Model]: { owner: Player, uid: string, droppedAt: number } } = {}
 local notice: RemoteEvent
@@ -208,6 +221,7 @@ local function release(player: Player): Carried?
 		return nil
 	end
 	carrying[player] = nil
+	lastPos[player] = nil
 	player:SetAttribute("Carrying", nil)
 	player:SetAttribute("CarrySize", nil)
 	if c.weld then
@@ -323,7 +337,6 @@ local function drop(player: Player)
 	task.delay(Carry.LOOSE_TIME, function()
 		if
 			model.Parent
-			and not carrying[player]
 			and model:GetAttribute("DroppedAt")
 			and os.clock() - (model:GetAttribute("DroppedAt") :: number) >= Carry.LOOSE_TIME - 0.5
 		then
@@ -336,6 +349,12 @@ Carry.drop = drop
 grab = function(player: Player, model: Model)
 	if carrying[player] or not model.Parent or not Knock.root(player) or not Knock.ready(player) then
 		return
+	end
+	-- two players finishing the grab in the same frame: only the first gets it (no duplicate toy)
+	for _, other in carrying do
+		if other.model == model then
+			return
+		end
 	end
 	if player:GetAttribute("Training") then
 		return
@@ -459,7 +478,7 @@ local function bank(player: Player)
 	end
 	release(player)
 	c.model:SetAttribute("FullWarned", nil)
-	local entry = Pens.bank(player, data, c.size, c.model)
+	local entry = Pens.bank(player, Carry.lucky(player, data, c.size), c.size, c.model)
 	if not entry then
 		c.model:Destroy()
 		return
@@ -579,27 +598,51 @@ function Carry.start(bedroom: Model)
 		while sleeping.Parent do
 			task.wait(0.5)
 			for player, c in carrying do
-				local root = Knock.root(player)
-				if not root or not c.model.Parent then
-					release(player)
-					if c.kind == "Stolen" and c.owner and c.uid then
-						c.model:Destroy()
-						Pens.restore(c.owner, c.uid)
+				local ok, err = pcall(function()
+					local root = Knock.root(player)
+					if not root and c.kind == "Sleeping" and c.model.Parent then
+						-- died or reset while dragging a blanket: it stays on the floor where they fell
+						lastPos[player] = nil
+						drop(player)
+						return
 					end
-					continue
-				end
-				local v = root.AssemblyLinearVelocity
-				if Vector3.new(v.X, 0, v.Z).Magnitude > 2 then
-					local points = (Carry.NOISE[c.size] or 1) * 0.5
-					if player:GetAttribute("SlowMode") then
-						points *= GameConfig.SLOW_MODE
+					if not root or not c.model.Parent then
+						lastPos[player] = nil
+						release(player)
+						if c.kind == "Stolen" and c.owner and c.uid then
+							c.model:Destroy()
+							Pens.restore(c.owner, c.uid)
+						end
+						return
 					end
-					Events.MakeNoise:Fire(root.Position, points, "Drag")
-				end
-				local index = MapConfig.homeAt(root.Position)
-				local hole = index and holes:FindFirstChild("Hole" .. index)
-				if hole and hole:GetAttribute("Owner") == player.UserId then
-					bank(player)
+					-- a jump further than they could walk in a tick (a teleport exploit) drops what they're dragging
+					local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+					local prev = lastPos[player]
+					lastPos[player] = flat
+					local humanoid = (root.Parent :: Model):FindFirstChildOfClass("Humanoid")
+					local walk = if humanoid then humanoid.WalkSpeed else 16
+					if prev and (flat - prev).Magnitude > walk * 0.5 * 1.6 + 8 then
+						lastPos[player] = nil
+						drop(player)
+						return
+					end
+					local v = root.AssemblyLinearVelocity
+					if Vector3.new(v.X, 0, v.Z).Magnitude > 2 then
+						local points = (Carry.NOISE[c.size] or 1) * 0.5
+						if player:GetAttribute("SlowMode") then
+							points *= GameConfig.SLOW_MODE
+						end
+						Events.MakeNoise:Fire(root.Position, points, "Drag")
+					end
+					local index = MapConfig.homeAt(root.Position)
+					local hole = index and holes:FindFirstChild("Hole" .. index)
+					if hole and hole:GetAttribute("Owner") == player.UserId then
+						lastPos[player] = nil
+						bank(player)
+					end
+				end)
+				if not ok then
+					warn(`Carry: {player.Name}: {err}`)
 				end
 			end
 			local now = os.clock()
@@ -627,7 +670,35 @@ function Carry.giveSleeping(player: Player, size: string): boolean
 		return false
 	end
 	local blanket = makeBlanket(sleeping, size, CFrame.new())
-	return Pens.bank(player, data, size, blanket) ~= nil
+	return Pens.bank(player, Carry.lucky(player, data, size), size, blanket) ~= nil
+end
+
+-- A bought Mystery Blanket: a Large blanket whose toy is rolled with the odds shown in the shop
+-- (Monetization.MYSTERY_ODDS, no luck on top so the shown odds stay true), quick to wake
+function Carry.giveMystery(player: Player, odds: { { any } }, wake: number): boolean
+	if not Pens.canBank(player) or not ToyCatalog then
+		return false
+	end
+	local total = 0
+	for _, o in odds do
+		total += o[2]
+	end
+	local roll = rng:NextNumber() * total
+	local rarity = odds[1][1]
+	for _, o in odds do
+		roll -= o[2]
+		if roll <= 0 then
+			rarity = o[1]
+			break
+		end
+	end
+	local options = ToyCatalog.inSet("Bedroom", rarity)
+	if #options == 0 then
+		return false
+	end
+	local data = options[rng:NextInteger(1, #options)]
+	local blanket = makeBlanket(sleeping, "L", CFrame.new())
+	return Pens.bank(player, data, "L", blanket, wake) ~= nil
 end
 
 return Carry

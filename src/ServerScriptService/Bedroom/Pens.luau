@@ -176,7 +176,30 @@ function Pens.luck(player: Player): number
 			sets += 1
 		end
 	end
-	return 1 + GameConfig.SET_LUCK * sets
+	local luck = 1 + GameConfig.SET_LUCK * sets
+	if player:GetAttribute("PassLuck") then
+		luck *= 2 -- x2 Luck pass
+	end
+	return luck
+end
+
+-- Wake All (a Robux product): every blanket waiting at home is ready to hatch now
+function Pens.wakeAll(player: Player): number
+	local p = PlayerData.get(player)
+	if not p then
+		return 0
+	end
+	local woken = 0
+	for _, b in p.Blankets do
+		if b.w > os.time() then
+			b.w = os.time()
+			woken += 1
+		end
+	end
+	if woken > 0 then
+		Pens.reload(player)
+	end
+	return woken
 end
 
 local function penPoint(hole: Model, u: number?, v: number?): CFrame
@@ -454,7 +477,7 @@ end
 
 -- A sleeping toy carried home (or a reward toy): it lies in your home as a blanket until you hatch it.
 -- `blanket` is the carried blanket model, if any; `size` the blanket's size.
-function Pens.bank(player: Player, data: any, size: string, blanket: Model?): Blanket?
+function Pens.bank(player: Player, data: any, size: string, blanket: Model?, wakeOverride: number?): Blanket?
 	local p = PlayerData.get(player)
 	if not p or not states[player] or not Pens.canBank(player) then
 		return nil
@@ -466,7 +489,7 @@ function Pens.bank(player: Player, data: any, size: string, blanket: Model?): Bl
 		then nil
 		else Mutations.roll(rng, { NightmareNight = false, Halloween = false }, Pens.luck(player))
 	-- bigger blankets and rarer toys take longer to wake; the first toy ever is quick (the tutorial)
-	local wake = ToySize.wakeSeconds(size, data.Rarity, p.Banked == 0)
+	local wake = wakeOverride or ToySize.wakeSeconds(size, data.Rarity, p.Banked == 0)
 	local b: Blanket = {
 		u = PlayerData.newUid(),
 		id = data.Id,
@@ -789,13 +812,11 @@ function Pens.start(_bedroom: Model)
 		notice.Parent = remotes
 	end
 	PlayerData.onLoaded(function(player, profile)
-		local hole: Model? = nil
-		for _ = 1, 100 do
+		-- a full server: wait for a home to free up (Homes hands it to whoever is waiting)
+		local hole: Model? = Homes.homeOf(player)
+		while not hole and player.Parent do
+			task.wait(0.25)
 			hole = Homes.homeOf(player)
-			if hole or not player.Parent then
-				break
-			end
-			task.wait(0.1)
 		end
 		if not hole or not player.Parent then
 			return

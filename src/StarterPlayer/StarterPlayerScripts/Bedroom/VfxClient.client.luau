@@ -278,6 +278,20 @@ Moments.on("StealStart", function(d: any)
 	end
 end)
 
+-- A Robux purchase or a gift landed (Bedroom/Shop): confetti and what you got
+Moments.on("Purchased", function(d: any)
+	VFX.flash(GOLD, 0.3, 0.35)
+	VFX.confetti(90)
+	VFX.popText(if d.gift then "GIFT!" else "THANK YOU!", UDim2.fromScale(0.5, 0.3), {
+		color = GOLD,
+		size = 64,
+		duration = 1.8,
+	})
+	if d.what then
+		VFX.popText(tostring(d.what), UDim2.fromScale(0.5, 0.38), { color = Color3.fromRGB(91, 242, 90), size = 34 })
+	end
+end)
+
 Moments.on("StealBanked", function(d: any)
 	local hole = myHome()
 	if hole then

@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
+local Monetization = require(Shared:WaitForChild("Monetization")) :: any
 local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
 local PlayerData = require(script.Parent.PlayerData)
 local Pens = require(script.Parent.Pens)
@@ -124,6 +125,9 @@ local function buy(player: Player, what: string, arg: any): (boolean, string)
 	elseif what == "Sell" then
 		-- one toy (uid) or many ({uid, ...}); locked toys and ones being stolen are skipped
 		local uids = if typeof(arg) == "string" then { arg } elseif typeof(arg) == "table" then arg else {}
+		if #uids > GameConfig.INVENTORY_MAX then
+			return false, "?"
+		end
 		local state = Pens.state(player)
 		local total, count = 0, 0
 		for _, uid in uids do
@@ -224,7 +228,11 @@ function Upgrades.start(_bedroom: Model)
 				end
 				-- the Speed number climbs every half second (the HUD reads the Speed attribute; the full profile goes
 				-- to the client now and then, not every tick)
-				p.Speed += GameConfig.wheelGain(p.WheelLevel) * 0.5
+				local gain = GameConfig.wheelGain(p.WheelLevel) * 0.5
+				if player:GetAttribute("PassSpeed") then
+					gain *= Monetization.SPEED_PASS -- x2 Speed pass
+				end
+				p.Speed += gain
 				player:SetAttribute("Speed", p.Speed)
 				ticks[player] = (ticks[player] or 0) + 1
 				if ticks[player] % 10 == 0 then

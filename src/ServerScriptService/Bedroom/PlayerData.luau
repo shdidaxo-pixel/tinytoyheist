@@ -45,6 +45,9 @@ export type Profile = {
 	Daily: { Streak: number, Day: number }, -- Day = the UTC day number of the last claim
 	BoostUntil: number, -- os.time() when x2 money runs out
 	Tutorial: number,
+	Passes: { [string]: boolean }, -- game passes gifted to you (bought ones are checked with Roblox on join)
+	Receipts: { string }, -- the last Robux purchases granted (PurchaseIds), so a receipt is never granted twice
+	MysteryOwed: number, -- bought Mystery Blankets still to come (they arrive as blanket slots free up)
 }
 
 local function defaults(): Profile
@@ -67,6 +70,9 @@ local function defaults(): Profile
 		Daily = { Streak = 0, Day = 0 },
 		BoostUntil = 0,
 		Tutorial = 0,
+		Passes = {},
+		Receipts = {},
+		MysteryOwed = 0,
 	}
 end
 PlayerData.defaults = defaults
@@ -107,6 +113,7 @@ type Session = {
 	countedAt: number, -- os.clock() up to which PlaySeconds has been counted
 	playtimeClaimed: { [number]: boolean },
 	dirty: boolean,
+	leaving: boolean?, -- set once the leave save has started: autosaves stop, so they can't lock it again
 }
 local sessions: { [Player]: Session } = {}
 local loadedCallbacks: { (Player, Profile) -> () } = {}
@@ -278,27 +285,45 @@ local function load(player: Player): (Profile?, boolean)
 	return nil, false
 end
 
-local function save(player: Player, release: boolean)
+local function save(player: Player, release: boolean): boolean
 	local s = sessions[player]
-	if not s or s.offline or not store then
-		return
+	if not s then
+		return false
+	end
+	if s.offline or not store then
+		return true -- nothing to save to (Studio without API access): the session copy is all there is
+	end
+	if s.leaving and not release then
+		return true -- the leave save is on its way
 	end
 	local ds = store :: DataStore
 	s.profile.PlaySeconds = PlayerData.playSeconds(player)
 	s.countedAt = os.clock()
 	local copy = table.clone(s.profile) :: any
-	local ok, err = pcall(function()
-		ds:UpdateAsync(key(player), function(old: any)
-			if type(old) == "table" and type(old.Lock) == "table" and old.Lock.Job ~= game.JobId then
-				return nil -- another server has taken over this player: don't overwrite its data
-			end
-			copy.Lock = if release then nil else { Job = game.JobId, Time = os.time() }
-			return copy
+	local ok, err = false, nil
+	-- the save on leave is the one that matters most: try it a few times
+	for attempt = 1, if release then 4 else 1 do
+		ok, err = pcall(function()
+			ds:UpdateAsync(key(player), function(old: any)
+				if type(old) == "table" and type(old.Lock) == "table" and old.Lock.Job ~= game.JobId then
+					return nil -- another server has taken over this player: don't overwrite its data
+				end
+				if s.leaving and not release then
+					return nil
+				end
+				copy.Lock = if release then nil else { Job = game.JobId, Time = os.time() }
+				return copy
+			end)
 		end)
-	end)
-	if not ok then
-		warn(`PlayerData: couldn't save {player.Name}: {err}`)
+		if ok then
+			break
+		end
+		warn(`PlayerData: couldn't save {player.Name} (try {attempt}): {err}`)
+		if attempt < 4 then
+			task.wait(2 ^ attempt)
+		end
 	end
+	return ok
 end
 PlayerData.save = save
 
@@ -367,9 +392,10 @@ end
 
 local function leave(player: Player)
 	local s = sessions[player]
-	if not s then
-		return
+	if not s or s.leaving then
+		return -- PlayerRemoving and BindToClose can both get here
 	end
+	s.leaving = true
 	for _, fn in leavingCallbacks do
 		pcall(fn, player, s.profile)
 	end
@@ -393,7 +419,8 @@ function PlayerData.start()
 			end)
 		end
 		local deadline = os.clock() + 25
-		while waiting > 0 and os.clock() < deadline do
+		-- wait for every leave save, including ones PlayerRemoving started (they clear their session when done)
+		while (waiting > 0 or next(sessions) ~= nil) and os.clock() < deadline do
 			task.wait(0.2)
 		end
 	end)

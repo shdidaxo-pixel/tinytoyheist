@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
+local ShopClient = require(script.Parent:WaitForChild("ShopClient"))
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("GameConfig")) :: any
 local MapConfig = require(Shared:WaitForChild("MapConfig")) :: any
@@ -439,6 +440,7 @@ local function buildToys(ctx: Ctx)
 			})
 			if on then
 				UIKit.icon(s, img("Check"), 22, UDim2.new(1, -3, 0, 3), Vector2.new(1, 0), 8)
+			end
 			if ToySize.isBig(entry.z) then
 				UIKit.text(s, string.upper(entry.z), 11, {
 					color = ToySize.color(entry.z),
@@ -447,7 +449,6 @@ local function buildToys(ctx: Ctx)
 					stroke = 2,
 					z = 8,
 				})
-			end
 			end
 			if entry.l then
 				UIKit.icon(s, img("Lock"), 20, UDim2.fromOffset(3, 3), nil, 8)
@@ -1131,6 +1132,7 @@ local function showReveal(ctx: Ctx, info: any)
 	local pic = UIKit.icon(pop, toyImage(info.id), picSize, UDim2.fromOffset(210, 120), mid, 6)
 	UIKit.bob(pic, 6, 0.8)
 	UIKit.sparkle(pop, UDim2.fromOffset(110, 70), 22)
+	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	-- the size roll: a tilted BIG / HUGE / GIANT stamp that punches in just after the card
 	if ToySize.isBig(info.sizeTier) then
 		local stamp = UIKit.text(
@@ -1153,7 +1155,6 @@ local function showReveal(ctx: Ctx, info: any)
 			UIKit.tween(punch, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
 		end)
 	end
-	UIKit.sparkle(pop, UDim2.fromOffset(312, 96), 18)
 	UIKit.text(pop, info.name, 30, { position = UDim2.fromOffset(210, 196), anchor = Vector2.new(0.5, 0), stroke = 4 })
 	local line = info.rarity .. (if info.mutation then "  ·  " .. string.upper(info.mutation) .. "!" else "")
 	local rarityLabel = UIKit.text(pop, line, 22, {
@@ -1234,7 +1235,11 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Your blankets: the ones waiting in your home, on the right edge, with their timers ("READY!" when you can hatch).
 local BLANKET_COLOUR = { S = hex("4DA8FF"), M = hex("9B7BFF"), L = hex("FF8A3D") } :: { [string]: Color3 }
+local wakeButton: Frame? = nil
 local function drawBlankets(holder: Frame)
+	if wakeButton then
+		wakeButton.Parent = nil
+	end
 	holder:ClearAllChildren()
 	local list = if profile then profile.Blankets or {} else {}
 	if #list == 0 then
@@ -1290,6 +1295,37 @@ local function drawBlankets(holder: Frame)
 	end
 	local hint = UIKit.text(holder, "Hold E on a ready one at home", 12, { font = UIKit.Fonts.body, stroke = 2 })
 	hint.LayoutOrder = 99
+	-- Wake All (Robux): every sleeping blanket is ready to hatch right away
+	local asleep = false
+	for _, b in list do
+		if b.w > now then
+			asleep = true
+		end
+	end
+	if asleep then
+		if not wakeButton then
+			-- made once and kept across redraws (the list redraws every second, which would eat a tap mid-press)
+			local button = UIKit.button(holder, "Wake All", {
+				palette = UIKit.Palettes.lime,
+				icon = img("Robux3"),
+				iconSize = 22,
+				size = UDim2.fromOffset(190, 40),
+				textSize = 20,
+				layoutOrder = 100,
+				onClick = function()
+					ShopClient.buy("WakeAll")
+				end,
+			})
+			local priceLabel = button:FindFirstChild("Text", true) :: TextLabel?
+			ShopClient.watchPrice("WakeAll", function(text)
+				if priceLabel then
+					priceLabel.Text = "Wake All " .. text
+				end
+			end)
+			wakeButton = button
+		end
+		(wakeButton :: Frame).Parent = holder
+	end
 end
 
 ---------------------------------------------------------------------------------------------------------------------

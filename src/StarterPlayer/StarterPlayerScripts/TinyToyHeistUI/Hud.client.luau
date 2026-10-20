@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local UIKit = require(script.Parent:WaitForChild("UIKit"))
+local ShopClient = require(script.Parent:WaitForChild("ShopClient"))
 local P = UIKit.Palettes
 local img, toy, hex = UIKit.image, UIKit.toy, UIKit.hex
 
@@ -66,6 +67,60 @@ local function open(name: string)
 	end
 end
 
+-- Gift: pick someone in the server to get what the gift button was next to (the shop's purple present buttons).
+local openGift: (key: string) -> ()
+do
+	local p = UIKit.panel(gui, "Gift", P.purple, Vector2.new(460, 420))
+	panels.Gift = p
+	local what = UIKit.text(p.body, "", 20, {
+		position = UDim2.fromOffset(230, 76),
+		anchor = Vector2.new(0.5, 0),
+		size = UDim2.fromOffset(420, 26),
+		z = 6,
+	})
+	local scroll = UIKit.new("ScrollingFrame", {
+		Name = "Players",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, -24, 1, -126),
+		Position = UDim2.fromOffset(12, 112),
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollBarThickness = 6,
+		ZIndex = 4,
+	}, p.body)
+	openGift = function(key: string)
+		local item = ShopClient.Monetization.byKey[key]
+		if not item then
+			return
+		end
+		what.Text = "Gift " .. item.name .. " to:"
+		scroll:ClearAllChildren()
+		list(scroll, 8, Enum.HorizontalAlignment.Center)
+		local others = 0
+		for _, other in Players:GetPlayers() do
+			if other == Players.LocalPlayer then
+				continue
+			end
+			others += 1
+			UIKit.button(scroll, other.DisplayName, {
+				palette = P.purple,
+				size = UDim2.fromOffset(400, 50),
+				textSize = 24,
+				layoutOrder = others,
+				onClick = function()
+					open("Gift") -- closes it
+					ShopClient.buy(key, other.UserId)
+				end,
+			})
+		end
+		if others == 0 then
+			UIKit.text(scroll, "Nobody else is here yet. Invite a friend!", 18, { font = UIKit.Fonts.body })
+		end
+		open("Gift")
+	end
+end
+
 -- Shop: a scrolling list like Break and Steal an Egg's: Featured, Game Passes, Speed Packs and Cash Packs.
 do
 	local p = UIKit.panel(gui, "Shop", P.lime, Vector2.new(760, 540))
@@ -93,7 +148,9 @@ do
 	-- Small gift button + green Robux price button, used on every card. Like Break and Steal an Egg: the gift is a
 	-- plain white present on purple. Optional extras: a taller button with a small label ("50 Toys") tucked into
 	-- its bottom edge, and a rainbow face for the biggest deal.
-	type BuyExtras = { height: number?, label: string?, rainbow: boolean?, textSize: number? }
+	-- `key` is what the buttons sell (Monetization): the price button buys it, the gift button gifts it to a player
+	-- in the server, the price is the live one from Roblox, and an owned pass says OWNED.
+	type BuyExtras = { height: number?, label: string?, rainbow: boolean?, textSize: number?, key: string? }
 	local function buyRow(
 		parent: Instance,
 		price: string,
@@ -114,7 +171,11 @@ do
 			gloss = true,
 		})
 		UIKit.icon(giftFace, img("GiftWhite"), math.floor(gw * 0.74), center, mid, 4)
-		UIKit.clickable(giftHolder)
+		UIKit.clickable(giftHolder, function()
+			if x.key then
+				openGift(x.key)
+			end
+		end)
 		local priceHolder = UIKit.button(parent, price, {
 			palette = palette or P.green,
 			icon = img("Robux3"),
@@ -123,8 +184,35 @@ do
 			textSize = x.textSize or 28,
 			iconSize = math.floor((x.textSize or 28) * 1.1),
 			iconGap = 2,
+			onClick = function()
+				if x.key then
+					ShopClient.buy(x.key)
+				end
+			end,
 		})
 		local face = priceHolder:FindFirstChild("Face") :: Frame
+		if x.key then
+			local key = x.key
+			local priceText = face:FindFirstChild("Text", true) :: TextLabel?
+			local robux = (face:FindFirstChild("Row") :: Frame):FindFirstChildOfClass("ImageLabel")
+			local owned = false
+			ShopClient.watchPrice(key, function(text)
+				if priceText and not owned then
+					priceText.Text = text
+				end
+			end)
+			if ShopClient.Monetization.pass(key) then
+				ShopClient.onOwned(key, function(on)
+					owned = on
+					if priceText then
+						priceText.Text = if on then "OWNED" else ShopClient.priceText(key)
+					end
+					if robux then
+						robux.Visible = not on
+					end
+				end)
+			end
+		end
 		if x.label then
 			-- price in the top part, the label straddling the bottom edge (half on the button, half below it)
 			local row = face:FindFirstChild("Row") :: Frame
@@ -229,17 +317,22 @@ do
 			}, t)
 		end
 	end
-	UIKit.text(card, "Limited Time!", 20, { position = UDim2.fromOffset(198, 66), z = 10 })
-	UIKit.text(card, "5d 10h 46m 46s", 20, { position = UDim2.new(1, -30, 0, 30), anchor = Vector2.new(1, 0), z = 10 })
-	-- odds tiles: small for common, big for rare, bottoms lined up, sitting over the art (and the hero's hem)
-	local odds = {
-		{ "Common", "45%", "duck", 72 },
-		{ "Uncommon", "30%", "frog", 80 },
-		{ "Rare", "15%", "jack", 90 },
-		{ "Epic", "7%", "robodino", 100 },
-		{ "Legendary", "2.5%", "cosmicteddy", 112 },
-		{ "Mythic", "0.5%", "kingduck", 126 },
+	UIKit.text(card, "A Bedroom toy, awake in 10 seconds!", 20, { position = UDim2.fromOffset(198, 66), z = 10 })
+	-- odds tiles: small for common, big for rare, bottoms lined up, sitting over the art (and the hero's hem). The
+	-- odds are Monetization.MYSTERY_ODDS (what the server rolls); the pictures are Bedroom toys of that rarity.
+	local tilePics = {
+		Common = { "RubberDuck", 72 },
+		Uncommon = { "PlushBunny", 80 },
+		Rare = { "TeddyKnight", 90 },
+		Epic = { "MusicBoxDancer", 100 },
+		Legendary = { "CosmicTeddy", 112 },
+		Mythic = { "GalaxyUnicornPlush", 126 },
 	}
+	local odds: { { any } } = {}
+	for _, o in ShopClient.Monetization.MYSTERY_ODDS do
+		local pic = tilePics[o[1]]
+		table.insert(odds, { o[1], tostring(o[2]) .. "%", pic[1], pic[2] })
+	end
 	local x = 712 - 26
 	for i = #odds, 1, -1 do
 		x -= odds[i][4]
@@ -291,32 +384,20 @@ do
 		})
 	end
 	-- price row: gift + price with its label inside the button's bottom edge; the 50 pack is the rainbow best deal
-	for i, buy in { { "3499", "50 Toys" }, { "799", "10 Toys" }, { "249", "3 Toys" }, { "99", "1 Toy" } } do
+	for i, buy in
+		{ { "Mystery50", "50 Toys" }, { "Mystery10", "10 Toys" }, { "Mystery3", "3 Toys" }, { "Mystery1", "1 Toy" } }
+	do
 		local gx = 24 + (i - 1) * 168 -- 4 groups of 160 + 8 gaps = 664, inside the gold frame
 		local row = buyRow(
 			card,
-			buy[1],
+			ShopClient.priceText(buy[1]),
 			UDim2.fromOffset(gx, 252),
 			160,
 			nil,
-			{ height = 56, label = buy[2], rainbow = i == 1, textSize = 27 }
+			{ height = 56, label = buy[2], rainbow = i == 1, textSize = 27, key = buy[1] }
 		)
 		for _, h in row do
 			h.ZIndex = 10
-		end
-		-- testing (Studio only, no Robux yet): the button puts that many Large blankets in your home
-		local count = ({ 50, 10, 3, 1 } :: { number })[i]
-		local hit = row[2]:FindFirstChild("Hit") :: TextButton?
-		if hit then
-			hit.Activated:Connect(function()
-				local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("GameRemotes")
-				local claim = remotes and remotes:FindFirstChild("Claim") :: RemoteFunction?
-				if claim then
-					task.spawn(function()
-						claim:InvokeServer("TestBlanket", count)
-					end)
-				end
-			end)
 		end
 	end
 
@@ -339,10 +420,10 @@ do
 	}, passes)
 	local green = '<font color="#5BF25A">2x</font>'
 	local passList = {
-		{ "x2 Speed", "Run " .. green .. " faster!", "PassSpeed3", "299", "Speed", "1250C8" },
-		{ "x2 Cash", "Earn " .. green .. " money!", "PassCash3", "499", "Cash", "B8600A" },
-		{ "x2 Luck", "Rarer toys under the blankets!", "PassLuck3", "399", "Luck", "17702A" },
-		{ "VIP", "Chat tag and " .. green .. " offline cash!", "PassVIP3", "799", "VIP", "5418B8" },
+		{ "x2 Speed", "Train " .. green .. " faster!", "PassSpeed3", "Speed", "Speed", "1250C8" },
+		{ "x2 Cash", "Earn " .. green .. " money!", "PassCash3", "Cash", "Cash", "B8600A" },
+		{ "x2 Luck", "Rarer toys under the blankets!", "PassLuck3", "Luck", "Luck", "17702A" },
+		{ "VIP", "VIP tag and +50% cash!", "PassVIP3", "VIP", "VIP", "5418B8" },
 	}
 	for i, ps in passList do
 		local cardFrame = UIKit.new("Frame", {
@@ -391,7 +472,9 @@ do
 		if dStroke then
 			dStroke.Color = hex(ps[6]):Lerp(Color3.new(0, 0, 0), 0.55)
 		end
-		for _, h in buyRow(cardFrame, ps[4], UDim2.fromOffset(160, 126), 182, P.lime) do
+		for _, h in
+			buyRow(cardFrame, ShopClient.priceText(ps[4]), UDim2.fromOffset(160, 126), 182, P.lime, { key = ps[4] })
+		do
 			h.ZIndex = 6
 		end
 	end
@@ -440,7 +523,16 @@ do
 		})
 		amount.RichText = true
 		local priceWidth = math.min(width - 24, 230)
-		for _, h in buyRow(cardFrame, pk[3], UDim2.fromOffset((width - priceWidth) / 2, 158), priceWidth, P.lime) do
+		for _, h in
+			buyRow(
+				cardFrame,
+				ShopClient.priceText(pk[3]),
+				UDim2.fromOffset((width - priceWidth) / 2, 158),
+				priceWidth,
+				P.lime,
+				{ key = pk[3] }
+			)
+		do
 			h.ZIndex = 6
 		end
 		if pk[4] then
@@ -528,7 +620,16 @@ do
 			z = 6,
 		})
 		UIKit.pulse(x2, 0.08, 0.8)
-		for _, h in buyRow(cardFrame, "3", UDim2.fromOffset(cx - 150, 104), 300, P.lime) do
+		for _, h in
+			buyRow(
+				cardFrame,
+				ShopClient.priceText("Speed"),
+				UDim2.fromOffset(cx - 150, 104),
+				300,
+				P.lime,
+				{ key = "Speed" }
+			)
+		do
 			h.ZIndex = 6
 		end
 	end
@@ -585,18 +686,18 @@ do
 		return '<font color="#7CFF5A">' .. s .. "</font>"
 	end
 	packs("Speed Packs", hex("6AD8FF"), 5, "SpeedPack", {
-		{ g("+150K") .. " SPEED", "SpeedPack1", "59" },
-		{ g("+1M") .. " SPEED", "SpeedPack2", "199", "BEST SELLING!" },
-		{ g("+10M") .. " SPEED", "SpeedPack3", "459" },
-		{ g("+50M") .. " SPEED", "SpeedPack4", "999" },
-		{ g("+250M") .. " SPEED", "SpeedPack5", "1,999", "BEST DEAL!" },
+		{ g("+150K") .. " SPEED", "SpeedPack1", "Speed1" },
+		{ g("+1M") .. " SPEED", "SpeedPack2", "Speed2", "BEST SELLING!" },
+		{ g("+10M") .. " SPEED", "SpeedPack3", "Speed3" },
+		{ g("+50M") .. " SPEED", "SpeedPack4", "Speed4" },
+		{ g("+250M") .. " SPEED", "SpeedPack5", "Speed5", "BEST DEAL!" },
 	}, doubleBanner)
 	packs("Cash Packs", hex("6AF26A"), 9, "CashPack", {
-		{ g("+$100K"), "CashPack1", "59" },
-		{ g("+$500K"), "CashPack2", "199", "BEST SELLING!" },
-		{ g("+$2M"), "CashPack3", "459" },
-		{ g("+$20M"), "CashPack4", "999" },
-		{ g("+$100M"), "CashPack5", "1,999", "BEST DEAL!" },
+		{ g("+$100K"), "CashPack1", "Cash1" },
+		{ g("+$500K"), "CashPack2", "Cash2", "BEST SELLING!" },
+		{ g("+$2M"), "CashPack3", "Cash3" },
+		{ g("+$20M"), "CashPack4", "Cash4" },
+		{ g("+$100M"), "CashPack5", "Cash5", "BEST DEAL!" },
 	})
 	UIKit.text(scroll, "Odds are shown on every random item.", 15, {
 		font = UIKit.Fonts.body,
@@ -979,12 +1080,17 @@ do
 	}, only)
 	UIKit.text(only, "ONLY", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 1
 	UIKit.icon(only, img("Robux3"), 26).LayoutOrder = 2
-	UIKit.text(only, "3", 24, { color = hex("8CFF3A"), stroke = 3.5 }).LayoutOrder = 3
+	local onlyPrice = UIKit.text(only, ShopClient.priceText("Speed"), 24, { color = hex("8CFF3A"), stroke = 3.5 })
+	onlyPrice.LayoutOrder = 3
+	ShopClient.watchPrice("Speed", function(text)
+		onlyPrice.Text = text
+	end)
 	UIKit.clickable(promoHolder, function()
-		open("Shop")
+		ShopClient.buy("Speed")
 	end)
 	local promoScale = UIKit.animScale(promoHolder)
 	function hud.setTraining(on: boolean)
+		on = on and not ShopClient.owns("Speed") -- no offer once you have it
 		if on and not promoHolder.Visible then
 			promoScale.Scale = 0.4
 			promoHolder.Visible = true
@@ -1014,11 +1120,24 @@ do
 		stroke = 3,
 	})
 	UIKit.wobble(inviteFade, 3, 1.4)
+	-- tap it to invite friends (the bonus itself is server side: Economy, +10% per friend in the server)
+	local inviteHit = UIKit.clickable(invite, function()
+		local SocialService = game:GetService("SocialService")
+		pcall(function()
+			if SocialService:CanSendGameInviteAsync(Players.LocalPlayer) then
+				SocialService:PromptGameInvite(Players.LocalPlayer)
+			end
+		end)
+	end)
+	inviteHit.Name = "InviteHit"
+	inviteHit.Visible = false -- only while it shows, so the hidden banner never eats taps
 	task.spawn(function()
 		task.wait(3)
 		while gui.Parent do
+			inviteHit.Visible = true
 			UIKit.tween(inviteFade, 0.5, { GroupTransparency = 0 })
 			task.wait(6)
+			inviteHit.Visible = false
 			UIKit.tween(inviteFade, 0.8, { GroupTransparency = 1 })
 			task.wait(40)
 		end

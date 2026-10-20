@@ -22,6 +22,7 @@ Kit.yieldEvery = 0 -- rebuilds at runtime are small; do them in one go
 
 local Homes = {}
 Homes.LOCK_TIME = 45
+Homes.LOCK_COOLDOWN = 20 -- seconds after a lock runs out before it can be locked again (no locking forever)
 Homes.CLAIM_ORDER = { 4, 5, 3, 6, 2, 7, 1, 8 } -- the middle of the curve first
 
 local holes: Folder
@@ -147,14 +148,33 @@ local function release(player: Player)
 	if hole then
 		hole:SetAttribute("Owner", 0)
 		hole:SetAttribute("Locked", false)
+		hole:SetAttribute("LockReadyAt", nil)
 		HomeLook.setLocked(hole, false)
 		refreshSign(hole)
+		-- someone who joined a full server gets the free home
+		task.defer(function()
+			for _, other in Players:GetPlayers() do
+				if other ~= player then
+					claim(other)
+				end
+			end
+		end)
 	end
 end
 
 -- The push-pin: the owner locks the door; while it's locked, anyone else who walks in is put back outside
-local function lock(hole: Model)
+local function lock(hole: Model, player: Player)
 	if hole:GetAttribute("Locked") then
+		return
+	end
+	local readyAt = (hole:GetAttribute("LockReadyAt") :: number?) or 0
+	local wait = math.ceil(readyAt - Workspace:GetServerTimeNow())
+	if wait > 0 then
+		local remotes = ReplicatedStorage:FindFirstChild("BedroomRemotes")
+		local notice = remotes and remotes:FindFirstChild("Notice") :: RemoteEvent?
+		if notice then
+			notice:FireClient(player, `The lock is resetting: lock again in {wait}s`, "warn")
+		end
 		return
 	end
 	hole:SetAttribute("LockedUntil", Workspace:GetServerTimeNow() + Homes.LOCK_TIME)
@@ -164,6 +184,7 @@ local function lock(hole: Model)
 			refreshSign(hole)
 			if Workspace:GetServerTimeNow() >= (hole:GetAttribute("LockedUntil") :: number) then
 				HomeLook.setLocked(hole, false)
+				hole:SetAttribute("LockReadyAt", Workspace:GetServerTimeNow() + Homes.LOCK_COOLDOWN)
 			end
 			task.wait(0.5)
 		end
@@ -201,7 +222,7 @@ function Homes.start(bedroom: Model)
 		if prompt then
 			prompt.Triggered:Connect(function(player)
 				if hole:GetAttribute("Owner") == player.UserId then
-					lock(hole)
+					lock(hole, player)
 				end
 			end)
 		end

@@ -100,6 +100,16 @@ function Raids.start(_bedroom: Model)
 		if not root or not at or (root.Position - at).Magnitude > 30 + reach then
 			return
 		end
+		-- a real steal happens from inside the owner's home (the pen is deep in it): not across a fence from next
+		-- door, and not through a locked door
+		local s = Pens.state(owner)
+		if not s or MapConfig.homeAt(root.Position) ~= s.hole:GetAttribute("HoleIndex") then
+			return
+		end
+		if s.hole:GetAttribute("Locked") then
+			notice:FireClient(thief, `{owner.DisplayName}'s door is locked!`, "warn")
+			return
+		end
 		if Carry.carryStolen(thief, owner, uid) then
 			local id = model:GetAttribute("ToyName") or "toy"
 			notice:FireClient(owner, `{thief.DisplayName} is stealing your {id}! Stop them!`, "warn")
